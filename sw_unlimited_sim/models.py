@@ -209,8 +209,9 @@ class Player:
     discard_pile: List[Card] = field(default_factory=list)
     has_initiative: bool = False
     
-    def draw_cards(self, count: int):
-        """Draw cards from deck"""
+    def draw_cards(self, count: int) -> List[Card]:
+        """Draw cards from deck and return the cards drawn."""
+        drawn = []
         for _ in range(count):
             if not self.deck:
                 # Deck empty - shuffle discard and create new deck
@@ -221,7 +222,10 @@ class Player:
                 else:
                     break
             if self.deck:
-                self.hand.append(self.deck.pop(0))
+                card = self.deck.pop(0)
+                self.hand.append(card)
+                drawn.append(card)
+        return drawn
     
     def get_ready_resources(self) -> List[Resource]:
         return [r for r in self.resources if not r.is_exhausted]

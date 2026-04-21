@@ -14,8 +14,8 @@ from card_analysis import analyze_card_database
 from deck_loader import _load_card_cache, available_decks
 from effect_audit import audit_deck, format_deck_audit
 from effect_store import get_effect, load_effects, save_effect
-from simulator import run_simulation
-from strategies import list_strategies
+from simulator import SimulationResult, run_simulation, run_single_game
+from strategies import get_strategy, list_strategies
 from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
 
 
@@ -122,6 +122,21 @@ th { color: var(--muted); font-size: 13px; text-transform: uppercase; }
 .status-unsupported { color: var(--bad); font-weight: 800; }
 .metric { font-size: 30px; font-weight: 800; }
 .muted { color: var(--muted); }
+details {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+summary {
+  cursor: pointer;
+  font-weight: 800;
+  padding: 12px 16px;
+}
+details pre {
+  border-radius: 0 0 8px 8px;
+  margin: 0;
+}
 @media (max-width: 760px) {
   header { display: block; }
   nav { margin-top: 10px; }
@@ -258,6 +273,54 @@ def audit_page(query: dict[str, list[str]]) -> bytes:
     return page("Deck Audit", body)
 
 
+def parse_positive_int(value: str, default: int, maximum: int) -> int:
+    try:
+        return max(1, min(maximum, int(value)))
+    except (TypeError, ValueError):
+        return default
+
+
+def run_detailed_simulation_html(
+    strategy1_name: str,
+    strategy2_name: str,
+    games: int,
+    deck1_ref: str,
+    deck2_ref: str,
+) -> str:
+    games = min(games, 50)
+    strategy1 = get_strategy(strategy1_name)
+    strategy2 = get_strategy(strategy2_name)
+    result = SimulationResult()
+    result.strategy1_name = strategy1_name
+    result.strategy2_name = strategy2_name
+    game_sections = []
+
+    for game_number in range(1, games + 1):
+        winner, turns, log = run_single_game(
+            strategy1,
+            strategy2,
+            verbose=False,
+            deck1_ref=deck1_ref,
+            deck2_ref=deck2_ref,
+        )
+        if winner is None and turns == 0:
+            result.add_error(f"Game {game_number} had an error: {log[0] if log else 'Unknown'}")
+        else:
+            result.add_game(winner, turns)
+
+        winner_label = f"Player {winner}" if winner else "Draw"
+        game_log = "\n".join(log) if log else "No logged actions."
+        game_sections.append(
+            "<details>"
+            f"<summary>Game {game_number}: {esc(winner_label)} in {turns} turns</summary>"
+            f"<pre>{esc(game_log)}</pre>"
+            "</details>"
+        )
+
+    cap_note = "<p class='muted'>Detailed mode is capped at 50 games so the browser page stays responsive.</p>"
+    return f"<pre>{esc(result.summary())}</pre>{cap_note}{''.join(game_sections)}"
+
+
 def simulate_page(query: dict[str, list[str]]) -> bytes:
     decks = available_decks()
     strategies = list_strategies()
@@ -265,15 +328,20 @@ def simulate_page(query: dict[str, list[str]]) -> bytes:
     deck2 = query.get("deck2", ["imperial_villainy_50" if "imperial_villainy_50" in decks else (decks[-1] if decks else "")])[0]
     strat1 = query.get("strategy1", ["aggressive"])[0]
     strat2 = query.get("strategy2", ["aggressive"])[0]
-    games = int(query.get("games", ["20"])[0] or 20)
+    games = parse_positive_int(query.get("games", ["20"])[0], 20, 5000)
+    show_logs = query.get("show_logs", [""])[0] == "1"
     result = ""
 
     if query.get("run", [""])[0] == "1":
-        buffer = io.StringIO()
-        with redirect_stdout(buffer):
-            run_simulation(strat1, strat2, games, deck1_ref=deck1, deck2_ref=deck2)
-        result = f"<pre>{esc(buffer.getvalue())}</pre>"
+        if show_logs:
+            result = run_detailed_simulation_html(strat1, strat2, games, deck1, deck2)
+        else:
+            buffer = io.StringIO()
+            with redirect_stdout(buffer):
+                run_simulation(strat1, strat2, games, deck1_ref=deck1, deck2_ref=deck2)
+            result = f"<pre>{esc(buffer.getvalue())}</pre>"
 
+    checked = "checked" if show_logs else ""
     body = f"""
 <section><h2>Run Simulation</h2><p>Compare two strategies and decklists. Start small, then scale up once audits are clean.</p></section>
 <section class="card">
@@ -301,6 +369,7 @@ def simulate_page(query: dict[str, list[str]]) -> bytes:
         <input name="games" type="number" min="1" max="5000" value="{esc(games)}">
       </div>
     </div>
+    <label><input type="checkbox" name="show_logs" value="1" {checked} style="width:auto"> Show moves and cards drawn for each game</label>
     <button type="submit">Run Simulation</button>
   </form>
 </section>
@@ -374,7 +443,7 @@ def train_page(query: dict[str, list[str]]) -> bytes:
         "triggers": []
     }, indent=2)
     body = f"""
-<section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Use the guided form for common effects, or edit the JSON directly for more complex cards.</p></section>
+<section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Approved effects are loaded by the simulator and can execute during games.</p></section>
 <section class="grid">
   <div class="card">
     <form method="get" action="/train">
