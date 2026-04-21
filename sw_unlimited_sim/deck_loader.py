@@ -100,6 +100,10 @@ def _abilities(card_data: dict[str, Any]) -> list[str]:
     return abilities
 
 
+def _aspects(card_data: dict[str, Any]) -> list[str]:
+    return [str(aspect) for aspect in (card_data.get("Aspects") or [])]
+
+
 def _has_ambush(card_data: dict[str, Any]) -> bool:
     keywords = {str(keyword).lower() for keyword in (card_data.get("Keywords") or [])}
     text = "\n".join(_abilities(card_data)).lower()
@@ -128,7 +132,7 @@ def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
     cost = _to_int(card_data.get("Cost"))
 
     if card_type == "unit":
-        return UnitCard(
+        card = UnitCard(
             card_id,
             name,
             cost,
@@ -139,9 +143,11 @@ def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
             abilities=_abilities(card_data),
             has_ambush=_has_ambush(card_data),
         )
+        card.aspects = _aspects(card_data)
+        return card
 
     if card_type == "upgrade":
-        return UpgradeCard(
+        card = UpgradeCard(
             card_id,
             name,
             cost,
@@ -149,14 +155,18 @@ def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
             hp_bonus=_to_int(card_data.get("HP")),
             abilities=_abilities(card_data),
         )
+        card.aspects = _aspects(card_data)
+        return card
 
     if card_type == "event":
-        return EventCard(
+        card = EventCard(
             card_id,
             name,
             cost,
             effect=str(card_data.get("FrontText") or ""),
         )
+        card.aspects = _aspects(card_data)
+        return card
 
     raise DeckLoadError(f"Unsupported maindeck card type '{card_data.get('Type')}' for {name}")
 
@@ -180,6 +190,7 @@ def leader_from_data(card_data: dict[str, Any]) -> LeaderCard:
     )
     leader.traits = _traits(card_data)
     leader.abilities = _abilities(card_data)
+    leader.aspects = _aspects(card_data)
     return leader
 
 

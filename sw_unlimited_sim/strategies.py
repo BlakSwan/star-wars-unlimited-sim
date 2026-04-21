@@ -51,6 +51,11 @@ def control_strategy(game: GameState, player: Player, actions: List[str]) -> str
     for action in actions:
         if action.startswith("leader_action_"):
             return action
+
+    # Then use unit action abilities if available
+    for action in actions:
+        if action.startswith("unit_action_"):
+            return action
     
     # Play events for card draw/effects
     for action in actions:
@@ -134,6 +139,9 @@ def greedy_value_strategy(game: GameState, player: Player, actions: List[str]) -
         
         elif action == "take_initiative":
             value = 1
+
+        elif action.startswith("unit_action_"):
+            value = 8
         
         if value > best_value:
             best_value = value

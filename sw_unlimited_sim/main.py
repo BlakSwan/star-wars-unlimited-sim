@@ -5,6 +5,7 @@ import argparse
 import sys
 
 from deck_loader import available_decks
+from effect_audit import audit_deck, format_deck_audit
 from simulator import (
     run_simulation, 
     compare_strategies, 
@@ -54,6 +55,10 @@ Examples:
                         help="Deck name or JSON path for player 1")
     parser.add_argument("--deck2",
                         help="Deck name or JSON path for player 2")
+    parser.add_argument("--audit-deck",
+                        help="Audit a deck for unsupported simulator effects")
+    parser.add_argument("--show-supported", action="store_true",
+                        help="Include supported cards in --audit-deck output")
     parser.add_argument("--fetch-cards", nargs="?", const=str(DEFAULT_OUTPUT_PATH),
                         metavar="OUTPUT",
                         help="Fetch all known SWU DB card data to JSON")
@@ -80,6 +85,11 @@ Examples:
         print("Available decks:")
         for deck in available_decks():
             print(f"  - {deck}")
+        return
+
+    if args.audit_deck:
+        audit = audit_deck(args.audit_deck)
+        print(format_deck_audit(audit, show_supported=args.show_supported))
         return
 
     # Fetch card data from SWU DB

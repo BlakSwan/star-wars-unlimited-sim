@@ -30,6 +30,7 @@ class Card:
     name: str
     cost: int
     card_type: CardType
+    aspects: List[str] = field(default_factory=list, init=False)
     
     def __repr__(self):
         return f"{self.name} ({self.cost})"
@@ -52,9 +53,13 @@ class UnitCard(Card):
         self.arena = arena
         self.traits = traits or []
         self.abilities = abilities or []
+        self.aspects = []
         self.has_ambush = has_ambush
         self.current_hp = hp
         self.damage = 0
+        self.experience_tokens = 0
+        self.attacked_this_phase = False
+        self.abilities_lost_until_ready = False
     
     def take_damage(self, amount: int) -> int:
         """Apply damage, return actual damage taken"""
@@ -89,6 +94,7 @@ class UpgradeCard(Card):
         self.power_bonus = power_bonus
         self.hp_bonus = hp_bonus
         self.abilities = abilities or []
+        self.aspects = []
 
 
 @dataclass
@@ -99,6 +105,7 @@ class EventCard(Card):
     def __init__(self, id, name, cost, effect=""):
         super().__init__(id, name, cost, CardType.EVENT)
         self.effect = effect
+        self.aspects = []
 
 
 @dataclass
@@ -118,6 +125,9 @@ class LeaderCard(Card):
         self.action_effect = action_effect
         self.epic_action_cost = epic_action_cost
         self.epic_action_effect = epic_action_effect
+        self.aspects = []
+        self.traits = []
+        self.abilities = []
         self.is_deployed = False
         self.epic_action_used = False
         self.is_exhausted = False
@@ -126,6 +136,9 @@ class LeaderCard(Card):
         self.current_hp = 0
         self.damage = 0
         self.arena = Arena.NONE
+        self.experience_tokens = 0
+        self.attacked_this_phase = False
+        self.abilities_lost_until_ready = False
 
     def take_damage(self, amount: int) -> int:
         """Apply damage while deployed as a unit."""

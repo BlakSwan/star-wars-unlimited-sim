@@ -9,6 +9,7 @@ from models import *
 from engine import GameState
 from cards import create_sample_decks, get_rebel_leader, get_imperial_leader
 from deck_loader import load_deck
+from effect_audit import audit_deck
 from strategies import get_strategy, STRATEGIES, Strategy
 
 
@@ -125,6 +126,21 @@ def run_simulation(strategy1_name: str, strategy2_name: str,
     print(f"Player 2: {strategy2_name} ({deck2_ref or 'sample Imperial deck'})")
     print(f"Games to play: {num_games}")
     print(f"{'='*50}\n")
+
+    if deck1_ref and deck2_ref:
+        warned = False
+        for label, deck_ref in (("Player 1", deck1_ref), ("Player 2", deck2_ref)):
+            audit = audit_deck(deck_ref)
+            if audit.unsupported_count or audit.partial_count:
+                warned = True
+                print(
+                    f"Warning: {label} deck '{audit.deck_name}' has "
+                    f"{audit.unsupported_count} unsupported and "
+                    f"{audit.partial_count} partially supported card copies."
+                )
+                print("Run `python main.py --audit-deck DECK` for details.")
+        if warned:
+            print()
     
     start_time = time.time()
     

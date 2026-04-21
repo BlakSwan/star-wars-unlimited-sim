@@ -21,6 +21,7 @@ python main.py --test
 | `python main.py --analyze STRAT` | Analyze strategy against all opponents |
 | `python main.py --list-decks` | List bundled JSON decklists |
 | `python main.py --sim STRAT1 STRAT2 N --deck1 DECK --deck2 DECK` | Simulate with explicit decklists |
+| `python main.py --audit-deck DECK` | Report unsupported card effects for a decklist |
 | `python main.py --fetch-cards` | Download SWU DB card data |
 | `python main.py --filter-gameplay-cards` | Remove cosmetic card variants from fetched data |
 
@@ -62,6 +63,12 @@ Run a simulation with explicit decks:
 python main.py --sim aggressive control 100 --deck1 rebel_heroism --deck2 imperial_villainy
 ```
 
+Audit effect support before trusting tournament results:
+
+```bash
+python main.py --audit-deck rebel_heroism
+```
+
 Deck JSON files reference SWU DB gameplay cards by set and card number:
 
 ```json
@@ -78,12 +85,15 @@ Deck JSON files reference SWU DB gameplay cards by set and card number:
 
 - Action phase (play cards, attack, use abilities, take initiative, pass)
 - Regroup phase (draw 2 cards, resource a card, ready all)
-- Combat (simultaneous damage, ambush ability)
+- Combat (simultaneous damage, ambush, sentinel, saboteur, raid, overwhelm)
 - Resource management
 - Win condition (destroy opponent's base)
+- A focused set of card effects used by bundled decks, including selected
+  When Played, On Attack, When Defeated, leader action, and event effects
 
 ## Notes
 
 - Uses sample cards from the Spark of Rebellion set
-- Simplified card effects for simulation speed
+- Card effects are implemented as a growing supported subset, not a complete
+  parser for every SWU card text
 - Run thousands of games for statistically significant results
