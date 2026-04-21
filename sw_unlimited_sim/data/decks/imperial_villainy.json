@@ -1,0 +1,19 @@
+{
+  "name": "Imperial Villainy",
+  "leader": {
+    "set": "SOR",
+    "number": "010"
+  },
+  "cards": [
+    {"set": "SOR", "number": "128", "count": 3},
+    {"set": "SOR", "number": "129", "count": 3},
+    {"set": "SOR", "number": "130", "count": 3},
+    {"set": "SOR", "number": "131", "count": 3},
+    {"set": "SOR", "number": "132", "count": 3},
+    {"set": "SOR", "number": "133", "count": 3},
+    {"set": "SOR", "number": "136", "count": 3},
+    {"set": "SOR", "number": "138", "count": 3},
+    {"set": "SOR", "number": "139", "count": 3},
+    {"set": "SOR", "number": "225", "count": 3}
+  ]
+}

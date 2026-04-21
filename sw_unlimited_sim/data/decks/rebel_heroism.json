@@ -1,0 +1,19 @@
+{
+  "name": "Rebel Heroism",
+  "leader": {
+    "set": "SOR",
+    "number": "014"
+  },
+  "cards": [
+    {"set": "SOR", "number": "140", "count": 3},
+    {"set": "SOR", "number": "141", "count": 3},
+    {"set": "SOR", "number": "142", "count": 3},
+    {"set": "SOR", "number": "143", "count": 3},
+    {"set": "SOR", "number": "144", "count": 3},
+    {"set": "SOR", "number": "145", "count": 3},
+    {"set": "SOR", "number": "150", "count": 3},
+    {"set": "SOR", "number": "151", "count": 3},
+    {"set": "SOR", "number": "103", "count": 3},
+    {"set": "SOR", "number": "245", "count": 3}
+  ]
+}
