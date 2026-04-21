@@ -14,9 +14,12 @@ from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
 
 SUPPORTED_KEYWORDS = {
     "Ambush",
+    "Grit",
     "Overwhelm",
     "Raid",
+    "Restore",
     "Saboteur",
+    "Shielded",
     "Sentinel",
 }
 
@@ -120,6 +123,37 @@ def _unsupported_keywords(card_data: dict[str, Any]) -> list[str]:
     return sorted(keyword for keyword in _keywords(card_data) if keyword not in SUPPORTED_KEYWORDS)
 
 
+def _is_supported_keyword_only(card_data: dict[str, Any]) -> bool:
+    keywords = _keywords(card_data)
+    if not keywords or _unsupported_keywords(card_data):
+        return False
+
+    text = _text(card_data).lower()
+    unsupported_triggers = [
+        "when played",
+        "when defeated",
+        "action [",
+        "attach",
+        "draw",
+        "discard",
+        "search",
+        "capture",
+        "bounty",
+        "smuggle",
+        "exploit",
+        "coordinate",
+        "plot",
+        "piloting",
+        "hidden",
+    ]
+    if any(trigger in text for trigger in unsupported_triggers):
+        return False
+
+    # Supported keyword reminder text may contain phrases such as
+    # "when this unit attacks" for Restore, Raid, and Saboteur.
+    return True
+
+
 def _audit_card(card_data: dict[str, Any], count: int) -> CardAudit:
     reasons: list[str] = []
     text = _text(card_data)
@@ -128,6 +162,9 @@ def _audit_card(card_data: dict[str, Any], count: int) -> CardAudit:
     if _has_stats_only_text(card_data):
         status = "supported"
         reasons.append("stat-only card")
+    elif _is_supported_keyword_only(card_data):
+        status = "supported"
+        reasons.append("supported keyword-only card")
     elif name in SUPPORTED_CARD_NAMES:
         unsupported_keywords = _unsupported_keywords(card_data)
         if unsupported_keywords:

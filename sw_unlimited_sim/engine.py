@@ -250,6 +250,10 @@ class GameState:
         
         player.units.append(unit)
         unit.is_exhausted = True  # Units enter exhausted
+
+        if self._has_keyword(unit, "shielded"):
+            unit.shield_tokens += 1
+            self._emit(f"  {unit.name} gains a Shield token")
         
         # Check for Ambush
         if unit.has_ambush:
@@ -446,7 +450,8 @@ class GameState:
         return bonus
 
     def _attack_power(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> int:
-        return attacker.power + self._raid_bonus(player, attacker, defender)
+        grit_bonus = attacker.damage if self._has_keyword(attacker, "grit") else 0
+        return attacker.power + self._raid_bonus(player, attacker, defender) + grit_bonus
 
     def _has_overwhelm(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> bool:
         if getattr(attacker, "abilities_lost_until_ready", False):
@@ -546,6 +551,11 @@ class GameState:
                 self._damage_unit(enemy, targets[0], 1)
             self._emit("  Fifth Brother deals 1 damage to himself on attack")
 
+        restore_amount = self._restore_amount(attacker)
+        if restore_amount:
+            player.base.current_hp = min(player.base.hp, player.base.current_hp + restore_amount)
+            self._emit(f"  {attacker.name} restores {restore_amount} base HP")
+
     def _resolve_base_combat_damage(self, player: Player, attacker: UnitCard, damage: int):
         enemy = self._get_enemy(player)
 
@@ -562,6 +572,16 @@ class GameState:
         if unit.name == "K-2SO":
             enemy.base.take_damage(3)
             self._emit("  K-2SO deals 3 damage to enemy base when defeated")
+
+    def _restore_amount(self, unit: UnitCard) -> int:
+        if getattr(unit, "abilities_lost_until_ready", False):
+            return 0
+        text = self._text(unit)
+        if "restore" not in text:
+            return 0
+        import re
+        match = re.search(r"restore\\s+(\\d+)", text)
+        return int(match.group(1)) if match else 0
 
     def _damage_unit(self, owner: Player, unit: UnitCard, amount: int):
         unit.take_damage(amount)

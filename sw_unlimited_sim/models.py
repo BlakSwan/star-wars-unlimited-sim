@@ -58,11 +58,15 @@ class UnitCard(Card):
         self.current_hp = hp
         self.damage = 0
         self.experience_tokens = 0
+        self.shield_tokens = 0
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
     
     def take_damage(self, amount: int) -> int:
         """Apply damage, return actual damage taken"""
+        if amount > 0 and self.shield_tokens > 0:
+            self.shield_tokens -= 1
+            return 0
         actual = min(amount, self.current_hp)
         self.damage += actual
         self.current_hp -= actual
@@ -137,11 +141,15 @@ class LeaderCard(Card):
         self.damage = 0
         self.arena = Arena.NONE
         self.experience_tokens = 0
+        self.shield_tokens = 0
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
 
     def take_damage(self, amount: int) -> int:
         """Apply damage while deployed as a unit."""
+        if amount > 0 and self.shield_tokens > 0:
+            self.shield_tokens -= 1
+            return 0
         actual = min(amount, self.current_hp)
         self.damage += actual
         self.current_hp -= actual

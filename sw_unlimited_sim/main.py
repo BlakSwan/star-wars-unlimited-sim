@@ -4,6 +4,7 @@
 import argparse
 import sys
 
+from card_analysis import analyze_card_database, format_card_analysis
 from deck_loader import available_decks
 from effect_audit import audit_deck, format_deck_audit
 from simulator import (
@@ -69,6 +70,12 @@ Examples:
                         help="Collapse cosmetic variants from fetched card data")
     parser.add_argument("--card-input", default=str(DEFAULT_OUTPUT_PATH),
                         help="Input JSON for --filter-gameplay-cards")
+    parser.add_argument("--analyze-cards", action="store_true",
+                        help="Analyze card database mechanics and simulator support")
+    parser.add_argument("--ui", action="store_true",
+                        help="Start the local web UI")
+    parser.add_argument("--ui-port", type=int, default=8765,
+                        help="Port for --ui")
     
     args = parser.parse_args()
     
@@ -90,6 +97,16 @@ Examples:
     if args.audit_deck:
         audit = audit_deck(args.audit_deck)
         print(format_deck_audit(audit, show_supported=args.show_supported))
+        return
+
+    if args.analyze_cards:
+        analysis = analyze_card_database(DEFAULT_GAMEPLAY_OUTPUT_PATH)
+        print(format_card_analysis(analysis))
+        return
+
+    if args.ui:
+        from ui_server import run_ui
+        run_ui(port=args.ui_port)
         return
 
     # Fetch card data from SWU DB

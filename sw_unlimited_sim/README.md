@@ -22,8 +22,10 @@ python main.py --test
 | `python main.py --list-decks` | List bundled JSON decklists |
 | `python main.py --sim STRAT1 STRAT2 N --deck1 DECK --deck2 DECK` | Simulate with explicit decklists |
 | `python main.py --audit-deck DECK` | Report unsupported card effects for a decklist |
+| `python main.py --analyze-cards` | Analyze card database mechanics and support coverage |
 | `python main.py --fetch-cards` | Download SWU DB card data |
 | `python main.py --filter-gameplay-cards` | Remove cosmetic card variants from fetched data |
+| `python main.py --ui` | Start the local browser UI |
 
 ## Available Strategies
 
@@ -42,10 +44,13 @@ sw_unlimited_sim/
 ├── engine.py      # Game logic and rules
 ├── cards.py       # Sample card database
 ├── deck_loader.py # JSON decklist loader backed by SWU DB data
+├── effect_store.py # Human-reviewed structured card effect storage
+├── ui_server.py   # Local browser UI
 ├── strategies.py  # AI player strategies
 ├── simulator.py   # Simulation runner
 ├── main.py        # CLI entry point
 ├── data/decks/    # Bundled decklists
+├── data/effects/  # Human-reviewed effect records
 └── README.md      # This file
 ```
 
@@ -74,6 +79,31 @@ Audit effect support before trusting tournament results:
 ```bash
 python main.py --audit-deck rebel_heroism
 ```
+
+Analyze the full card database to prioritize rules work:
+
+```bash
+python main.py --analyze-cards
+```
+
+Start the local UI for non-coder workflows:
+
+```bash
+python main.py --ui
+```
+
+Then open `http://127.0.0.1:8765` in a browser. Use `--ui-port PORT` if
+that port is already taken.
+
+The UI includes:
+
+- Dashboard metrics for deck count, strategy count, approved effects, and card
+  support coverage
+- Deck audit forms for tournament shape and unsupported effect checks
+- Simulation forms for choosing both decks, both strategies, and game count
+- Full-card database coverage analysis
+- Human-in-the-loop effect training with a guided form for common effects and
+  an advanced JSON editor for complex cards
 
 Deck JSON files reference SWU DB gameplay cards by set and card number:
 
