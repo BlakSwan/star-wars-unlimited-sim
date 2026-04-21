@@ -427,6 +427,10 @@ class GameState:
         elif "raid 1" in text:
             bonus += 1
 
+        if attacker.name == "Partisan Insurgent":
+            if any(unit is not attacker and self._has_aspect(unit, "Aggression") for unit in player.units):
+                bonus += 2
+
         if attacker.name == "Fifth Brother":
             bonus += attacker.damage
 

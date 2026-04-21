@@ -1,0 +1,27 @@
+{
+  "name": "Imperial Villainy 50",
+  "minimum_cards": 50,
+  "leader": {
+    "set": "SOR",
+    "number": "010"
+  },
+  "cards": [
+    {"set": "SOR", "number": "128", "count": 3},
+    {"set": "SOR", "number": "129", "count": 3},
+    {"set": "SOR", "number": "130", "count": 3},
+    {"set": "SOR", "number": "131", "count": 3},
+    {"set": "SOR", "number": "132", "count": 3},
+    {"set": "SOR", "number": "133", "count": 3},
+    {"set": "SOR", "number": "136", "count": 3},
+    {"set": "SOR", "number": "138", "count": 3},
+    {"set": "SOR", "number": "139", "count": 3},
+    {"set": "SOR", "number": "225", "count": 3},
+    {"set": "SOR", "number": "157", "count": 3},
+    {"set": "SOR", "number": "159", "count": 3},
+    {"set": "SOR", "number": "164", "count": 3},
+    {"set": "SOR", "number": "247", "count": 3},
+    {"set": "SOR", "number": "248", "count": 3},
+    {"set": "SOR", "number": "250", "count": 2},
+    {"set": "SOR", "number": "140", "count": 3}
+  ]
+}

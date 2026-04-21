@@ -23,6 +23,8 @@ SUPPORTED_KEYWORDS = {
 SUPPORTED_CARD_NAMES = {
     "Darth Vader",
     "Admiral Ozzel",
+    "Cantina Braggart",
+    "Corellian Freighter",
     "Fighters For Freedom",
     "Fifth Brother",
     "Force Choke",
@@ -34,12 +36,15 @@ SUPPORTED_CARD_NAMES = {
     "K-2SO",
     "Karabast",
     "Medal Ceremony",
+    "Partisan Insurgent",
     "Rebel Assault",
     "Red Three",
     "Sabine Wren",
     "Seventh Sister",
     "SpecForce Soldier",
     "Vader's Lightsaber",
+    "Volunteer Soldier",
+    "Wampa",
 }
 
 
@@ -61,6 +66,7 @@ class DeckAudit:
     deck_path: str
     leader: CardAudit
     cards: list[CardAudit]
+    validation_errors: list[str] = field(default_factory=list)
 
     @property
     def all_cards(self) -> list[CardAudit]:
@@ -87,6 +93,10 @@ class DeckAudit:
     @property
     def partial_count(self) -> int:
         return self.counts_by_status["partial"]
+
+    @property
+    def is_valid_tournament_shape(self) -> bool:
+        return not self.validation_errors
 
 
 def _text(card_data: dict[str, Any]) -> str:
@@ -160,15 +170,29 @@ def audit_deck(
     leader = _audit_card(leader_data, count=1)
 
     card_audits = []
+    validation_errors: list[str] = []
+    total_cards = 0
     for entry in decklist.get("cards", []):
         card_data = _lookup_card(card_index, entry)
-        card_audits.append(_audit_card(card_data, count=_to_int(entry.get("count"), default=1)))
+        count = _to_int(entry.get("count"), default=1)
+        total_cards += count
+        card_audits.append(_audit_card(card_data, count=count))
+
+        if count > 3:
+            validation_errors.append(
+                f"{card_data.get('Set')} {card_data.get('Number')} {card_data.get('Name')} has {count} copies; max is 3."
+            )
+
+    min_cards = _to_int(decklist.get("minimum_cards"), default=50)
+    if total_cards < min_cards:
+        validation_errors.append(f"Main deck has {total_cards} cards; minimum is {min_cards}.")
 
     return DeckAudit(
         deck_name=decklist.get("name") or deck_path.stem,
         deck_path=str(deck_path),
         leader=leader,
         cards=card_audits,
+        validation_errors=validation_errors,
     )
 
 
@@ -182,6 +206,7 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
         f"Path: {audit.deck_path}",
         f"Leader: {audit.leader.set_code} {audit.leader.number} {audit.leader.name} [{audit.leader.status}]",
         f"Main deck cards: {total_cards}",
+        f"Tournament shape: {'valid' if audit.is_valid_tournament_shape else 'invalid'}",
         (
             "Support by copies: "
             f"supported={counts['supported']}, "
@@ -195,6 +220,12 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
             f"unsupported={unique_counts['unsupported']}"
         ),
     ]
+
+    if audit.validation_errors:
+        lines.append("")
+        lines.append("Validation Issues")
+        for issue in audit.validation_errors:
+            lines.append(f"- {issue}")
 
     def add_section(title: str, status: str):
         cards = [card for card in audit.all_cards if card.status == status]

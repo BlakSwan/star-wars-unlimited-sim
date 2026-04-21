@@ -63,6 +63,12 @@ Run a simulation with explicit decks:
 python main.py --sim aggressive control 100 --deck1 rebel_heroism --deck2 imperial_villainy
 ```
 
+Use the 50-card tournament-shaped starter lists:
+
+```bash
+python main.py --sim aggressive aggressive 100 --deck1 rebel_heroism_50 --deck2 imperial_villainy_50
+```
+
 Audit effect support before trusting tournament results:
 
 ```bash
