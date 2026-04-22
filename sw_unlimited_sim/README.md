@@ -131,6 +131,16 @@ The UI includes:
   `OPENAI_API_KEY` and optionally `SWU_LLM_MODEL`; LLM drafts are saved as
   manual review records and never execute until approved and marked executable.
 
+Local LLM settings are read from shell environment variables or an untracked
+`.env` file at the repository root:
+
+```bash
+cp .env.example .env
+# edit .env and set OPENAI_API_KEY
+```
+
+Do not commit real API keys.
+
 Deck JSON files reference SWU DB gameplay cards by set and card number:
 
 ```json

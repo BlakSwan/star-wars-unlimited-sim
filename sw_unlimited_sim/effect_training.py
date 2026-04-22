@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-import os
 import urllib.request
 from abc import ABC, abstractmethod
 from typing import Any
+
+from settings import get_setting
 
 
 TRIGGERS = [
@@ -236,10 +237,10 @@ class OpenAIEffectSuggestionProvider(EffectSuggestionProvider):
     name = "openai"
 
     def __init__(self, model: str | None = None):
-        self.model = model or os.environ.get("SWU_LLM_MODEL", "gpt-5.4-mini")
-        self.api_key = os.environ.get("OPENAI_API_KEY")
+        self.model = model or get_setting("SWU_LLM_MODEL", "gpt-5.4-mini")
+        self.api_key = get_setting("OPENAI_API_KEY")
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY is required for the OpenAI effect suggestion provider")
+            raise ValueError("OPENAI_API_KEY is required. Put it in an untracked .env file or shell environment.")
 
     def suggest_effect(self, card: dict[str, Any]) -> dict[str, Any]:
         prompt = {
