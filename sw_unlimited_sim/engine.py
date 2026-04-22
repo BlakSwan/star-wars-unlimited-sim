@@ -2,6 +2,7 @@
 
 from typing import Any, Optional, List, Tuple
 import random
+import re
 from effect_store import effect_key, load_effects
 from effect_training import should_execute_record
 from models import *
@@ -120,6 +121,8 @@ class GameState:
         for card in player.hand:
             if player.can_afford(self._effective_cost(player, card)):
                 actions.append(f"play_{card.id}")
+            if self._can_play_as_pilot(player, card):
+                actions.append(f"pilot_{card.id}")
         
         # Can attack with ready units
         for unit in player.units:
@@ -175,6 +178,10 @@ class GameState:
         if action.startswith("play_"):
             card_id = action[5:]
             return self._play_card(player, card_id)
+
+        if action.startswith("pilot_"):
+            card_id = action[6:]
+            return self._play_card_as_pilot(player, card_id)
         
         if action.startswith("attack_"):
             parsed_attack = self._parse_attack_action(player, action)
@@ -304,13 +311,118 @@ class GameState:
             self.log(f"Turn {self.turn_count}: Player {player.id} plays {upgrade.name} but has no unit - discarded")
             return True
         
-        upgrade.attached_to = target
-        target.power += upgrade.power_bonus
-        target.hp += upgrade.hp_bonus
-        target.current_hp += upgrade.hp_bonus
+        self._attach_upgrade(upgrade, target)
         
         self.log(f"Turn {self.turn_count}: Player {player.id} plays {upgrade.name} on {target.name}")
         self._resolve_when_played_upgrade(player, upgrade, target)
+        return True
+
+    def _attach_upgrade(self, upgrade: Card, target: UnitCard):
+        """Attach an upgrade and apply its printed stat bonuses."""
+        upgrade.attached_to = target
+        upgrade.structured_power_bonus = 0
+        upgrade.structured_hp_bonus = 0
+        if not hasattr(target, "attached_upgrades"):
+            target.attached_upgrades = []
+        target.attached_upgrades.append(upgrade)
+        self._modify_unit_stats(target, self._printed_attached_power_bonus(upgrade), self._printed_attached_hp_bonus(upgrade))
+        if self._upgrade_grants_keyword(upgrade, "shielded"):
+            target.shield_tokens += 1
+            self.log(f"Turn {self.turn_count}: {upgrade.name} gives {target.name} a Shield token")
+
+    def _printed_attached_power_bonus(self, upgrade: Card) -> int:
+        if isinstance(upgrade, UpgradeCard):
+            return int(getattr(upgrade, "power_bonus", 0) or 0)
+        if getattr(upgrade, "played_as_pilot", False):
+            return int(getattr(upgrade, "power", 0) or 0)
+        return 0
+
+    def _printed_attached_hp_bonus(self, upgrade: Card) -> int:
+        if isinstance(upgrade, UpgradeCard):
+            return int(getattr(upgrade, "hp_bonus", 0) or 0)
+        if getattr(upgrade, "played_as_pilot", False):
+            return int(getattr(upgrade, "hp", 0) or 0)
+        return 0
+
+    def _modify_unit_stats(self, unit: UnitCard, power_delta: int = 0, hp_delta: int = 0):
+        unit.power += power_delta
+        unit.hp += hp_delta
+        if hp_delta > 0:
+            unit.current_hp += hp_delta
+        elif hp_delta < 0:
+            unit.current_hp = min(unit.current_hp, unit.hp)
+            if unit.current_hp <= 0:
+                unit.current_hp = 0
+            unit.damage = max(0, unit.hp - unit.current_hp)
+
+    def _upgrade_total_power_bonus(self, upgrade: UpgradeCard) -> int:
+        return self._printed_attached_power_bonus(upgrade) + int(getattr(upgrade, "structured_power_bonus", 0) or 0)
+
+    def _upgrade_total_hp_bonus(self, upgrade: UpgradeCard) -> int:
+        return self._printed_attached_hp_bonus(upgrade) + int(getattr(upgrade, "structured_hp_bonus", 0) or 0)
+
+    def _discard_attached_upgrades(self, owner: Player, unit: UnitCard):
+        attached = list(getattr(unit, "attached_upgrades", []) or [])
+        for upgrade in attached:
+            self._modify_unit_stats(unit, -self._upgrade_total_power_bonus(upgrade), -self._upgrade_total_hp_bonus(upgrade))
+            upgrade.attached_to = None
+            upgrade.played_as_pilot = False
+            upgrade.structured_power_bonus = 0
+            upgrade.structured_hp_bonus = 0
+            owner.discard_pile.append(upgrade)
+            self.log(f"Turn {self.turn_count}: {upgrade.name} is discarded from {unit.name}")
+        unit.attached_upgrades = []
+
+    def _piloting_cost(self, card: Card) -> Optional[int]:
+        if "Piloting" not in (getattr(card, "abilities", []) or []) and not self._has_keyword(card, "piloting"):
+            return None
+        match = re.search(r"piloting\s+\[C=(\d+)", self._text(card), flags=re.IGNORECASE)
+        return int(match.group(1)) if match else None
+
+    def _unit_has_pilot(self, unit: UnitCard) -> bool:
+        for upgrade in getattr(unit, "attached_upgrades", []) or []:
+            if getattr(upgrade, "played_as_pilot", False) or self._has_trait(upgrade, "PILOT"):
+                return True
+        return False
+
+    def _eligible_pilot_targets(self, player: Player) -> list[UnitCard]:
+        return [
+            unit for unit in player.units
+            if self._has_trait(unit, "VEHICLE") and not self._unit_has_pilot(unit)
+        ]
+
+    def _choose_pilot_target(self, player: Player) -> Optional[UnitCard]:
+        targets = self._eligible_pilot_targets(player)
+        if not targets:
+            return None
+        return max(targets, key=lambda unit: (unit.power + unit.current_hp, unit.power))
+
+    def _can_play_as_pilot(self, player: Player, card: Card) -> bool:
+        if not isinstance(card, UnitCard) or isinstance(card, LeaderCard):
+            return False
+        cost = self._piloting_cost(card)
+        return cost is not None and player.can_afford(cost) and bool(self._eligible_pilot_targets(player))
+
+    def _play_card_as_pilot(self, player: Player, card_id: str) -> bool:
+        card = next((candidate for candidate in player.hand if candidate.id == card_id), None)
+        if not card or not self._can_play_as_pilot(player, card):
+            return False
+
+        target = self._choose_pilot_target(player)
+        cost = self._piloting_cost(card)
+        if target is None or cost is None or not player.pay_cost(cost):
+            return False
+
+        player.hand.remove(card)
+        card.played_as_pilot = True
+        card.is_exhausted = False
+        card.damage = 0
+        card.current_hp = getattr(card, "hp", 0)
+        self._attach_upgrade(card, target)
+        self.log(f"Turn {self.turn_count}: Player {player.id} plays {card.name} as a Pilot on {target.name}")
+        self._resolve_structured_effects(player, card, "when_played_as_upgrade", defender=target)
+        self._resolve_structured_effects(player, card, "when_played", defender=target)
+        self._record_played_card(player, card)
         return True
     
     def _play_event(self, player: Player, event: EventCard):
@@ -407,6 +519,7 @@ class GameState:
         """Remove defeated unit"""
         enemy = self._get_enemy(player)
         self._resolve_when_defeated(player, unit, enemy)
+        self._discard_attached_upgrades(player, unit)
         player.units.remove(unit)
         if unit in player.ground_arena:
             player.ground_arena.remove(unit)
@@ -427,6 +540,7 @@ class GameState:
     def _return_unit_to_hand(self, owner: Player, unit: UnitCard, source_name: str):
         if unit not in owner.units:
             return
+        self._discard_attached_upgrades(owner, unit)
         owner.units.remove(unit)
         if unit in owner.ground_arena:
             owner.ground_arena.remove(unit)
@@ -452,6 +566,9 @@ class GameState:
             pieces.append(card.epic_action_effect)
         return "\n".join(piece for piece in pieces if piece).lower()
 
+    def _attached_upgrade_texts(self, unit: UnitCard) -> list[str]:
+        return [self._text(upgrade) for upgrade in getattr(unit, "attached_upgrades", []) or []]
+
     def _effective_cost(self, player: Player, card: Card) -> int:
         if card.name == "Force Choke" and self._friendly_force_unit(player):
             return max(0, card.cost - 1)
@@ -469,7 +586,20 @@ class GameState:
     def _has_keyword(self, unit: UnitCard, keyword: str) -> bool:
         if getattr(unit, "abilities_lost_until_ready", False):
             return False
-        return keyword.lower() in self._text(unit)
+        keyword = keyword.lower()
+        if keyword in self._text(unit):
+            return True
+        return any(self._upgrade_grants_keyword(upgrade, keyword) for upgrade in getattr(unit, "attached_upgrades", []) or [])
+
+    def _upgrade_grants_keyword(self, upgrade: Card, keyword: str) -> bool:
+        keyword = keyword.lower()
+        text = self._text(upgrade)
+        attached_patterns = [
+            f"attached unit gains {keyword}",
+            f"attached unit gains: {keyword}",
+            f"attached unit gains {keyword.capitalize()}".lower(),
+        ]
+        return any(pattern in text for pattern in attached_patterns)
 
     def _raid_bonus(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> int:
         if getattr(attacker, "abilities_lost_until_ready", False):
@@ -723,7 +853,10 @@ class GameState:
         if target.get("filter"):
             self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported target filter")
             return False
-        if step.get("duration") not in (None, "", "instant"):
+        duration = step.get("duration")
+        if step.get("type") == "modify_stats" and duration == "while_attached" and isinstance(source, UpgradeCard):
+            pass
+        elif duration not in (None, "", "instant"):
             self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported duration")
             return False
         if step.get("optional") or step.get("choice_group"):
@@ -854,14 +987,30 @@ class GameState:
             self.log(f"Turn {self.turn_count}: {source_name} gives {amount} Shield token(s) to {unit.name}")
         elif effect_type == "give_experience":
             unit.experience_tokens += amount
-            unit.power += amount
-            unit.hp += amount
-            unit.current_hp += amount
+            self._modify_unit_stats(unit, amount, amount)
             self.log(f"Turn {self.turn_count}: {source_name} gives {amount} Experience token(s) to {unit.name}")
+        elif effect_type == "modify_stats":
+            power_delta, hp_delta = self._structured_stat_deltas(step)
+            if not power_delta and not hp_delta:
+                self.log(f"Turn {self.turn_count}: {source_name} skipped empty stat modifier")
+                return
+            self._modify_unit_stats(unit, power_delta, hp_delta)
+            if isinstance(source, UpgradeCard) and step.get("duration") == "while_attached":
+                source.structured_power_bonus = int(getattr(source, "structured_power_bonus", 0) or 0) + power_delta
+                source.structured_hp_bonus = int(getattr(source, "structured_hp_bonus", 0) or 0) + hp_delta
+            self.log(f"Turn {self.turn_count}: {source_name} modifies {unit.name} by {power_delta:+}/{hp_delta:+}")
         elif effect_type == "capture_unit":
             self.log(f"Turn {self.turn_count}: {source_name} skipped capture effect; capture zones are not modeled yet")
         else:
             self.log(f"Turn {self.turn_count}: {source_name} skipped unknown structured effect {effect_type}")
+
+    def _structured_stat_deltas(self, step: dict[str, Any]) -> tuple[int, int]:
+        if "power" in step or "hp" in step:
+            return int(step.get("power") or 0), int(step.get("hp") or 0)
+        if "power_bonus" in step or "hp_bonus" in step:
+            return int(step.get("power_bonus") or 0), int(step.get("hp_bonus") or 0)
+        amount = int(step.get("amount") or 0)
+        return amount, amount
 
     def _friendly_force_unit(self, player: Player) -> Optional[UnitCard]:
         for unit in player.units:

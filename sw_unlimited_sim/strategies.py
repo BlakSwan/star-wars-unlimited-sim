@@ -32,6 +32,10 @@ def aggressive_strategy(game: GameState, player: Player, actions: List[str]) -> 
             for card in player.hand:
                 if card.id == card_id and isinstance(card, UnitCard):
                     return action
+
+    for action in actions:
+        if action.startswith("pilot_"):
+            return action
     
     # Attack units if can't play cards
     for action in actions:
@@ -68,6 +72,10 @@ def control_strategy(game: GameState, player: Player, actions: List[str]) -> str
     # Play units
     for action in actions:
         if action.startswith("play_"):
+            return action
+
+    for action in actions:
+        if action.startswith("pilot_"):
             return action
     
     # Attack enemy units (trade favorably)
@@ -115,6 +123,13 @@ def greedy_value_strategy(game: GameState, player: Player, actions: List[str]) -
                     elif isinstance(card, EventCard):
                         value = card.cost + 2  # Events are valuable
                     break
+
+        elif action.startswith("pilot_"):
+            card_id = action[6:]
+            for card in player.hand:
+                if card.id == card_id and isinstance(card, UnitCard):
+                    value = card.power + card.hp
+                    break
         
         elif action.startswith("attack_"):
             if "_base" in action:
@@ -161,13 +176,13 @@ def economic_strategy(game: GameState, player: Player, actions: List[str]) -> st
         return "take_initiative"
     
     # Play higher cost cards first (better value)
-    play_actions = [a for a in actions if a.startswith("play_")]
+    play_actions = [a for a in actions if a.startswith("play_") or a.startswith("pilot_")]
     if play_actions:
         # Find highest cost card to play
         best_play = None
         best_cost = -1
         for action in play_actions:
-            card_id = action[5:]
+            card_id = action[5:] if action.startswith("play_") else action[6:]
             for card in player.hand:
                 if card.id == card_id and card.cost > best_cost:
                     best_cost = card.cost

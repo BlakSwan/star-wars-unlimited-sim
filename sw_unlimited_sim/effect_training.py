@@ -22,6 +22,7 @@ TRIGGERS = [
     "when_unit_defeated",
     "when_event_played",
     "regroup_start",
+    "when_played_as_upgrade",
 ]
 
 EFFECT_TYPES = [
@@ -91,9 +92,10 @@ ENGINE_EXECUTABLE_EFFECTS = {
     "defeat_unit",
     "give_shield",
     "give_experience",
+    "modify_stats",
 }
 
-ENGINE_EXECUTABLE_TRIGGERS = {"when_played", "on_attack", "when_defeated", "action"}
+ENGINE_EXECUTABLE_TRIGGERS = {"when_played", "on_attack", "when_defeated", "action", "when_played_as_upgrade"}
 
 
 class EffectSuggestionError(RuntimeError):
@@ -198,7 +200,10 @@ def execution_status_for_record(record: dict[str, Any]) -> str:
         for step in trigger.get("steps") or []:
             if step.get("type") not in ENGINE_EXECUTABLE_EFFECTS:
                 return "partial"
-            if step.get("duration") not in (None, "", "instant"):
+            duration = step.get("duration")
+            if step.get("type") == "modify_stats" and duration == "while_attached":
+                pass
+            elif duration not in (None, "", "instant"):
                 return "partial"
             target = step.get("target") or {}
             if target.get("filter"):
@@ -307,6 +312,15 @@ def _normalize_step(step: Any, warnings: list[str]) -> dict[str, Any] | None:
     amount = _coerce_int(step.get("amount"), warnings, "amount")
     if amount is not None:
         normalized["amount"] = amount
+    for source_key, normalized_key in (
+        ("power", "power"),
+        ("hp", "hp"),
+        ("power_bonus", "power"),
+        ("hp_bonus", "hp"),
+    ):
+        value = _coerce_int(step.get(source_key), warnings, source_key)
+        if value is not None:
+            normalized[normalized_key] = value
     if step.get("choice_group"):
         normalized["choice_group"] = str(step.get("choice_group"))
     return normalized
@@ -679,6 +693,12 @@ class OllamaBackend(LocalModelBackend):
                 ["Check the Ollama terminal output.", "Confirm SWU_LOCAL_HOST is correct."],
             ) from exc
         except urllib.error.URLError as exc:
+            if isinstance(exc.reason, socket.timeout) or "timed out" in str(exc.reason).lower():
+                raise EffectSuggestionError(
+                    "Ollama request timed out",
+                    f"Ollama did not respond within {timeout or self.timeout} seconds.",
+                    ["Try a smaller local model.", "Increase SWU_OLLAMA_TIMEOUT or SWU_LOCAL_TIMEOUT in .env."],
+                ) from exc
             raise EffectSuggestionError(
                 "Ollama is not running",
                 f"The app could not reach Ollama at {self.host}.",
@@ -846,11 +866,57 @@ class LocalEffectSuggestionProvider(EffectSuggestionProvider):
         }
 
 
+class OllamaEffectSuggestionProvider(LocalEffectSuggestionProvider):
+    """Minimal Ollama-backed draft provider for human-reviewed effect records."""
+
+    name = "ollama"
+
+    def __init__(self, model: str | None = None, host: str | None = None, timeout: int | None = None):
+        model = model or get_setting("SWU_OLLAMA_MODEL", get_setting("SWU_LOCAL_MODEL", "qwen2.5"))
+        host = host or get_setting("SWU_OLLAMA_HOST", get_setting("SWU_LOCAL_HOST", "http://localhost:11434"))
+        timeout = timeout or int(get_setting("SWU_OLLAMA_TIMEOUT", get_setting("SWU_LOCAL_TIMEOUT", "60")))
+        super().__init__(backend=OllamaBackend(model=model, host=host, timeout=timeout))
+
+    def _build_prompt(self, card: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "task": "Draft a conservative Star Wars Unlimited simulator effect record for human review.",
+            "instructions": [
+                "Return ONLY valid JSON.",
+                "Use the blank_record schema.",
+                "Set status to draft.",
+                "Do not approve the record.",
+                "Use only the allowed trigger and step values.",
+                "If uncertain, leave triggers empty or add notes instead of guessing.",
+            ],
+            "allowed_triggers": TRIGGERS,
+            "preferred_step_types": sorted(ENGINE_EXECUTABLE_EFFECTS),
+            "allowed_step_types": EFFECT_TYPES,
+            "allowed_target_controllers": TARGET_CONTROLLERS,
+            "allowed_target_types": TARGET_TYPES,
+            "allowed_target_filters": TARGET_FILTERS,
+            "allowed_durations": DURATIONS,
+            "blank_record": blank_effect_record(card),
+            "card": {
+                "set": card.get("Set"),
+                "number": card.get("Number"),
+                "name": card.get("Name"),
+                "type": card.get("Type"),
+                "rules_text": rules_text(card),
+            },
+        }
+
+
 def get_effect_suggestion_provider(provider_name: str = "heuristic", **kwargs: Any) -> EffectSuggestionProvider:
     if provider_name == "heuristic":
         return RuleTextHeuristicProvider()
     if provider_name == "openai":
         return OpenAIEffectSuggestionProvider(model=kwargs.get("model"))
+    if provider_name == "ollama":
+        return OllamaEffectSuggestionProvider(
+            model=kwargs.get("model"),
+            host=kwargs.get("host"),
+            timeout=kwargs.get("timeout"),
+        )
     if provider_name == "local":
         return LocalEffectSuggestionProvider(
             local_provider=kwargs.get("local_provider"),

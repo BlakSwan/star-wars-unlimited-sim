@@ -17,6 +17,7 @@ from effect_training import (  # noqa: E402
     LocalModelBackend,
     MLXBackend,
     OllamaBackend,
+    OllamaEffectSuggestionProvider,
     get_effect_suggestion_provider,
     normalize_effect_record,
 )
@@ -64,6 +65,12 @@ class EffectTrainingTests(unittest.TestCase):
         provider = get_effect_suggestion_provider("local", local_provider="ollama", model="test-model")
         self.assertIsInstance(provider, LocalEffectSuggestionProvider)
         self.assertEqual(provider.backend.model, "test-model")
+
+    def test_provider_selection_includes_ollama_provider(self):
+        provider = get_effect_suggestion_provider("ollama", model="test-model", host="http://localhost:11434", timeout=1)
+        self.assertIsInstance(provider, OllamaEffectSuggestionProvider)
+        self.assertEqual(provider.backend.model, "test-model")
+        self.assertEqual(provider.backend.host, "http://localhost:11434")
 
     def test_simple_local_draft_is_safe_but_still_draft(self):
         candidate = {
@@ -152,6 +159,73 @@ class EffectTrainingTests(unittest.TestCase):
         backend = OllamaBackend(model="test-model", host="http://127.0.0.1:11434", timeout=1)
         with mock.patch("urllib.request.urlopen", return_value=FakeResponse({"response": "{\"triggers\": []}"})):
             self.assertEqual(backend.generate_json({"task": "test"}), "{\"triggers\": []}")
+
+    def test_ollama_provider_valid_json_response_creates_draft(self):
+        response_record = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "deal_damage",
+                            "amount": "2",
+                            "duration": "instant",
+                            "target": {"controller": "enemy", "type": "unit"},
+                        }
+                    ],
+                }
+            ]
+        }
+        provider = OllamaEffectSuggestionProvider(model="test-model", host="http://localhost:11434", timeout=1)
+
+        with mock.patch("urllib.request.urlopen", return_value=FakeResponse({"response": json.dumps(response_record)})):
+            record = provider.suggest_effect(CARD)
+
+        self.assertEqual(record["status"], "draft")
+        self.assertEqual(record["source"], "local:ollama:test-model")
+        self.assertEqual(record["execution_status"], "executable")
+        self.assertEqual(record["triggers"][0]["steps"][0]["amount"], 2)
+        self.assertFalse(record["review"]["human_verified"])
+        self.assertTrue(record["review"]["llm_suggested"])
+
+    def test_ollama_provider_invalid_json_response_stays_manual_draft(self):
+        provider = OllamaEffectSuggestionProvider(model="test-model", host="http://localhost:11434", timeout=1)
+
+        with mock.patch("urllib.request.urlopen", return_value=FakeResponse({"response": "not json"})):
+            record = provider.suggest_effect(CARD)
+
+        self.assertEqual(record["status"], "draft")
+        self.assertEqual(record["execution_status"], "manual")
+        self.assertEqual(record["review"]["triage"], "unresolved")
+        self.assertIn("Could not parse local model output", record["review"]["notes"])
+
+    def test_ollama_provider_missing_response_body_stays_manual_draft(self):
+        provider = OllamaEffectSuggestionProvider(model="test-model", host="http://localhost:11434", timeout=1)
+
+        with mock.patch("urllib.request.urlopen", return_value=FakeResponse({})):
+            record = provider.suggest_effect(CARD)
+
+        self.assertEqual(record["status"], "draft")
+        self.assertEqual(record["execution_status"], "manual")
+        self.assertEqual(record["review"]["triage"], "unresolved")
+        self.assertIn("did not include generated text", record["review"]["notes"])
+
+    def test_ollama_provider_unavailable_raises_friendly_error(self):
+        provider = OllamaEffectSuggestionProvider(model="test-model", host="http://localhost:11434", timeout=1)
+
+        with mock.patch("urllib.request.urlopen", side_effect=urllib.error.URLError("refused")):
+            with self.assertRaises(EffectSuggestionError) as raised:
+                provider.suggest_effect(CARD)
+
+        self.assertEqual(raised.exception.title, "Ollama is not running")
+
+    def test_ollama_timeout_is_friendly_error(self):
+        backend = OllamaBackend(model="test-model", host="http://localhost:11434", timeout=1)
+        with mock.patch("urllib.request.urlopen", side_effect=urllib.error.URLError("timed out")):
+            with self.assertRaises(EffectSuggestionError) as raised:
+                backend.generate_json({"task": "test"})
+        self.assertEqual(raised.exception.title, "Ollama request timed out")
 
     def test_ollama_unavailable_is_friendly_error(self):
         backend = OllamaBackend(model="test-model", host="http://127.0.0.1:11434", timeout=1)

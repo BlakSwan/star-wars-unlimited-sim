@@ -243,13 +243,21 @@ Deck JSON files reference SWU DB gameplay cards by set and card number:
 - Action phase (play cards, attack, use abilities, take initiative, pass)
 - Regroup phase (draw 2 cards, resource a card, ready all)
 - Combat (simultaneous damage, ambush, sentinel, saboteur, raid, overwhelm)
+- Upgrade attachment with printed stat bonuses. Attached upgrades are discarded
+  when the attached unit leaves play.
+- Piloting play mode for unit cards with the Piloting keyword: they can be
+  played as upgrades on friendly Vehicle units without a Pilot, using their
+  Piloting cost and printed power/HP as attached stat bonuses. Attached Pilot
+  cards can grant supported keywords to the attached unit, and trained
+  `when_played_as_upgrade` effects can fire when a card is played via Piloting.
 - Resource management
 - Win condition (destroy opponent's base)
 - A focused set of card effects used by bundled decks, including selected
   When Played, On Attack, When Defeated, leader action, and event effects
 - Human-approved structured effects for When Played, On Attack, When Defeated,
   and action triggers. Supported guided effect steps include damage, healing,
-  draw, discard, exhaust, ready, defeat, shield, and experience tokens.
+  draw, discard, exhaust, ready, defeat, shield, experience tokens, and basic
+  stat modifiers from attached upgrades.
 - Trained effect records marked `execution_status: executable` can affect games.
   More complex records can be stored as `partial` or `manual` until the engine
   supports their conditions, choices, target filters, or durations.

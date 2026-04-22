@@ -740,6 +740,7 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
         selected = f"{card.get('Set')}-{card.get('Number')}"
         train_href = f"/train?card={esc(selected)}"
         draft_href = f"/train/suggest?card={esc(selected)}"
+        ollama_draft_href = f"/train/suggest?card={esc(selected)}&provider=ollama"
         local_draft_href = f"/train/suggest?card={esc(selected)}&provider=local"
         rows.append(
             "<tr>"
@@ -752,7 +753,7 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
             f"<td>{esc(item['training_status'])}</td>"
             f"<td>{esc(', '.join(item['patterns']) or 'none')}</td>"
             f"<td>{esc('; '.join(item['audit'].reasons))}</td>"
-            f"<td><a class='button secondary' href='{train_href}'>Train</a> <a class='button' href='{draft_href}'>Draft</a> <a class='button' href='{local_draft_href}'>Local Draft</a></td>"
+            f"<td><a class='button secondary' href='{train_href}'>Train</a> <a class='button' href='{draft_href}'>Draft</a> <a class='button' href='{ollama_draft_href}'>Ollama Draft</a> <a class='button' href='{local_draft_href}'>Local Draft</a></td>"
             "</tr>"
         )
     queue_rows = "\n".join(rows) or "<tr><td colspan='10'>No cards match this queue filter.</td></tr>"
@@ -881,6 +882,7 @@ def train_page(query: dict[str, list[str]]) -> bytes:
         ) + "</ul>"
     draft_href = f"/train/suggest?card={esc(selected)}"
     llm_href = f"/train/suggest?card={esc(selected)}&provider=openai"
+    ollama_llm_href = f"/train/suggest?card={esc(selected)}&provider=ollama"
     local_llm_href = f"/train/suggest?card={esc(selected)}&provider=local"
     body = f"""
 <section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Approved executable effects are loaded by the simulator during games.</p></section>
@@ -902,6 +904,7 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     <pre>{esc(text or 'No rules text')}</pre>
     <a class="button secondary" href="{draft_href}">Draft From Card Text</a>
     <a class="button" href="{llm_href}">Draft With LLM</a>
+    <a class="button" href="{ollama_llm_href}">Draft With Ollama</a>
     <a class="button" href="{local_llm_href}">Draft With Local Model</a>
   </div>
 </section>

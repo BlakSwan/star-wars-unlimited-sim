@@ -61,6 +61,7 @@ class UnitCard(Card):
         self.shield_tokens = 0
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
+        self.attached_upgrades = []
     
     def take_damage(self, amount: int) -> int:
         """Apply damage, return actual damage taken"""
@@ -144,6 +145,7 @@ class LeaderCard(Card):
         self.shield_tokens = 0
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
+        self.attached_upgrades = []
 
     def take_damage(self, amount: int) -> int:
         """Apply damage while deployed as a unit."""
