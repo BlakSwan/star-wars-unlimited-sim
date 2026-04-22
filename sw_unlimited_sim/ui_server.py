@@ -3,18 +3,35 @@
 from __future__ import annotations
 
 import html
-import io
 import json
-from contextlib import redirect_stdout
+import re
+from collections import Counter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from statistics import median
 from urllib.parse import parse_qs, urlparse
 
 from card_analysis import analyze_card_database
 from deck_loader import _load_card_cache, available_decks
 from effect_audit import audit_deck, format_deck_audit
 from effect_store import get_effect, load_effects, save_effect
-from simulator import SimulationResult, run_simulation, run_single_game
+from effect_training import (
+    CONDITION_TYPES,
+    DURATIONS,
+    EFFECT_TYPES,
+    EXECUTION_STATUSES,
+    TARGET_CONTROLLERS,
+    TARGET_FILTERS,
+    TARGET_TYPES,
+    TRIGGERS,
+    blank_effect_record,
+    build_condition,
+    build_step,
+    execution_status_for_record,
+    get_effect_suggestion_provider,
+    rules_text,
+)
+from simulator import SimulationResult, run_single_game
 from strategies import get_strategy, list_strategies
 from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
 
@@ -137,6 +154,28 @@ details pre {
   border-radius: 0 0 8px 8px;
   margin: 0;
 }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.stat-tile {
+  background: #fbfaf7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+.stat-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 850;
+  margin-top: 6px;
+}
 @media (max-width: 760px) {
   header { display: block; }
   nav { margin-top: 10px; }
@@ -195,34 +234,30 @@ def build_effect_record(
     card: dict,
     status: str,
     trigger: str,
-    effect_type: str,
-    amount: str,
-    target_controller: str,
-    target_type: str,
+    steps: list[dict],
     notes: str,
+    confidence: str = "medium",
+    condition_type: str = "none",
+    condition_value: str = "",
+    execution_status: str = "",
 ) -> dict:
-    step = {
-        "type": effect_type,
-        "target": {
-            "controller": target_controller,
-            "type": target_type,
-        },
-    }
-    if amount:
-        step["amount"] = int(amount)
-    record = {
-        "set": card.get("Set"),
-        "number": card.get("Number"),
-        "name": card.get("Name"),
+    condition = build_condition(condition_type, condition_value)
+    record = blank_effect_record(card)
+    record.update({
         "status": status,
         "source": "human_guided_ui",
         "triggers": [
             {
                 "event": trigger,
-                "steps": [step],
+                "conditions": [condition] if condition else [],
+                "steps": steps,
             }
         ],
-    }
+    })
+    record["review"]["confidence"] = confidence
+    record["review"]["notes"] = notes.strip()
+    record["review"]["human_verified"] = status == "approved"
+    record["execution_status"] = execution_status or execution_status_for_record(record)
     if notes.strip():
         record["notes"] = notes.strip()
     return record
@@ -280,20 +315,162 @@ def parse_positive_int(value: str, default: int, maximum: int) -> int:
         return default
 
 
-def run_detailed_simulation_html(
+def pct(numerator: int, denominator: int) -> str:
+    return f"{numerator / max(1, denominator):.1%}"
+
+
+def card_count_from_draw_text(value: str) -> int:
+    if value.strip() == "none":
+        return 0
+    return len([part for part in value.split(", ") if part.strip()])
+
+
+def empty_sim_stats() -> dict:
+    return {
+        "games": 0,
+        "errors": 0,
+        "turns": [],
+        "wins": Counter(),
+        "drawn": Counter(),
+        "played": Counter(),
+        "attacks": Counter(),
+        "base_attacks": Counter(),
+        "resources": Counter(),
+        "passes": Counter(),
+        "initiative_rolls": Counter(),
+        "initiative_wins": Counter(),
+        "base_damage_taken": Counter(),
+        "top_played": Counter(),
+    }
+
+
+def update_stats_from_game(stats: dict, winner: int | None, turns: int, log: list[str]):
+    stats["games"] += 1
+    stats["turns"].append(turns)
+    if winner:
+        stats["wins"][winner] += 1
+    else:
+        stats["wins"]["draw"] += 1
+
+    initiative_player = None
+    for line in log:
+        initiative_match = re.search(r"Setup: Player ([12]) wins initiative roll", line)
+        if initiative_match:
+            initiative_player = int(initiative_match.group(1))
+            stats["initiative_rolls"][initiative_player] += 1
+
+        draw_match = re.search(r"Player ([12]) draws (.+?) \(", line)
+        if draw_match:
+            stats["drawn"][int(draw_match.group(1))] += card_count_from_draw_text(draw_match.group(2))
+
+        resource_match = re.search(r"Player ([12]) resources ", line)
+        if resource_match:
+            stats["resources"][int(resource_match.group(1))] += 1
+
+        play_match = re.search(r"Player ([12]) plays (.+?)(?: exhausted| ready| on | but|$)", line)
+        if play_match:
+            player_id = int(play_match.group(1))
+            card_name = play_match.group(2).strip()
+            stats["played"][player_id] += 1
+            stats["top_played"][card_name] += 1
+
+        attack_match = re.search(r"Player ([12])'s .+ attacks ", line)
+        if attack_match:
+            stats["attacks"][int(attack_match.group(1))] += 1
+
+        base_attack_match = re.search(r"Player ([12])'s .+ attacks Player ([12])'s base for (\d+) damage", line)
+        if base_attack_match:
+            attacker = int(base_attack_match.group(1))
+            defender = int(base_attack_match.group(2))
+            damage = int(base_attack_match.group(3))
+            stats["base_attacks"][attacker] += 1
+            stats["base_damage_taken"][defender] += damage
+
+        base_damage_match = re.search(r"deals (\d+) damage to Player ([12])'s base", line)
+        if base_damage_match:
+            damage = int(base_damage_match.group(1))
+            defender = int(base_damage_match.group(2))
+            stats["base_damage_taken"][defender] += damage
+
+        pass_match = re.search(r"Player ([12]) passes", line)
+        if pass_match:
+            stats["passes"][int(pass_match.group(1))] += 1
+
+    if initiative_player and winner == initiative_player:
+        stats["initiative_wins"][initiative_player] += 1
+
+
+def avg_counter(stats: dict, key: str, player_id: int) -> float:
+    return stats[key][player_id] / max(1, stats["games"])
+
+
+def metric(label: str, value: str) -> str:
+    return f"<div class='stat-tile'><div class='stat-label'>{esc(label)}</div><div class='stat-value'>{esc(value)}</div></div>"
+
+
+def simulation_stats_html(stats: dict) -> str:
+    games = max(1, stats["games"])
+    turns = stats["turns"] or [0]
+    initiative_games = stats["initiative_rolls"][1] + stats["initiative_rolls"][2]
+    initiative_wins = stats["initiative_wins"][1] + stats["initiative_wins"][2]
+    top_played_rows = "".join(
+        f"<tr><td>{esc(name)}</td><td>{count}</td></tr>"
+        for name, count in stats["top_played"].most_common(10)
+    ) or "<tr><td colspan='2'>No cards played</td></tr>"
+
+    tiles = "".join([
+        metric("P1 Win Rate", pct(stats["wins"][1], stats["games"])),
+        metric("P2 Win Rate", pct(stats["wins"][2], stats["games"])),
+        metric("Avg Turns", f"{sum(turns) / len(turns):.1f}"),
+        metric("Median Turns", f"{median(turns):.1f}"),
+        metric("Fastest Game", str(min(turns))),
+        metric("Longest Game", str(max(turns))),
+        metric("Initiative Win Rate", pct(initiative_wins, initiative_games)),
+        metric("Errors", str(stats["errors"])),
+    ])
+
+    player_rows = "".join(
+        f"<tr><td>Player {player_id}</td>"
+        f"<td>{avg_counter(stats, 'drawn', player_id):.1f}</td>"
+        f"<td>{avg_counter(stats, 'played', player_id):.1f}</td>"
+        f"<td>{avg_counter(stats, 'attacks', player_id):.1f}</td>"
+        f"<td>{avg_counter(stats, 'base_attacks', player_id):.1f}</td>"
+        f"<td>{avg_counter(stats, 'resources', player_id):.1f}</td>"
+        f"<td>{avg_counter(stats, 'base_damage_taken', player_id):.1f}</td></tr>"
+        for player_id in (1, 2)
+    )
+
+    return f"""
+<section class="card">
+  <h2>Stats Window</h2>
+  <div class="stats-grid">{tiles}</div>
+  <h3>Per Game Averages</h3>
+  <table>
+    <thead><tr><th>Player</th><th>Cards Drawn</th><th>Cards Played</th><th>Attacks</th><th>Base Attacks</th><th>Resources</th><th>Base Damage Taken</th></tr></thead>
+    <tbody>{player_rows}</tbody>
+  </table>
+  <h3>Most Played Cards</h3>
+  <table><thead><tr><th>Card</th><th>Plays</th></tr></thead><tbody>{top_played_rows}</tbody></table>
+</section>
+"""
+
+
+def run_ui_simulation_html(
     strategy1_name: str,
     strategy2_name: str,
     games: int,
     deck1_ref: str,
     deck2_ref: str,
+    show_logs: bool,
 ) -> str:
-    games = min(games, 50)
     strategy1 = get_strategy(strategy1_name)
     strategy2 = get_strategy(strategy2_name)
     result = SimulationResult()
     result.strategy1_name = strategy1_name
     result.strategy2_name = strategy2_name
+    stats = empty_sim_stats()
     game_sections = []
+    log_limit = min(games, 50)
 
     for game_number in range(1, games + 1):
         winner, turns, log = run_single_game(
@@ -305,20 +482,25 @@ def run_detailed_simulation_html(
         )
         if winner is None and turns == 0:
             result.add_error(f"Game {game_number} had an error: {log[0] if log else 'Unknown'}")
+            stats["errors"] += 1
         else:
             result.add_game(winner, turns)
+            update_stats_from_game(stats, winner, turns, log)
 
-        winner_label = f"Player {winner}" if winner else "Draw"
-        game_log = "\n".join(log) if log else "No logged actions."
-        game_sections.append(
-            "<details>"
-            f"<summary>Game {game_number}: {esc(winner_label)} in {turns} turns</summary>"
-            f"<pre>{esc(game_log)}</pre>"
-            "</details>"
-        )
+        if show_logs and game_number <= log_limit:
+            winner_label = f"Player {winner}" if winner else "Draw"
+            game_log = "\n".join(log) if log else "No logged actions."
+            game_sections.append(
+                "<details>"
+                f"<summary>Game {game_number}: {esc(winner_label)} in {turns} turns</summary>"
+                f"<pre>{esc(game_log)}</pre>"
+                "</details>"
+            )
 
-    cap_note = "<p class='muted'>Detailed mode is capped at 50 games so the browser page stays responsive.</p>"
-    return f"<pre>{esc(result.summary())}</pre>{cap_note}{''.join(game_sections)}"
+    cap_note = ""
+    if show_logs and games > log_limit:
+        cap_note = "<p class='muted'>Detailed logs are capped at 50 games so the browser page stays responsive. Stats include every game in the run.</p>"
+    return f"<pre>{esc(result.summary())}</pre>{simulation_stats_html(stats)}{cap_note}{''.join(game_sections)}"
 
 
 def simulate_page(query: dict[str, list[str]]) -> bytes:
@@ -333,13 +515,7 @@ def simulate_page(query: dict[str, list[str]]) -> bytes:
     result = ""
 
     if query.get("run", [""])[0] == "1":
-        if show_logs:
-            result = run_detailed_simulation_html(strat1, strat2, games, deck1, deck2)
-        else:
-            buffer = io.StringIO()
-            with redirect_stdout(buffer):
-                run_simulation(strat1, strat2, games, deck1_ref=deck1, deck2_ref=deck2)
-            result = f"<pre>{esc(buffer.getvalue())}</pre>"
+        result = run_ui_simulation_html(strat1, strat2, games, deck1, deck2, show_logs)
 
     checked = "checked" if show_logs else ""
     body = f"""
@@ -415,6 +591,58 @@ def _load_card_index():
     return _load_card_cache(DEFAULT_GAMEPLAY_OUTPUT_PATH)
 
 
+def effect_step_fields(index: int) -> str:
+    return f"""
+<div class="card">
+  <h3>Step {index}</h3>
+  <label>Effect</label>
+  <select name="effect_type_{index}">
+    <option value="">No step</option>
+    {options(EFFECT_TYPES)}
+  </select>
+  <div class="inline-field">
+    <div>
+      <label>Amount</label>
+      <input name="amount_{index}" type="number" min="0">
+    </div>
+    <div>
+      <label>Duration</label>
+      <select name="duration_{index}">{options(DURATIONS, "instant")}</select>
+    </div>
+  </div>
+  <div class="inline-field">
+    <div>
+      <label>Target Side</label>
+      <select name="target_controller_{index}">{options(TARGET_CONTROLLERS, "enemy")}</select>
+    </div>
+    <div>
+      <label>Target Type</label>
+      <select name="target_type_{index}">{options(TARGET_TYPES, "unit")}</select>
+    </div>
+  </div>
+  <div class="inline-field">
+    <div>
+      <label>Target Filter</label>
+      <select name="target_filter_{index}">{options(TARGET_FILTERS, "none")}</select>
+    </div>
+    <div>
+      <label>Filter Value</label>
+      <input name="filter_value_{index}" placeholder="Trait, aspect, number, etc.">
+    </div>
+  </div>
+  <div class="inline-field">
+    <div>
+      <label>Choice Group</label>
+      <input name="choice_group_{index}" placeholder="mode_1">
+    </div>
+    <div>
+      <label><input type="checkbox" name="optional_{index}" value="1" style="width:auto"> Optional / may</label>
+    </div>
+  </div>
+</div>
+"""
+
+
 def train_page(query: dict[str, list[str]]) -> bytes:
     index = _load_card_index()
     cards = sorted(index.values(), key=card_sort_key)
@@ -434,16 +662,13 @@ def train_page(query: dict[str, list[str]]) -> bytes:
         selected_attr = "selected" if value == selected else ""
         card_options.append(f'<option value="{esc(value)}" {selected_attr}>{esc(card_display(card))}</option>')
     card_options_html = "\n".join(card_options)
-    text = "\n".join(str(selected_card.get(field) or "") for field in ("FrontText", "BackText", "EpicAction") if selected_card and selected_card.get(field))
-    effect_json = json.dumps(current_effect or {
-        "set": selected_card.get("Set") if selected_card else "",
-        "number": selected_card.get("Number") if selected_card else "",
-        "name": selected_card.get("Name") if selected_card else "",
-        "status": "draft",
-        "triggers": []
-    }, indent=2)
+    text = rules_text(selected_card) if selected_card else ""
+    default_effect = blank_effect_record(selected_card) if selected_card else {"status": "draft", "triggers": []}
+    effect_json = json.dumps(current_effect or default_effect, indent=2)
+    execution_status = (current_effect or default_effect).get("execution_status", "manual")
+    llm_href = f"/train/suggest?card={esc(selected)}"
     body = f"""
-<section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Approved effects are loaded by the simulator and can execute during games.</p></section>
+<section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Approved executable effects are loaded by the simulator during games.</p></section>
 <section class="grid">
   <div class="card">
     <form method="get" action="/train">
@@ -455,14 +680,62 @@ def train_page(query: dict[str, list[str]]) -> bytes:
   <div class="card">
     <h3>{esc(selected_card.get('Name') if selected_card else '')}</h3>
     <p class="muted">{esc(selected)}</p>
+    <p><strong>Execution status:</strong> {esc(execution_status)}</p>
     <pre>{esc(text or 'No rules text')}</pre>
+    <a class="button secondary" href="{llm_href}">Draft From Card Text</a>
   </div>
 </section>
-<section class="split">
+<section>
+  <h3>Complex Effect Builder</h3>
+  <form method="post" action="/train/guided-save">
+    <input type="hidden" name="card" value="{esc(selected)}">
+    <div class="inline-field">
+      <div>
+        <label>Status</label>
+        <select name="status">{options(["draft", "approved"], "draft")}</select>
+      </div>
+      <div>
+        <label>Engine Execution</label>
+        <select name="execution_status">{options(EXECUTION_STATUSES, "manual")}</select>
+      </div>
+      <div>
+        <label>Reviewer Confidence</label>
+        <select name="confidence">{options(["low", "medium", "high"], "medium")}</select>
+      </div>
+      <div>
+        <label>Trigger</label>
+        <select name="trigger">{options(TRIGGERS, "when_played")}</select>
+      </div>
+    </div>
+    <div class="inline-field">
+      <div>
+        <label>Condition</label>
+        <select name="condition_type">{options(CONDITION_TYPES, "none")}</select>
+      </div>
+      <div>
+        <label>Condition Value</label>
+        <input name="condition_value" placeholder="Trait, aspect, threshold, etc.">
+      </div>
+    </div>
+    <h3>Effect Steps</h3>
+    <div class="grid">
+      {effect_step_fields(1)}
+      {effect_step_fields(2)}
+      {effect_step_fields(3)}
+    </div>
+    <label>Reviewer Notes</label>
+    <textarea name="notes" placeholder="Ruling notes, unresolved choices, or why this should not execute yet."></textarea>
+    <button type="submit">Save Structured Effect</button>
+  </form>
+</section>
+<section class="grid">
   <div class="card">
-    <h3>Guided Effect Builder</h3>
+    <h3>Simple One-Step Shortcut</h3>
     <form method="post" action="/train/guided-save">
       <input type="hidden" name="card" value="{esc(selected)}">
+      <input type="hidden" name="execution_status" value="executable">
+      <input type="hidden" name="confidence" value="medium">
+      <input type="hidden" name="condition_type" value="none">
       <div class="inline-field">
         <div>
           <label>Status</label>
@@ -470,23 +743,23 @@ def train_page(query: dict[str, list[str]]) -> bytes:
         </div>
         <div>
           <label>Trigger</label>
-          <select name="trigger">{options(["when_played", "on_attack", "when_defeated", "action", "constant"], "when_played")}</select>
+          <select name="trigger">{options(["when_played", "on_attack", "when_defeated", "action"], "when_played")}</select>
         </div>
       </div>
       <label>Effect</label>
-      <select name="effect_type">{options(["deal_damage", "heal_damage", "draw_cards", "discard_cards", "exhaust_unit", "ready_unit", "defeat_unit", "give_shield", "give_experience", "capture_unit"], "deal_damage")}</select>
+      <select name="effect_type_1">{options(["deal_damage", "heal_damage", "draw_cards", "discard_cards", "exhaust_unit", "ready_unit", "defeat_unit", "give_shield", "give_experience"], "deal_damage")}</select>
       <div class="inline-field">
         <div>
           <label>Amount</label>
-          <input name="amount" type="number" min="0" value="1">
+          <input name="amount_1" type="number" min="0" value="1">
         </div>
         <div>
           <label>Target Side</label>
-          <select name="target_controller">{options(["enemy", "friendly", "self", "any"], "enemy")}</select>
+          <select name="target_controller_1">{options(["enemy", "friendly", "self", "any"], "enemy")}</select>
         </div>
         <div>
           <label>Target Type</label>
-          <select name="target_type">{options(["unit", "base", "player", "card", "upgrade"], "unit")}</select>
+          <select name="target_type_1">{options(["unit", "base", "player"], "unit")}</select>
         </div>
       </div>
       <label>Reviewer Notes</label>
@@ -525,15 +798,33 @@ def save_guided_train(post_body: str) -> bytes:
     try:
         set_code, number = selected.split("-", 1)
         card = _load_card_index()[(set_code, number)]
+        steps = []
+        for index in range(1, 4):
+            step = build_step(
+                effect_type=fields.get(f"effect_type_{index}", [""])[0],
+                amount=fields.get(f"amount_{index}", [""])[0],
+                target_controller=fields.get(f"target_controller_{index}", ["enemy"])[0],
+                target_type=fields.get(f"target_type_{index}", ["unit"])[0],
+                target_filter=fields.get(f"target_filter_{index}", ["none"])[0],
+                filter_value=fields.get(f"filter_value_{index}", [""])[0],
+                duration=fields.get(f"duration_{index}", ["instant"])[0],
+                optional=fields.get(f"optional_{index}", [""])[0] == "1",
+                choice_group=fields.get(f"choice_group_{index}", [""])[0],
+            )
+            if step:
+                steps.append(step)
+        if not steps:
+            raise ValueError("At least one effect step is required")
         data = build_effect_record(
             card=card,
             status=fields.get("status", ["draft"])[0],
             trigger=fields.get("trigger", ["when_played"])[0],
-            effect_type=fields.get("effect_type", ["deal_damage"])[0],
-            amount=fields.get("amount", [""])[0],
-            target_controller=fields.get("target_controller", ["enemy"])[0],
-            target_type=fields.get("target_type", ["unit"])[0],
+            steps=steps,
             notes=fields.get("notes", [""])[0],
+            confidence=fields.get("confidence", ["medium"])[0],
+            condition_type=fields.get("condition_type", ["none"])[0],
+            condition_value=fields.get("condition_value", [""])[0],
+            execution_status=fields.get("execution_status", [""])[0],
         )
         save_effect(data)
         message = (
@@ -546,6 +837,25 @@ def save_guided_train(post_body: str) -> bytes:
     return page("Save Guided Effect", message)
 
 
+def suggest_train_effect(query: dict[str, list[str]]) -> bytes:
+    selected = query.get("card", [""])[0]
+    try:
+        set_code, number = selected.split("-", 1)
+        card = _load_card_index()[(set_code, number)]
+        provider = get_effect_suggestion_provider(query.get("provider", ["heuristic"])[0])
+        data = provider.suggest_effect(card)
+        save_effect(data)
+        message = (
+            "<section class='card'><h2>Draft Saved</h2>"
+            "<p class='muted'>The draft is stored for human review. It is marked manual and will not execute in simulations until reviewed.</p>"
+            f"<pre>{esc(json.dumps(data, indent=2))}</pre>"
+            f"<a class='button secondary' href='/train?card={esc(selected)}'>Review Draft</a></section>"
+        )
+    except Exception as exc:
+        message = f"<section class='card'><h2>Could Not Draft Effect</h2><p>{esc(exc)}</p><a class='button secondary' href='/train'>Back</a></section>"
+    return page("Draft Effect", message)
+
+
 class UIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -556,6 +866,7 @@ class UIHandler(BaseHTTPRequestHandler):
             "/simulate": lambda: simulate_page(query),
             "/cards": lambda: cards_page(),
             "/train": lambda: train_page(query),
+            "/train/suggest": lambda: suggest_train_effect(query),
         }
         handler = routes.get(parsed.path)
         if handler is None:

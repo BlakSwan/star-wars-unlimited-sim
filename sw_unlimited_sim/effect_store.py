@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from effect_training import execution_status_for_record
+
 
 EFFECT_DIR = Path(__file__).resolve().parent / "data" / "effects"
 CARD_EFFECTS_PATH = EFFECT_DIR / "card_effects.json"
@@ -35,6 +37,10 @@ def load_effects() -> dict[str, Any]:
 def save_effect(card_effect: dict[str, Any]):
     effects = load_effects()
     key = effect_key(card_effect["set"], str(card_effect["number"]))
+    if "schema_version" not in card_effect:
+        card_effect["schema_version"] = 1
+    if "execution_status" not in card_effect:
+        card_effect["execution_status"] = execution_status_for_record(card_effect)
     card_effect["updated_at"] = datetime.now(timezone.utc).isoformat()
     effects[key] = card_effect
     _write_json(CARD_EFFECTS_PATH, effects)

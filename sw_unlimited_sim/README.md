@@ -101,6 +101,9 @@ The UI includes:
   support coverage
 - Deck audit forms for tournament shape and unsupported effect checks
 - Simulation forms for choosing both decks, both strategies, and game count
+- Simulation stats window with win rates, turn length, initiative conversion,
+  per-game draw/play/attack/resource averages, base pressure, and most-played
+  cards
 - Optional per-game simulation logs showing opening hands, cards drawn, resource
   choices, plays, attacks, and passes. Detailed log mode is capped at 50 games
   to keep the browser responsive.
@@ -108,6 +111,12 @@ The UI includes:
 - Human-in-the-loop effect training with a guided form for common effects and
   an advanced JSON editor for complex cards. Effects saved with `approved`
   status are loaded and executed by the simulator.
+- Complex effect training with multiple steps, conditions, target filters,
+  durations, optional effects, reviewer confidence, and explicit engine
+  execution status.
+- Draft generation boundary for future LLM-assisted unsupported-card training.
+  The current offline provider creates manual review drafts from rules text
+  heuristics; it does not call an external model.
 
 Deck JSON files reference SWU DB gameplay cards by set and card number:
 
@@ -133,6 +142,9 @@ Deck JSON files reference SWU DB gameplay cards by set and card number:
 - Human-approved structured effects for When Played, On Attack, When Defeated,
   and action triggers. Supported guided effect steps include damage, healing,
   draw, discard, exhaust, ready, defeat, shield, and experience tokens.
+- Trained effect records marked `execution_status: executable` can affect games.
+  More complex records can be stored as `partial` or `manual` until the engine
+  supports their conditions, choices, target filters, or durations.
 
 ## Notes
 

@@ -3,6 +3,7 @@
 from typing import Any, Optional, List, Tuple
 import random
 from effect_store import effect_key, load_effects
+from effect_training import should_execute_record
 from models import *
 
 
@@ -640,7 +641,7 @@ class GameState:
         if not key:
             return None
         record = self.card_effects.get(key)
-        if not record or record.get("status") != "approved":
+        if not record or not should_execute_record(record):
             return None
         return record
 
@@ -658,8 +659,26 @@ class GameState:
         for trigger_record in record.get("triggers", []):
             if trigger_record.get("event") != trigger:
                 continue
+            if trigger_record.get("conditions"):
+                self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported conditions")
+                continue
             for step in trigger_record.get("steps", []):
+                if not self._can_execute_structured_step(source, step):
+                    continue
                 self._apply_structured_step(player, source, step, defender)
+
+    def _can_execute_structured_step(self, source: Card, step: dict[str, Any]) -> bool:
+        target = step.get("target") or {}
+        if target.get("filter"):
+            self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported target filter")
+            return False
+        if step.get("duration") not in (None, "", "instant"):
+            self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported duration")
+            return False
+        if step.get("optional") or step.get("choice_group"):
+            self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect that needs a choice")
+            return False
+        return True
 
     def _target_player(self, player: Player, target_spec: dict[str, Any]) -> Player:
         controller = str(target_spec.get("controller") or "self").lower()

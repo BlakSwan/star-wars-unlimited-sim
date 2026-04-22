@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from deck_loader import _load_card_cache, _lookup_card, _to_int, resolve_deck_path
+from effect_store import effect_key, load_effects
+from effect_training import should_execute_record
 from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
 
 
@@ -154,12 +156,20 @@ def _is_supported_keyword_only(card_data: dict[str, Any]) -> bool:
     return True
 
 
-def _audit_card(card_data: dict[str, Any], count: int) -> CardAudit:
+def _audit_card(card_data: dict[str, Any], count: int, trained_effects: dict[str, Any] | None = None) -> CardAudit:
     reasons: list[str] = []
     text = _text(card_data)
     name = str(card_data.get("Name") or "Unknown Card")
+    trained_effects = trained_effects or {}
+    trained_record = trained_effects.get(effect_key(str(card_data.get("Set") or ""), str(card_data.get("Number") or "")))
 
-    if _has_stats_only_text(card_data):
+    if trained_record and should_execute_record(trained_record):
+        status = "supported"
+        reasons.append("approved trained effect is executable")
+    elif trained_record and trained_record.get("status") == "approved":
+        status = "partial"
+        reasons.append(f"approved trained effect is {trained_record.get('execution_status', 'manual')}")
+    elif _has_stats_only_text(card_data):
         status = "supported"
         reasons.append("stat-only card")
     elif _is_supported_keyword_only(card_data):
@@ -202,9 +212,10 @@ def audit_deck(
     deck_path = resolve_deck_path(deck_ref)
     decklist = json.loads(deck_path.read_text(encoding="utf-8"))
     card_index = _load_card_cache(card_data_path)
+    trained_effects = load_effects()
 
     leader_data = _lookup_card(card_index, decklist["leader"])
-    leader = _audit_card(leader_data, count=1)
+    leader = _audit_card(leader_data, count=1, trained_effects=trained_effects)
 
     card_audits = []
     validation_errors: list[str] = []
@@ -213,7 +224,7 @@ def audit_deck(
         card_data = _lookup_card(card_index, entry)
         count = _to_int(entry.get("count"), default=1)
         total_cards += count
-        card_audits.append(_audit_card(card_data, count=count))
+        card_audits.append(_audit_card(card_data, count=count, trained_effects=trained_effects))
 
         if count > 3:
             validation_errors.append(
