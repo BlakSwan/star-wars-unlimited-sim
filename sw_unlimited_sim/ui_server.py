@@ -21,6 +21,7 @@ from effect_training import (
     DURATIONS,
     EFFECT_TYPES,
     EXECUTION_STATUSES,
+    EffectSuggestionError,
     TARGET_CONTROLLERS,
     TARGET_FILTERS,
     TARGET_TYPES,
@@ -739,6 +740,7 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
         selected = f"{card.get('Set')}-{card.get('Number')}"
         train_href = f"/train?card={esc(selected)}"
         draft_href = f"/train/suggest?card={esc(selected)}"
+        local_draft_href = f"/train/suggest?card={esc(selected)}&provider=local"
         rows.append(
             "<tr>"
             f"<td>{esc(card.get('Set'))} {esc(card.get('Number'))}</td>"
@@ -750,7 +752,7 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
             f"<td>{esc(item['training_status'])}</td>"
             f"<td>{esc(', '.join(item['patterns']) or 'none')}</td>"
             f"<td>{esc('; '.join(item['audit'].reasons))}</td>"
-            f"<td><a class='button secondary' href='{train_href}'>Train</a> <a class='button' href='{draft_href}'>Draft</a></td>"
+            f"<td><a class='button secondary' href='{train_href}'>Train</a> <a class='button' href='{draft_href}'>Draft</a> <a class='button' href='{local_draft_href}'>Local Draft</a></td>"
             "</tr>"
         )
     queue_rows = "\n".join(rows) or "<tr><td colspan='10'>No cards match this queue filter.</td></tr>"
@@ -866,8 +868,20 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     default_effect = blank_effect_record(selected_card) if selected_card else {"status": "draft", "triggers": []}
     effect_json = json.dumps(current_effect or default_effect, indent=2)
     execution_status = (current_effect or default_effect).get("execution_status", "manual")
+    review = (current_effect or default_effect).get("review", {})
+    triage = review.get("triage", "")
+    parse_warnings = review.get("parse_warnings") or []
+    source = (current_effect or default_effect).get("source", "")
+    triage_html = f"<p><strong>Triage:</strong> {esc(triage)}</p>" if triage else ""
+    source_html = f"<p><strong>Source:</strong> {esc(source)}</p>" if source else ""
+    warnings_html = ""
+    if parse_warnings:
+        warnings_html = "<p><strong>Parse warnings:</strong></p><ul>" + "".join(
+            f"<li>{esc(warning)}</li>" for warning in parse_warnings
+        ) + "</ul>"
     draft_href = f"/train/suggest?card={esc(selected)}"
     llm_href = f"/train/suggest?card={esc(selected)}&provider=openai"
+    local_llm_href = f"/train/suggest?card={esc(selected)}&provider=local"
     body = f"""
 <section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Approved executable effects are loaded by the simulator during games.</p></section>
 <section class="grid">
@@ -882,9 +896,13 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     <h3>{esc(selected_card.get('Name') if selected_card else '')}</h3>
     <p class="muted">{esc(selected)}</p>
     <p><strong>Execution status:</strong> {esc(execution_status)}</p>
+    {source_html}
+    {triage_html}
+    {warnings_html}
     <pre>{esc(text or 'No rules text')}</pre>
     <a class="button secondary" href="{draft_href}">Draft From Card Text</a>
     <a class="button" href="{llm_href}">Draft With LLM</a>
+    <a class="button" href="{local_llm_href}">Draft With Local Model</a>
   </div>
 </section>
 <section>
@@ -1047,11 +1065,31 @@ def suggest_train_effect(query: dict[str, list[str]]) -> bytes:
         provider = get_effect_suggestion_provider(query.get("provider", ["heuristic"])[0])
         data = provider.suggest_effect(card)
         save_effect(data)
+        review = data.get("review", {})
+        triage = review.get("triage", "not classified")
+        warnings = review.get("parse_warnings") or []
+        warning_block = ""
+        if warnings:
+            warning_block = "<p><strong>Parse warnings:</strong></p><ul>" + "".join(
+                f"<li>{esc(warning)}</li>" for warning in warnings
+            ) + "</ul>"
         message = (
             "<section class='card'><h2>Draft Saved</h2>"
-            "<p class='muted'>The draft is stored for human review. It is marked manual and will not execute in simulations until reviewed.</p>"
+            "<p class='muted'>The draft is stored for human review. Drafts will not execute in simulations until approved, even when the structure looks executable.</p>"
+            f"<p><strong>Source:</strong> {esc(data.get('source', 'unknown'))}</p>"
+            f"<p><strong>Triage:</strong> {esc(triage)}</p>"
+            f"{warning_block}"
             f"<pre>{esc(json.dumps(data, indent=2))}</pre>"
             f"<a class='button secondary' href='/train?card={esc(selected)}'>Review Draft</a></section>"
+        )
+    except EffectSuggestionError as exc:
+        actions = "".join(f"<li>{esc(action)}</li>" for action in exc.actions)
+        action_block = f"<ul>{actions}</ul>" if actions else ""
+        message = (
+            f"<section class='card'><h2>{esc(exc.title)}</h2>"
+            f"<p>{esc(exc.detail)}</p>"
+            f"{action_block}"
+            f"<a class='button secondary' href='/train?card={esc(selected)}'>Back</a></section>"
         )
     except Exception as exc:
         message = f"<section class='card'><h2>Could Not Draft Effect</h2><p>{esc(exc)}</p><a class='button secondary' href='/train'>Back</a></section>"

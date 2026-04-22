@@ -27,6 +27,9 @@ python main.py --test
 | `python main.py --filter-gameplay-cards` | Remove cosmetic card variants from fetched data |
 | `python main.py --ui` | Start the local browser UI |
 | `python main.py --fetch-competitive-decks` | Cache top hot SWUDB deck usage for training priority |
+| `python main.py --test-local-provider` | Check Ollama or MLX setup for local card-effect drafting |
+| `python main.py --draft-card SET NUMBER` | Draft one card effect with a local model |
+| `python main.py --draft-missing-cards` | Bulk-draft missing effect records with a local model |
 
 ## Available Strategies
 
@@ -130,6 +133,9 @@ The UI includes:
 - Optional OpenAI draft provider for LLM-assisted card training. Set
   `OPENAI_API_KEY` and optionally `SWU_LLM_MODEL`; LLM drafts are saved as
   manual review records and never execute until approved and marked executable.
+- Optional local-model draft provider for Ollama or MLX. Local drafts are
+  normalized into the same schema, triaged as `safe_draft`, `needs_review`, or
+  `unresolved`, and kept in the existing human-review flow.
 
 Local LLM settings are read from shell environment variables or an untracked
 `.env` file at the repository root:
@@ -140,6 +146,85 @@ cp .env.example .env
 ```
 
 Do not commit real API keys.
+
+## Local Model Drafting
+
+Local-model drafting reduces the amount of manual annotation needed for
+unsupported cards. The model creates a draft record, then deterministic
+normalization checks triggers, step types, targets, durations, conditions, and
+engine execution status. The browser review workflow remains the authority:
+drafts do not affect simulations unless they are approved and executable.
+
+### Ollama
+
+Install and start Ollama, then pull a model:
+
+```bash
+ollama pull qwen2.5:7b-instruct
+```
+
+Add local settings to `.env` or your shell:
+
+```bash
+SWU_LOCAL_PROVIDER=ollama
+SWU_LOCAL_MODEL=qwen2.5:7b-instruct
+SWU_LOCAL_HOST=http://127.0.0.1:11434
+SWU_LOCAL_TIMEOUT=60
+```
+
+Check setup without drafting a card:
+
+```bash
+python main.py --test-local-provider
+```
+
+Draft one card:
+
+```bash
+python main.py --draft-card SOR 128
+```
+
+Bulk-draft missing cards, optionally limited to specific sets:
+
+```bash
+python main.py --draft-missing-cards --sets SOR SHD --limit 50
+```
+
+By default, bulk drafting skips existing records and never approves drafts.
+Use `--overwrite-drafts` only when replacing previous draft records. The
+`--approve-safe-drafts` flag exists for experiments, but normal tournament
+prep should review drafts in the UI before approval.
+
+### MLX
+
+MLX support is optional and isolated so the simulator still runs without MLX
+packages installed. On Apple Silicon, install the runtime and point the
+provider at a local model path or Hugging Face model name supported by
+`mlx-lm`:
+
+```bash
+pip install mlx-lm
+SWU_LOCAL_PROVIDER=mlx
+SWU_LOCAL_MODEL=mlx-community/Qwen2.5-7B-Instruct-4bit
+python main.py --test-local-provider
+```
+
+The first MLX path is text-generation only. The backend is structured so vision
+support can be added later without changing the UI, store, or training schema.
+
+### Browser Review
+
+Start the UI with:
+
+```bash
+python main.py --ui
+```
+
+On the Train Effects tab, use `Draft With Local Model`. The saved draft shows
+its source, triage bucket, and parse warnings. On the Training Queue tab, use
+`Local Draft` to create a draft for a queued card, then review and approve it
+only if the structured effect matches the card text and the engine execution
+status is appropriate.
 
 Deck JSON files reference SWU DB gameplay cards by set and card number:
 
