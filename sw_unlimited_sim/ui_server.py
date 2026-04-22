@@ -866,7 +866,8 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     default_effect = blank_effect_record(selected_card) if selected_card else {"status": "draft", "triggers": []}
     effect_json = json.dumps(current_effect or default_effect, indent=2)
     execution_status = (current_effect or default_effect).get("execution_status", "manual")
-    llm_href = f"/train/suggest?card={esc(selected)}"
+    draft_href = f"/train/suggest?card={esc(selected)}"
+    llm_href = f"/train/suggest?card={esc(selected)}&provider=openai"
     body = f"""
 <section><h2>Train Structured Effects</h2><p>Turn card text into reviewed simulator actions. Approved executable effects are loaded by the simulator during games.</p></section>
 <section class="grid">
@@ -882,7 +883,8 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     <p class="muted">{esc(selected)}</p>
     <p><strong>Execution status:</strong> {esc(execution_status)}</p>
     <pre>{esc(text or 'No rules text')}</pre>
-    <a class="button secondary" href="{llm_href}">Draft From Card Text</a>
+    <a class="button secondary" href="{draft_href}">Draft From Card Text</a>
+    <a class="button" href="{llm_href}">Draft With LLM</a>
   </div>
 </section>
 <section>

@@ -424,6 +424,22 @@ class GameState:
         player.discard_pile.append(unit)
         self.log(f"Turn {self.turn_count}: {unit.name} was defeated")
 
+    def _return_unit_to_hand(self, owner: Player, unit: UnitCard, source_name: str):
+        if unit not in owner.units:
+            return
+        owner.units.remove(unit)
+        if unit in owner.ground_arena:
+            owner.ground_arena.remove(unit)
+        if unit in owner.space_arena:
+            owner.space_arena.remove(unit)
+        unit.damage = 0
+        unit.current_hp = unit.hp
+        unit.is_exhausted = False
+        unit.attacked_this_phase = False
+        unit.abilities_lost_until_ready = False
+        owner.hand.append(unit)
+        self.log(f"Turn {self.turn_count}: {source_name} returns {unit.name} to Player {owner.id}'s hand")
+
     # ==================== CARD TEXT / KEYWORDS ====================
 
     def _text(self, card: Card) -> str:
@@ -446,6 +462,9 @@ class GameState:
 
     def _has_aspect(self, card: Card, aspect: str) -> bool:
         return aspect.upper() in {str(value).upper() for value in getattr(card, "aspects", [])}
+
+    def _is_card(self, card: Card, set_code: str, number: str) -> bool:
+        return self._card_effect_key(card) == effect_key(set_code, number)
 
     def _has_keyword(self, unit: UnitCard, keyword: str) -> bool:
         if getattr(unit, "abilities_lost_until_ready", False):
@@ -559,6 +578,22 @@ class GameState:
                 self._damage_unit(enemy if target in enemy.units else player, target, 3)
                 self._emit(f"  Imperial Interceptor deals 3 damage to {target.name}")
 
+        if self._is_card(unit, "JTL", "143"):
+            self._damage_base(enemy, 4, "Devastator")
+
+        if self._is_card(unit, "JTL", "096") and player.can_afford(2):
+            player.pay_cost(2)
+            if unit in player.space_arena:
+                player.space_arena.remove(unit)
+            if unit not in player.ground_arena:
+                player.ground_arena.append(unit)
+            unit.arena = Arena.GROUND
+            unit.experience_tokens += 2
+            unit.power += 2
+            unit.hp += 2
+            unit.current_hp += 2
+            self.log("Turn {0}: Blue Leader pays 2, moves to ground, and gains 2 Experience tokens".format(self.turn_count))
+
     def _resolve_when_played_upgrade(self, player: Player, upgrade: UpgradeCard, target: UnitCard):
         self._resolve_structured_effects(player, upgrade, "when_played", defender=target)
 
@@ -590,6 +625,19 @@ class GameState:
                 self._damage_unit(enemy, targets[0], 1)
             self._emit("  Fifth Brother deals 1 damage to himself on attack")
 
+        if self._is_card(attacker, "LOF", "046"):
+            targets = [
+                unit for unit in player.units
+                if unit is not attacker and (self._has_trait(unit, "CREATURE") or self._has_trait(unit, "SPECTRE"))
+            ]
+            if targets:
+                target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+                target.experience_tokens += 1
+                target.power += 1
+                target.hp += 1
+                target.current_hp += 1
+                self.log(f"Turn {self.turn_count}: Ezra Bridger gives an Experience token to {target.name}")
+
         restore_amount = self._restore_amount(attacker)
         if restore_amount:
             before = player.base.current_hp
@@ -616,6 +664,9 @@ class GameState:
             enemy.base.take_damage(3)
             self.log(f"Turn {self.turn_count}: K-2SO deals 3 damage to Player {enemy.id}'s base when defeated")
             self._emit("  K-2SO deals 3 damage to enemy base when defeated")
+
+        if self._is_card(unit, "SEC", "094") and self._can_disclose_aspects(owner, ["COMMAND", "COMMAND", "HEROISM"]):
+            self._draw_cards(owner, 1, "Mina Bonteri")
 
     def _restore_amount(self, unit: UnitCard) -> int:
         if getattr(unit, "abilities_lost_until_ready", False):
@@ -734,6 +785,16 @@ class GameState:
             player.discard_pile.append(card)
             discarded.append(card)
         self.log(f"Turn {self.turn_count}: Player {player.id} discards {self._card_names(discarded)} ({source_name})")
+
+    def _can_disclose_aspects(self, player: Player, required_aspects: list[str]) -> bool:
+        available = []
+        for card in player.hand:
+            available.extend(str(aspect).upper() for aspect in getattr(card, "aspects", []) or [])
+        for aspect in required_aspects:
+            if aspect not in available:
+                return False
+            available.remove(aspect)
+        return True
 
     def _apply_structured_step(
         self,
@@ -898,6 +959,13 @@ class GameState:
                 if self._friendly_force_unit(player) and resources:
                     player.pay_cost(resources)
                     self._damage_unit(enemy, target, 2 * resources)
+            return
+
+        if self._is_card(event, "SEC", "233"):
+            targets = [unit for unit in enemy.units if not isinstance(unit, LeaderCard) and unit.cost <= 6]
+            if targets:
+                target = max(targets, key=lambda unit: (unit.cost, unit.power + unit.hp))
+                self._return_unit_to_hand(enemy, target, "Beguile")
             return
 
     def _unit_action_has_target(self, player: Player, unit: UnitCard) -> bool:

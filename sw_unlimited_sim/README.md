@@ -127,6 +127,9 @@ The UI includes:
 - Draft generation boundary for future LLM-assisted unsupported-card training.
   The current offline provider creates manual review drafts from rules text
   heuristics; it does not call an external model.
+- Optional OpenAI draft provider for LLM-assisted card training. Set
+  `OPENAI_API_KEY` and optionally `SWU_LLM_MODEL`; LLM drafts are saved as
+  manual review records and never execute until approved and marked executable.
 
 Deck JSON files reference SWU DB gameplay cards by set and card number:
 

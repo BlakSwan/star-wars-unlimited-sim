@@ -52,6 +52,14 @@ SUPPORTED_CARD_NAMES = {
     "Wampa",
 }
 
+SUPPORTED_CARD_KEYS = {
+    "JTL-096",  # Blue Leader
+    "JTL-143",  # Devastator
+    "LOF-046",  # Ezra Bridger
+    "SEC-094",  # Mina Bonteri
+    "SEC-233",  # Beguile
+}
+
 
 @dataclass
 class CardAudit:
@@ -160,8 +168,9 @@ def _audit_card(card_data: dict[str, Any], count: int, trained_effects: dict[str
     reasons: list[str] = []
     text = _text(card_data)
     name = str(card_data.get("Name") or "Unknown Card")
+    card_key = effect_key(str(card_data.get("Set") or ""), str(card_data.get("Number") or ""))
     trained_effects = trained_effects or {}
-    trained_record = trained_effects.get(effect_key(str(card_data.get("Set") or ""), str(card_data.get("Number") or "")))
+    trained_record = trained_effects.get(card_key)
 
     if trained_record and should_execute_record(trained_record):
         status = "supported"
@@ -175,7 +184,7 @@ def _audit_card(card_data: dict[str, Any], count: int, trained_effects: dict[str
     elif _is_supported_keyword_only(card_data):
         status = "supported"
         reasons.append("supported keyword-only card")
-    elif name in SUPPORTED_CARD_NAMES:
+    elif name in SUPPORTED_CARD_NAMES or card_key in SUPPORTED_CARD_KEYS:
         unsupported_keywords = _unsupported_keywords(card_data)
         if unsupported_keywords:
             status = "partial"

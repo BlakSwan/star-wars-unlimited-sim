@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import os
+import urllib.request
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -227,7 +230,100 @@ class RuleTextHeuristicProvider(EffectSuggestionProvider):
         return record
 
 
+class OpenAIEffectSuggestionProvider(EffectSuggestionProvider):
+    """LLM-backed draft provider using the OpenAI Responses API."""
+
+    name = "openai"
+
+    def __init__(self, model: str | None = None):
+        self.model = model or os.environ.get("SWU_LLM_MODEL", "gpt-5.4-mini")
+        self.api_key = os.environ.get("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError("OPENAI_API_KEY is required for the OpenAI effect suggestion provider")
+
+    def suggest_effect(self, card: dict[str, Any]) -> dict[str, Any]:
+        prompt = {
+            "task": "Draft a Star Wars Unlimited simulator effect record for human review.",
+            "constraints": [
+                "Return only valid JSON.",
+                "Use the schema shown in the blank_record.",
+                "Set status to draft.",
+                "Set execution_status to manual unless every trigger and step is clearly executable by the current engine.",
+                "Prefer explicit conditions, target filters, durations, optional flags, and choice groups over prose notes.",
+                "Do not invent card text.",
+            ],
+            "engine_executable_triggers": sorted(ENGINE_EXECUTABLE_TRIGGERS),
+            "engine_executable_effects": sorted(ENGINE_EXECUTABLE_EFFECTS),
+            "allowed_triggers": TRIGGERS,
+            "allowed_effect_types": EFFECT_TYPES,
+            "allowed_target_filters": TARGET_FILTERS,
+            "allowed_condition_types": CONDITION_TYPES,
+            "allowed_durations": DURATIONS,
+            "blank_record": blank_effect_record(card),
+            "card": {
+                "set": card.get("Set"),
+                "number": card.get("Number"),
+                "name": card.get("Name"),
+                "type": card.get("Type"),
+                "traits": card.get("Traits") or [],
+                "aspects": card.get("Aspects") or [],
+                "keywords": card.get("Keywords") or [],
+                "rules_text": rules_text(card),
+            },
+        }
+        request = urllib.request.Request(
+            "https://api.openai.com/v1/responses",
+            data=json.dumps({
+                "model": self.model,
+                "input": [
+                    {
+                        "role": "developer",
+                        "content": "You convert trading card rules text into conservative simulator JSON drafts.",
+                    },
+                    {
+                        "role": "user",
+                        "content": json.dumps(prompt),
+                    },
+                ],
+            }).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+
+        record = self._parse_response_json(payload)
+        record["status"] = "draft"
+        record["source"] = f"openai:{self.model}"
+        record.setdefault("review", {})
+        record["review"]["llm_suggested"] = True
+        record["review"]["human_verified"] = False
+        record["execution_status"] = "manual"
+        return record
+
+    def _parse_response_json(self, payload: dict[str, Any]) -> dict[str, Any]:
+        text = payload.get("output_text") or ""
+        if not text:
+            for item in payload.get("output", []) or []:
+                for content in item.get("content", []) or []:
+                    if content.get("type") in {"output_text", "text"}:
+                        text += content.get("text") or ""
+        text = text.strip()
+        if not text:
+            raise ValueError("OpenAI response did not include text output")
+        if text.startswith("```"):
+            text = text.strip("`")
+            if text.startswith("json"):
+                text = text[4:].strip()
+        return json.loads(text)
+
+
 def get_effect_suggestion_provider(provider_name: str = "heuristic") -> EffectSuggestionProvider:
-    if provider_name != "heuristic":
-        raise ValueError(f"Effect suggestion provider '{provider_name}' is not configured")
-    return RuleTextHeuristicProvider()
+    if provider_name == "heuristic":
+        return RuleTextHeuristicProvider()
+    if provider_name == "openai":
+        return OpenAIEffectSuggestionProvider()
+    raise ValueError(f"Effect suggestion provider '{provider_name}' is not configured")
