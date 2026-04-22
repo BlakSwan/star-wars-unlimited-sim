@@ -1,0 +1,5976 @@
+{
+  "deck_count": 20,
+  "decks": [
+    {
+      "author": "MoGTCG",
+      "base": {
+        "key": "LOF-020",
+        "name": "Nightsister Lair"
+      },
+      "cards": [
+        {
+          "count": 2,
+          "key": "SEC-039",
+          "name": "Creditor's Claim",
+          "number": "039",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-075",
+          "name": "Knowledge and Defense",
+          "number": "075",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "SEC-040",
+          "name": "Emergency Powers",
+          "number": "040",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-231",
+          "name": "Darth Tyranus - Servant of Sidious",
+          "number": "231",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-070",
+          "name": "Anakin Skywalker - Champion of Mortis",
+          "number": "070",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-061",
+          "name": "Secretive Sage",
+          "number": "061",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-160",
+          "name": "Merrin - Alone With the Dead",
+          "number": "160",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-037",
+          "name": "Cantwell Arrestor Cruiser",
+          "number": "037",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-079",
+          "name": "Shatterpoint",
+          "number": "079",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "JTL-144",
+          "name": "No Disintegrations",
+          "number": "144",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LOF-140",
+          "name": "Darth Maul's Lightsaber",
+          "number": "140",
+          "set": "LOF",
+          "sideboard_count": 1
+        },
+        {
+          "count": 0,
+          "key": "LAW-117",
+          "name": "Conveyex Security Captain",
+          "number": "117",
+          "set": "LAW",
+          "sideboard_count": 1
+        },
+        {
+          "count": 0,
+          "key": "SEC-078",
+          "name": "Hyperspace Disaster",
+          "number": "078",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-132",
+          "name": "Grand Inquisitor - You're Right to Be Afraid",
+          "number": "132",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-237",
+          "name": "The Son - Embodiment of Darkness",
+          "number": "237",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-038",
+          "name": "Condemn",
+          "number": "038",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-180",
+          "name": "Let's Call It War",
+          "number": "180",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 0,
+          "key": "JTL-043",
+          "name": "No Glory, Only Results",
+          "number": "043",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-067",
+          "name": "Chirrut \u00cemwe - Blind, But Not Deaf",
+          "number": "067",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-129",
+          "name": "Acolyte of the Beyond",
+          "number": "129",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-183",
+          "name": "Topple the Summit",
+          "number": "183",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-031",
+          "name": "Karis - We Don't Like Strangers",
+          "number": "031",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-028",
+          "name": "Trayus Acolyte",
+          "number": "028",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-132",
+          "name": "The Tree Remembers",
+          "number": "132",
+          "set": "LAW",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-035",
+          "name": "Talzin's Assassin",
+          "number": "035",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-041",
+          "name": "Drain Essence",
+          "number": "041",
+          "set": "LOF",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "jbmweCQvCPv",
+      "leader": {
+        "key": "LOF-009",
+        "name": "Darth Maul - Sith Revealed"
+      },
+      "like_count": 66,
+      "main_counts": {
+        "JTL-143": 2,
+        "JTL-144": 3,
+        "LOF-031": 3,
+        "LOF-035": 3,
+        "LOF-041": 2,
+        "LOF-061": 3,
+        "LOF-067": 3,
+        "LOF-070": 3,
+        "LOF-079": 3,
+        "LOF-129": 3,
+        "LOF-132": 3,
+        "LOF-160": 3,
+        "LOF-231": 3,
+        "LOF-237": 2,
+        "SEC-028": 3,
+        "SEC-038": 3,
+        "SEC-039": 2,
+        "SEC-040": 2,
+        "SEC-183": 1
+      },
+      "name": "Maul Blue V.1 - Post Rotation MoG TCG",
+      "publish_date": "2026-02-04T19:07:53.206185Z",
+      "sideboard_counts": {
+        "JTL-043": 1,
+        "JTL-143": 1,
+        "LAW-117": 1,
+        "LAW-132": 1,
+        "LOF-140": 1,
+        "SEC-037": 1,
+        "SEC-075": 1,
+        "SEC-078": 1,
+        "SEC-180": 1
+      }
+    },
+    {
+      "author": "MoGTCG",
+      "base": {
+        "key": "SEC-025",
+        "name": "Amnesty Housing"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "JTL-203",
+          "name": "Han Solo - Has His Moments",
+          "number": "203",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-151",
+          "name": "Red Five - Running the Trench",
+          "number": "151",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-227",
+          "name": "Superheavy Ion Cannon",
+          "number": "227",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-148",
+          "name": "Karis Nemik - Freedom Is a Pure Idea",
+          "number": "148",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-219",
+          "name": "Ebon Hawk - Cause and Effect",
+          "number": "219",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-186",
+          "name": "Enfys Nest's Helmet",
+          "number": "186",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-221",
+          "name": "Stolen AT-Hauler",
+          "number": "221",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-080",
+          "name": "Luke Skywalker - Profit or Be Destroyed",
+          "number": "080",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-215",
+          "name": "Emissary's Sheathipede",
+          "number": "215",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-211",
+          "name": "Faith in Your Friends",
+          "number": "211",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-260",
+          "name": "Inspector's Shuttle",
+          "number": "260",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-249",
+          "name": "Millennium Falcon - Get Out And Push",
+          "number": "249",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-176",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-237",
+          "name": "Qui-Gon Jinn - Influencing Chance",
+          "number": "237",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-082",
+          "name": "Urrr'k - Elite Sharpshooter",
+          "number": "082",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-207",
+          "name": "Lightmaker - I Have An Idea",
+          "number": "207",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-204",
+          "name": "Blue Ace - Colorful Racer",
+          "number": "204",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-226",
+          "name": "Radiant VII - Ambassadors' Arrival",
+          "number": "226",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-149",
+          "name": "Red Squadron Y-Wing",
+          "number": "149",
+          "set": "JTL",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "WxVWebDRj",
+      "leader": {
+        "key": "LAW-014",
+        "name": "Enfys Nest - Until We Can Go No Higher"
+      },
+      "like_count": 38,
+      "main_counts": {
+        "JTL-149": 3,
+        "JTL-151": 2,
+        "JTL-203": 3,
+        "JTL-221": 3,
+        "JTL-226": 1,
+        "JTL-227": 3,
+        "JTL-249": 1,
+        "LAW-080": 1,
+        "LAW-082": 3,
+        "LAW-186": 3,
+        "LAW-237": 3,
+        "SEC-148": 3,
+        "SEC-176": 3,
+        "SEC-204": 2,
+        "SEC-207": 2,
+        "SEC-211": 3,
+        "SEC-215": 3,
+        "SEC-219": 3,
+        "SEC-233": 2,
+        "SEC-260": 3
+      },
+      "name": "Enfys Transport Combo V.1",
+      "publish_date": "2026-02-06T18:59:10.072622Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "_gn0m",
+      "base": {
+        "key": "SOR-030",
+        "name": "Chopper Base"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "JTL-210",
+          "name": "The Mandalorian - Weathered Pilot",
+          "number": "210",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-182",
+          "name": "Nihil Marauder",
+          "number": "182",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-211",
+          "name": "Black Sun Patroller",
+          "number": "211",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-075",
+          "name": "Interrogation Droid",
+          "number": "075",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-085",
+          "name": "You Hold This",
+          "number": "085",
+          "set": "LAW",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "SEC-176",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-174",
+          "name": "0-0-0 - Translation and Torture",
+          "number": "174",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-173",
+          "name": "BT-1 - Blastomech",
+          "number": "173",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-186",
+          "name": "Marchion Ro - Eye of the Nihil",
+          "number": "186",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-082",
+          "name": "Urrr'k - Elite Sharpshooter",
+          "number": "082",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-206",
+          "name": "That's a Rock",
+          "number": "206",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-131",
+          "name": "Strikeship",
+          "number": "131",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-083",
+          "name": "Broken Horn - Vizago's Pride",
+          "number": "083",
+          "set": "LAW",
+          "sideboard_count": 2
+        },
+        {
+          "count": 2,
+          "key": "JTL-211",
+          "name": "Independent Smuggler",
+          "number": "211",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-172",
+          "name": "Storm Raider",
+          "number": "172",
+          "set": "LAW",
+          "sideboard_count": 3
+        },
+        {
+          "count": 0,
+          "key": "SEC-163",
+          "name": "Outer Rim Constable",
+          "number": "163",
+          "set": "SEC",
+          "sideboard_count": 3
+        },
+        {
+          "count": 3,
+          "key": "LOF-179",
+          "name": "Aurra Sing - Patient and Deadly",
+          "number": "179",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-171",
+          "name": "Punishing One - Takes No Prisoners",
+          "number": "171",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-076",
+          "name": "Vult Skerris's Defender - Secret Project",
+          "number": "076",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-176",
+          "name": "Sebulba's Podracer - Taking the Lead",
+          "number": "176",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-077",
+          "name": "Shadow of Stygeon Prime",
+          "number": "077",
+          "set": "LAW",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "sndUcSlBGbdMS",
+      "leader": {
+        "key": "LAW-012",
+        "name": "Sebulba - Especially Dangerous Dug"
+      },
+      "like_count": 50,
+      "main_counts": {
+        "JTL-210": 3,
+        "JTL-211": 2,
+        "LAW-075": 3,
+        "LAW-076": 3,
+        "LAW-077": 1,
+        "LAW-082": 3,
+        "LAW-173": 3,
+        "LAW-174": 3,
+        "LAW-176": 3,
+        "LAW-206": 3,
+        "LAW-211": 3,
+        "LOF-131": 3,
+        "LOF-179": 3,
+        "LOF-182": 3,
+        "LOF-186": 3,
+        "SEC-171": 3,
+        "SEC-176": 3,
+        "SEC-233": 2
+      },
+      "name": "Crazy fast Sebulba",
+      "publish_date": "2026-01-29T20:23:56.348597Z",
+      "sideboard_counts": {
+        "LAW-083": 2,
+        "LAW-085": 2,
+        "LAW-172": 3,
+        "SEC-163": 3
+      }
+    },
+    {
+      "author": "Thorrk",
+      "base": {
+        "key": "LAW-022",
+        "name": "Aldhani Garrison"
+      },
+      "cards": [
+        {
+          "count": 2,
+          "key": "SEC-098",
+          "name": "Captain Typho - All Necessary Precautions",
+          "number": "098",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-119",
+          "name": "Crucible - Centuries of Wisdom",
+          "number": "119",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-102",
+          "name": "Resistance Blue Squadron",
+          "number": "102",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-106",
+          "name": "Unity of Purpose",
+          "number": "106",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-094",
+          "name": "Mina Bonteri - Stop This War",
+          "number": "094",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-068",
+          "name": "Millennium Falcon - Dodging Patrols",
+          "number": "068",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-071",
+          "name": "The Max Rebo Band - Jatz-Wailers",
+          "number": "071",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-235",
+          "name": "Lady Proxima - Where's the Money?",
+          "number": "235",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-213",
+          "name": "A-Wing",
+          "number": "213",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-072",
+          "name": "Max Rebo - Encore!",
+          "number": "072",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-130",
+          "name": "Timely Reinforcements",
+          "number": "130",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-096",
+          "name": "Blue Leader - Scarif Air Support",
+          "number": "096",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-104",
+          "name": "Figure of Unity",
+          "number": "104",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-067",
+          "name": "Jyn Erso - Take The Next Chance",
+          "number": "067",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-145",
+          "name": "R2-D2 - Part of the plan",
+          "number": "145",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-101",
+          "name": "Queen Amidala - Championing Her People",
+          "number": "101",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-212",
+          "name": "Republic Y-Wing",
+          "number": "212",
+          "set": "JTL",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "hDTzPNJHnvUb",
+      "leader": {
+        "key": "JTL-016",
+        "name": "Admiral Ackbar - It's a Trap!"
+      },
+      "like_count": 25,
+      "main_counts": {
+        "JTL-096": 3,
+        "JTL-102": 2,
+        "JTL-106": 3,
+        "JTL-130": 2,
+        "JTL-212": 3,
+        "LAW-067": 3,
+        "LAW-068": 3,
+        "LAW-071": 3,
+        "LAW-072": 3,
+        "LAW-145": 3,
+        "LAW-235": 3,
+        "SEC-094": 3,
+        "SEC-098": 2,
+        "SEC-101": 3,
+        "SEC-104": 2,
+        "SEC-119": 3,
+        "SEC-213": 3,
+        "SEC-233": 3
+      },
+      "name": "Thorrk's Akbar Unity of purpose",
+      "publish_date": "2026-02-17T22:46:44.802658Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "MoGTCG",
+      "base": {
+        "key": "LOF-019",
+        "name": "Vergence Temple"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "LOF-048",
+          "name": "Itinerant Warrior",
+          "number": "048",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-100",
+          "name": "Kelleran Beq - The Sabered Hand",
+          "number": "100",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-045",
+          "name": "Yaddle - A Chance To Make Things Right",
+          "number": "045",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-261",
+          "name": "Constructed Lightsaber",
+          "number": "261",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-101",
+          "name": "Queen Amidala - Championing Her People",
+          "number": "101",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-105",
+          "name": "Cinta Kaz - Stone Cold and Fearless",
+          "number": "105",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-041",
+          "name": "Nothing Left to Fear",
+          "number": "041",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-094",
+          "name": "Mina Bonteri - Stop This War",
+          "number": "094",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-094",
+          "name": "Jedi Consular",
+          "number": "094",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-098",
+          "name": "Captain Typho - All Necessary Precautions",
+          "number": "098",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-046",
+          "name": "Ezra Bridger - Attuned With Life",
+          "number": "046",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-093",
+          "name": "Gungi - Finding Himself",
+          "number": "093",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-096",
+          "name": "Blue Leader - Scarif Air Support",
+          "number": "096",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-079",
+          "name": "Shatterpoint",
+          "number": "079",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-035",
+          "name": "Ezra Bridger - Spectre Six",
+          "number": "035",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-048",
+          "name": "Captain Rex - Into the Firefight",
+          "number": "048",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-096",
+          "name": "Obi-Wan Kenobi - Protective Padawan",
+          "number": "096",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-101",
+          "name": "Yoda - My Ally is the Force",
+          "number": "101",
+          "set": "LOF",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "ArRlkBAz",
+      "leader": {
+        "key": "LOF-008",
+        "name": "Obi-Wan Kenobi - Courage Makes Heroes"
+      },
+      "like_count": 38,
+      "main_counts": {
+        "JTL-096": 3,
+        "LAW-035": 3,
+        "LAW-041": 2,
+        "LAW-105": 3,
+        "LOF-045": 3,
+        "LOF-046": 3,
+        "LOF-048": 3,
+        "LOF-079": 2,
+        "LOF-093": 3,
+        "LOF-094": 3,
+        "LOF-096": 3,
+        "LOF-100": 3,
+        "LOF-101": 2,
+        "LOF-261": 3,
+        "SEC-048": 2,
+        "SEC-094": 3,
+        "SEC-098": 3,
+        "SEC-101": 3
+      },
+      "name": "Obi-Wan Blue V.1 - Post Rotation",
+      "publish_date": "2026-02-11T00:11:14.803377Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "Thorrk",
+      "base": {
+        "key": "SOR-026",
+        "name": "Catacombs of Cadera"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "LAW-132",
+          "name": "The Tree Remembers",
+          "number": "132",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-038",
+          "name": "Condemn",
+          "number": "038",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-144",
+          "name": "No Disintegrations",
+          "number": "144",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-181",
+          "name": "Planetary Bombardment",
+          "number": "181",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-067",
+          "name": "Chirrut \u00cemwe - Blind, But Not Deaf",
+          "number": "067",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-044",
+          "name": "Single Reactor Ignition",
+          "number": "044",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-078",
+          "name": "Hyperspace Disaster",
+          "number": "078",
+          "set": "SEC",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "LOF-041",
+          "name": "Drain Essence",
+          "number": "041",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-180",
+          "name": "Let's Call It War",
+          "number": "180",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-077",
+          "name": "Crushing Blow",
+          "number": "077",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-043",
+          "name": "No Glory, Only Results",
+          "number": "043",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-078",
+          "name": "Direct Hit",
+          "number": "078",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 2,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LOF-069",
+          "name": "Graceful Purrgil",
+          "number": "069",
+          "set": "LOF",
+          "sideboard_count": 2
+        },
+        {
+          "count": 2,
+          "key": "LOF-079",
+          "name": "Shatterpoint",
+          "number": "079",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-039",
+          "name": "Darth Sidious - The Phantom Menace",
+          "number": "039",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-101",
+          "name": "Lawbringer - Shadow Over Lothal",
+          "number": "101",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-075",
+          "name": "Knowledge and Defense",
+          "number": "075",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-033",
+          "name": "Sly Moore - Witness to Power",
+          "number": "033",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-041",
+          "name": "Annihilator - Tagge's Flagship",
+          "number": "041",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "LAW-178",
+          "name": "Persecutor - Fire Over Scarif",
+          "number": "178",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-180",
+          "name": "Piercing Shot",
+          "number": "180",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LAW-133",
+          "name": "Lost and Forgotten",
+          "number": "133",
+          "set": "LAW",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "rLqGwsUkSESv",
+      "leader": {
+        "key": "LAW-004",
+        "name": "Aurra Sing - Assassin"
+      },
+      "like_count": 24,
+      "main_counts": {
+        "JTL-041": 1,
+        "JTL-043": 3,
+        "JTL-143": 2,
+        "JTL-144": 3,
+        "JTL-181": 2,
+        "LAW-044": 3,
+        "LAW-101": 2,
+        "LAW-132": 3,
+        "LAW-133": 3,
+        "LAW-178": 2,
+        "LOF-039": 2,
+        "LOF-041": 3,
+        "LOF-067": 3,
+        "LOF-077": 3,
+        "LOF-079": 2,
+        "SEC-033": 3,
+        "SEC-038": 3,
+        "SEC-075": 3,
+        "SEC-078": 1,
+        "SEC-180": 3
+      },
+      "name": "Control is not dead",
+      "publish_date": "2026-02-10T16:52:35.9433Z",
+      "sideboard_counts": {
+        "JTL-041": 1,
+        "JTL-078": 3,
+        "JTL-180": 1,
+        "JTL-181": 1,
+        "LOF-069": 2,
+        "SEC-078": 2
+      }
+    },
+    {
+      "author": "Thorrk",
+      "base": {
+        "key": "JTL-024",
+        "name": "Data Vault"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "LAW-235",
+          "name": "Lady Proxima - Where's the Money?",
+          "number": "235",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-103",
+          "name": "Chewbacca - Faithful First Mate",
+          "number": "103",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 3,
+          "key": "LOF-096",
+          "name": "Obi-Wan Kenobi - Protective Padawan",
+          "number": "096",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-072",
+          "name": "Max Rebo - Encore!",
+          "number": "072",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-112",
+          "name": "Eager Escort Fighter",
+          "number": "112",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 3,
+          "key": "JTL-096",
+          "name": "Blue Leader - Scarif Air Support",
+          "number": "096",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-071",
+          "name": "The Max Rebo Band - Jatz-Wailers",
+          "number": "071",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-105",
+          "name": "The Starhawk - Prototype Battleship",
+          "number": "105",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-121",
+          "name": "The Purrgil King - Leading the Journey",
+          "number": "121",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-100",
+          "name": "Kelleran Beq - The Sabered Hand",
+          "number": "100",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-094",
+          "name": "Mina Bonteri - Stop This War",
+          "number": "094",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-121",
+          "name": "Salvage",
+          "number": "121",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LAW-068",
+          "name": "Millennium Falcon - Dodging Patrols",
+          "number": "068",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-149",
+          "name": "Rey - Skywalker",
+          "number": "149",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-118",
+          "name": "Terentatek",
+          "number": "118",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-095",
+          "name": "Phoenix Squadron A-Wing",
+          "number": "095",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-110",
+          "name": "GNK Power Droid",
+          "number": "110",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-098",
+          "name": "Captain Typho - All Necessary Precautions",
+          "number": "098",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-127",
+          "name": "Charged with Corruption",
+          "number": "127",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-101",
+          "name": "Queen Amidala - Championing Her People",
+          "number": "101",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-244",
+          "name": "Unmarked Credits",
+          "number": "244",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-067",
+          "name": "Jyn Erso - Take The Next Chance",
+          "number": "067",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-207",
+          "name": "Jam Communications",
+          "number": "207",
+          "set": "JTL",
+          "sideboard_count": 3
+        }
+      ],
+      "deck_id": "JulslDqT",
+      "leader": {
+        "key": "LAW-018",
+        "name": "Lando Calrissian - Full Sabacc"
+      },
+      "like_count": 23,
+      "main_counts": {
+        "JTL-095": 3,
+        "JTL-096": 3,
+        "JTL-105": 3,
+        "LAW-067": 3,
+        "LAW-068": 3,
+        "LAW-071": 3,
+        "LAW-072": 3,
+        "LAW-149": 3,
+        "LAW-235": 3,
+        "LAW-244": 3,
+        "LOF-096": 3,
+        "LOF-100": 3,
+        "LOF-118": 3,
+        "LOF-121": 3,
+        "SEC-094": 3,
+        "SEC-098": 3,
+        "SEC-101": 3,
+        "SEC-110": 3,
+        "SEC-127": 3,
+        "SEC-233": 3
+      },
+      "name": "Thorrk's Lando DV post rotation",
+      "publish_date": "2026-02-02T22:19:18.007614Z",
+      "sideboard_counts": {
+        "JTL-103": 3,
+        "JTL-112": 3,
+        "JTL-121": 1,
+        "JTL-207": 3
+      }
+    },
+    {
+      "author": "MoGTCG",
+      "base": {
+        "key": "JTL-030",
+        "name": "Mos Eisley"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "JTL-221",
+          "name": "Stolen AT-Hauler",
+          "number": "221",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-240",
+          "name": "Fett's Firespray - Feared Silhouette",
+          "number": "240",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-083",
+          "name": "Broken Horn - Vizago's Pride",
+          "number": "083",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-077",
+          "name": "Shadow of Stygeon Prime",
+          "number": "077",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-133",
+          "name": "Allegiant General Pryde - Ruthless and Loyal",
+          "number": "133",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-179",
+          "name": "Aggressive Negotiations",
+          "number": "179",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-183",
+          "name": "Topple the Summit",
+          "number": "183",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-142",
+          "name": "Darth Vader - Scourge of Squadrons",
+          "number": "142",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-211",
+          "name": "Black Sun Patroller",
+          "number": "211",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-226",
+          "name": "Radiant VII - Ambassadors' Arrival",
+          "number": "226",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-172",
+          "name": "Cinta Kaz - The Struggle Comes First",
+          "number": "172",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-242",
+          "name": "Shuttle ST-149 - Under Krennic's Authority",
+          "number": "242",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-237",
+          "name": "TIE Bomber",
+          "number": "237",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-176",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-218",
+          "name": "Guerilla Soldier",
+          "number": "218",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-140",
+          "name": "IG-2000 - Assassin's Aggressor",
+          "number": "140",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-183",
+          "name": "Zygerrian Starhopper",
+          "number": "183",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-162",
+          "name": "Droid Missile Platform",
+          "number": "162",
+          "set": "JTL",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "dGuBpfaSkyQN",
+      "leader": {
+        "key": "JTL-009",
+        "name": "Boba Fett - Any Methods Necessary"
+      },
+      "like_count": 32,
+      "main_counts": {
+        "JTL-133": 3,
+        "JTL-140": 2,
+        "JTL-142": 3,
+        "JTL-143": 2,
+        "JTL-162": 3,
+        "JTL-183": 3,
+        "JTL-218": 3,
+        "JTL-221": 3,
+        "JTL-226": 1,
+        "JTL-237": 3,
+        "JTL-240": 3,
+        "JTL-242": 2,
+        "LAW-077": 3,
+        "LAW-083": 2,
+        "LAW-211": 3,
+        "SEC-172": 2,
+        "SEC-176": 1,
+        "SEC-179": 3,
+        "SEC-183": 3,
+        "SEC-233": 3
+      },
+      "name": "Boba4 Yellow is so back!",
+      "publish_date": "2026-02-19T20:06:26.804763Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "Thorrk",
+      "base": {
+        "key": "LAW-027",
+        "name": "Stygeon Spire"
+      },
+      "cards": [
+        {
+          "count": 1,
+          "key": "JTL-250",
+          "name": "Sabine's Masterpiece - Crazy Colorful",
+          "number": "250",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-048",
+          "name": "Chio Fain - Four-Armed Slicer",
+          "number": "048",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-176",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-153",
+          "name": "Rebellious Hammerhead",
+          "number": "153",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-105",
+          "name": "Cinta Kaz - Stone Cold and Fearless",
+          "number": "105",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-148",
+          "name": "Karis Nemik - Freedom Is a Pure Idea",
+          "number": "148",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-045",
+          "name": "Zeb Orellios - Spectre Four",
+          "number": "045",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-147",
+          "name": "Kit Fisto's Aethersprite - Good Hunting",
+          "number": "147",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-168",
+          "name": "Ziton Moj - Black Sun Bully",
+          "number": "168",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-089",
+          "name": "Kanan Jarrus - Spectre One",
+          "number": "089",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-163",
+          "name": "Outer Rim Constable",
+          "number": "163",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-051",
+          "name": "Red Squadron X-Wing",
+          "number": "051",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-151",
+          "name": "Red Five - Running the Trench",
+          "number": "151",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-046",
+          "name": "Ezra Bridger - Attuned With Life",
+          "number": "046",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-179",
+          "name": "Aggressive Negotiations",
+          "number": "179",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-104",
+          "name": "Bodhi Rook - Creating a Diversion",
+          "number": "104",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-148",
+          "name": "Rey - With Palpatine's Power",
+          "number": "148",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-164",
+          "name": "Warrior of Clan Ordo",
+          "number": "164",
+          "set": "SEC",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "LsxcwlWCCtEaL",
+      "leader": {
+        "key": "LAW-005",
+        "name": "Jyn Erso - Time to Fight"
+      },
+      "like_count": 25,
+      "main_counts": {
+        "JTL-051": 3,
+        "JTL-151": 3,
+        "JTL-153": 3,
+        "JTL-250": 1,
+        "LAW-045": 3,
+        "LAW-048": 3,
+        "LAW-089": 3,
+        "LAW-104": 3,
+        "LAW-105": 3,
+        "LOF-046": 3,
+        "LOF-147": 1,
+        "LOF-148": 3,
+        "SEC-148": 3,
+        "SEC-163": 3,
+        "SEC-164": 3,
+        "SEC-168": 3,
+        "SEC-176": 3,
+        "SEC-179": 3
+      },
+      "name": "SIP's Jyn red",
+      "publish_date": "2026-02-17T22:46:23.868081Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "PineappleSWU",
+      "base": {
+        "key": "SEC-026",
+        "name": "Mount Tantiss"
+      },
+      "cards": [
+        {
+          "count": 0,
+          "key": "SEC-127",
+          "name": "Charged with Corruption",
+          "number": "127",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "JTL-082",
+          "name": "Kijimi Patrollers",
+          "number": "082",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-186",
+          "name": "Garindan - Information Broker",
+          "number": "186",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "LAW-072",
+          "name": "Max Rebo - Encore!",
+          "number": "072",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-179",
+          "name": "Aurra Sing - Patient and Deadly",
+          "number": "179",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-066",
+          "name": "Tear This Ship Apart",
+          "number": "066",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-193",
+          "name": "Grand Admiral Thrawn - Grand Schemer",
+          "number": "193",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-184",
+          "name": "Contracted Jumpmaster",
+          "number": "184",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "SEC-080",
+          "name": "Imperial Dark Trooper",
+          "number": "080",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-110",
+          "name": "GNK Power Droid",
+          "number": "110",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-192",
+          "name": "Grand Moff Tarkin - Taking Krennic's Achievement",
+          "number": "192",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 0,
+          "key": "LOF-207",
+          "name": "Loth-Cat",
+          "number": "207",
+          "set": "LOF",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-090",
+          "name": "Executor - Might of the Empire",
+          "number": "090",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-159",
+          "name": "Expendable Mercenary",
+          "number": "159",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-246",
+          "name": "The Axe Forgets",
+          "number": "246",
+          "set": "LAW",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "SEC-082",
+          "name": "Chancellor Palpatine - I Am The Senate",
+          "number": "082",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-213",
+          "name": "The Legacy Run - Doomed Debris",
+          "number": "213",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-112",
+          "name": "Eager Escort Fighter",
+          "number": "112",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LAW-071",
+          "name": "The Max Rebo Band - Jatz-Wailers",
+          "number": "071",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-091",
+          "name": "Craving Power",
+          "number": "091",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-216",
+          "name": "Contracted Hunter",
+          "number": "216",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-214",
+          "name": "Boba Fett - For a Price",
+          "number": "214",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-119",
+          "name": "Resupply Carrier",
+          "number": "119",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-088",
+          "name": "First Light - Threatening Elegance",
+          "number": "088",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-237",
+          "name": "Qui-Gon Jinn - Influencing Chance",
+          "number": "237",
+          "set": "LAW",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "SEC-090",
+          "name": "Director Krennic - I Lose Nothing But Time",
+          "number": "090",
+          "set": "SEC",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "DLfycoJkndtNl",
+      "leader": {
+        "key": "LAW-008",
+        "name": "Director Krennic - Amidst My Achievement"
+      },
+      "like_count": 21,
+      "main_counts": {
+        "JTL-082": 3,
+        "JTL-090": 1,
+        "JTL-119": 3,
+        "JTL-216": 3,
+        "LAW-066": 2,
+        "LAW-071": 3,
+        "LAW-072": 2,
+        "LAW-159": 3,
+        "LAW-214": 3,
+        "LOF-091": 3,
+        "LOF-179": 3,
+        "LOF-213": 3,
+        "SEC-080": 3,
+        "SEC-082": 2,
+        "SEC-088": 2,
+        "SEC-090": 3,
+        "SEC-110": 3,
+        "SEC-193": 2,
+        "SEC-233": 3
+      },
+      "name": "Krennic Yellow - Gonk Gang Sam",
+      "publish_date": "2026-02-10T09:27:14.594745Z",
+      "sideboard_counts": {
+        "JTL-112": 1,
+        "JTL-184": 1,
+        "LAW-237": 1,
+        "LAW-246": 1,
+        "LOF-207": 1,
+        "SEC-127": 1,
+        "SEC-186": 1,
+        "SEC-192": 1
+      }
+    },
+    {
+      "author": "MoGTCG",
+      "base": {
+        "key": "LOF-026",
+        "name": "Fortress Vader"
+      },
+      "cards": [
+        {
+          "count": 2,
+          "key": "LAW-044",
+          "name": "Single Reactor Ignition",
+          "number": "044",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-070",
+          "name": "Anakin Skywalker - Champion of Mortis",
+          "number": "070",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-180",
+          "name": "Let's Call It War",
+          "number": "180",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-244",
+          "name": "Darth Nihilus - Lord of Hunger",
+          "number": "244",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-075",
+          "name": "Knowledge and Defense",
+          "number": "075",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-101",
+          "name": "Lawbringer - Shadow Over Lothal",
+          "number": "101",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-041",
+          "name": "Drain Essence",
+          "number": "041",
+          "set": "LOF",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-129",
+          "name": "Acolyte of the Beyond",
+          "number": "129",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-079",
+          "name": "Out the Airlock",
+          "number": "079",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "LOF-146",
+          "name": "Ki-Adi-Mundi - We Must Push On",
+          "number": "146",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-028",
+          "name": "Trayus Acolyte",
+          "number": "028",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-176",
+          "name": "Shoot Down",
+          "number": "176",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 1,
+          "key": "LOF-039",
+          "name": "Darth Sidious - The Phantom Menace",
+          "number": "039",
+          "set": "LOF",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "LAW-133",
+          "name": "Lost and Forgotten",
+          "number": "133",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-043",
+          "name": "No Glory, Only Results",
+          "number": "043",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-038",
+          "name": "Condemn",
+          "number": "038",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-144",
+          "name": "No Disintegrations",
+          "number": "144",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-078",
+          "name": "Hyperspace Disaster",
+          "number": "078",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-231",
+          "name": "Darth Tyranus - Servant of Sidious",
+          "number": "231",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-031",
+          "name": "Karis - We Don't Like Strangers",
+          "number": "031",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-061",
+          "name": "Secretive Sage",
+          "number": "061",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-067",
+          "name": "Chirrut \u00cemwe - Blind, But Not Deaf",
+          "number": "067",
+          "set": "LOF",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-035",
+          "name": "Talzin's Assassin",
+          "number": "035",
+          "set": "LOF",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "rImvdyPM",
+      "leader": {
+        "key": "LAW-004",
+        "name": "Aurra Sing - Assassin"
+      },
+      "like_count": 15,
+      "main_counts": {
+        "JTL-043": 3,
+        "JTL-143": 2,
+        "JTL-144": 3,
+        "LAW-044": 2,
+        "LAW-101": 2,
+        "LAW-133": 2,
+        "LOF-031": 3,
+        "LOF-035": 3,
+        "LOF-039": 1,
+        "LOF-041": 2,
+        "LOF-061": 3,
+        "LOF-067": 1,
+        "LOF-070": 3,
+        "LOF-129": 2,
+        "LOF-146": 2,
+        "LOF-231": 3,
+        "SEC-028": 3,
+        "SEC-038": 3,
+        "SEC-075": 3,
+        "SEC-180": 3,
+        "SEC-244": 1
+      },
+      "name": "Aurra Sing is the new Talzin?",
+      "publish_date": "2026-02-17T19:00:00.45641Z",
+      "sideboard_counts": {
+        "JTL-079": 1,
+        "JTL-176": 1,
+        "LOF-039": 1,
+        "LOF-041": 1,
+        "LOF-067": 1,
+        "SEC-078": 1
+      }
+    },
+    {
+      "author": "ScrubGamesSWU",
+      "base": {
+        "key": "JTL-021",
+        "name": "Colossus"
+      },
+      "cards": [
+        {
+          "count": 1,
+          "key": "LAW-069",
+          "name": "The Ghost - Home of the Spectres",
+          "number": "069",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-142",
+          "name": "Sabine Wren - Explosives Artist",
+          "number": "142",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-087",
+          "name": "Darth Vader - Commanding the First Legion",
+          "number": "087",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-194",
+          "name": "Triple Dark Raid",
+          "number": "194",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-183",
+          "name": "Shin Hati - Overeager Apprentice",
+          "number": "183",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-242",
+          "name": "Shuttle ST-149 - Under Krennic's Authority",
+          "number": "242",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-041",
+          "name": "Power of the Dark Side",
+          "number": "041",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-046",
+          "name": "Ezra Bridger - Attuned With Life",
+          "number": "046",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-198",
+          "name": "Bail Organa - Responding to Catastrophe",
+          "number": "198",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-094",
+          "name": "Mina Bonteri - Stop This War",
+          "number": "094",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-044",
+          "name": "Loth-Wolf",
+          "number": "044",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TWI-193",
+          "name": "R2-D2 - Full of Solutions",
+          "number": "193",
+          "set": "TWI",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-149",
+          "name": "Mace Windu - Party Crasher",
+          "number": "149",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-036",
+          "name": "Iden Versio - Adapt or Die",
+          "number": "036",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-088",
+          "name": "Anakin Skywalker - Prescient Podracer",
+          "number": "088",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-182",
+          "name": "Bossk - Deadly Stalker",
+          "number": "182",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-193",
+          "name": "Frozen in Carbonite",
+          "number": "193",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TS26-40",
+          "name": "Obi-Wan Kenobi - Steadfast Knight",
+          "number": "40",
+          "set": "TS26",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-055",
+          "name": "Chopper - Spectre Three",
+          "number": "055",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-203",
+          "name": "Han Solo - Has His Moments",
+          "number": "203",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-254",
+          "name": "Stalwart Fleet Trooper",
+          "number": "254",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-174",
+          "name": "Hotshot DL-44 Blaster",
+          "number": "174",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-141",
+          "name": "Green Squadron A-Wing",
+          "number": "141",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-044",
+          "name": "Restored ARC-170",
+          "number": "044",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-151",
+          "name": "Red Five - Running the Trench",
+          "number": "151",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TS26-21",
+          "name": "Gar Saxon - Sundari Pillager",
+          "number": "21",
+          "set": "TS26",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-045",
+          "name": "Yaddle - A Chance To Make Things Right",
+          "number": "045",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-045",
+          "name": "Zeb Orellios - Spectre Four",
+          "number": "045",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-111",
+          "name": "Seasoned Fleet Admiral",
+          "number": "111",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-032",
+          "name": "Lom Pyke - Dealer in Truths",
+          "number": "032",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-089",
+          "name": "Kanan Jarrus - Spectre One",
+          "number": "089",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-189",
+          "name": "Boba Fett - Feared Bounty Hunter",
+          "number": "189",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-199",
+          "name": "Depa Billaba - A Higher Purpose",
+          "number": "199",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-142",
+          "name": "Adi Gallia - Stern and Focused",
+          "number": "142",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-076",
+          "name": "Vult Skerris's Defender - Secret Project",
+          "number": "076",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-067",
+          "name": "Jyn Erso - Take The Next Chance",
+          "number": "067",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-096",
+          "name": "Obi-Wan Kenobi - Protective Padawan",
+          "number": "096",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-250",
+          "name": "Sabine's Masterpiece - Crazy Colorful",
+          "number": "250",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-082",
+          "name": "Chancellor Palpatine - I Am The Senate",
+          "number": "082",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-078",
+          "name": "Sabine Wren - Spectre Five",
+          "number": "078",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-142",
+          "name": "Darth Vader - Scourge of Squadrons",
+          "number": "142",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-045",
+          "name": "Yoda - Old Master",
+          "number": "045",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-188",
+          "name": "4-LOM - Bounty Hunter for Hire",
+          "number": "188",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-049",
+          "name": "Obi-Wan Kenobi - Following Fate",
+          "number": "049",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-198",
+          "name": "Fireball - An Explosion with Wings",
+          "number": "198",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-098",
+          "name": "Captain Typho - All Necessary Precautions",
+          "number": "098",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-192",
+          "name": "Grand Moff Tarkin - Taking Krennic's Achievement",
+          "number": "192",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-148",
+          "name": "Cassian Andor - Rebellions Are Built On Hope",
+          "number": "148",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "IBH-064",
+          "name": "Hoth Lieutenant",
+          "number": "064",
+          "set": "IBH",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-224",
+          "name": "Change of Heart",
+          "number": "224",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-145",
+          "name": "K-2SO - Cassian's Counterpart",
+          "number": "145",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-085",
+          "name": "Superlaser Technician",
+          "number": "085",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-126",
+          "name": "Resupply",
+          "number": "126",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-262",
+          "name": "Confiscate",
+          "number": "262",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-094",
+          "name": "Luke Skywalker - You Still With Me?",
+          "number": "094",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-235",
+          "name": "Commandeer",
+          "number": "235",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-181",
+          "name": "Cloud-Rider Veteran",
+          "number": "181",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-084",
+          "name": "Phase-III Dark Trooper",
+          "number": "084",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TS26-29",
+          "name": "Ziton Moj - Sowing Chaos",
+          "number": "29",
+          "set": "TS26",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-095",
+          "name": "Phoenix Squadron A-Wing",
+          "number": "095",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-139",
+          "name": "Force Choke",
+          "number": "139",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-188",
+          "name": "Darth Traya - Lord of Betrayal",
+          "number": "188",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-093",
+          "name": "Gungi - Finding Himself",
+          "number": "093",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-134",
+          "name": "Ruthless Raider",
+          "number": "134",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-192",
+          "name": "N-1 Starfighter",
+          "number": "192",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-148",
+          "name": "Karis Nemik - Freedom Is a Pure Idea",
+          "number": "148",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-101",
+          "name": "Queen Amidala - Championing Her People",
+          "number": "101",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-035",
+          "name": "Ezra Bridger - Spectre Six",
+          "number": "035",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-201",
+          "name": "Ahsoka Tano - Chasing Whispers",
+          "number": "201",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-088",
+          "name": "First Light - Threatening Elegance",
+          "number": "088",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-132",
+          "name": "Imperial Interceptor",
+          "number": "132",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-176",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-090",
+          "name": "Maul - Shadow Collective Visionary",
+          "number": "090",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-104",
+          "name": "Bodhi Rook - Creating a Diversion",
+          "number": "104",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-193",
+          "name": "Millennium Falcon - Piece of Junk",
+          "number": "193",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-147",
+          "name": "Chopper - War Hero",
+          "number": "147",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TS26-56",
+          "name": "Galactic Escalation",
+          "number": "56",
+          "set": "TS26",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-094",
+          "name": "Palpatine's Return",
+          "number": "094",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-080",
+          "name": "Luke Skywalker - Profit or Be Destroyed",
+          "number": "080",
+          "set": "LAW",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "vVRLvUdpywoXd",
+      "leader": {
+        "key": "LAW-001",
+        "name": "Saw Gerrera - Bring Down The Empire"
+      },
+      "like_count": 24,
+      "main_counts": {
+        "IBH-064": 1,
+        "JTL-036": 1,
+        "JTL-094": 1,
+        "JTL-095": 1,
+        "JTL-111": 1,
+        "JTL-142": 1,
+        "JTL-143": 1,
+        "JTL-151": 1,
+        "JTL-189": 1,
+        "JTL-198": 1,
+        "JTL-201": 1,
+        "JTL-203": 1,
+        "JTL-235": 1,
+        "JTL-242": 1,
+        "JTL-250": 1,
+        "LAW-035": 1,
+        "LAW-045": 1,
+        "LAW-055": 1,
+        "LAW-067": 1,
+        "LAW-069": 1,
+        "LAW-076": 1,
+        "LAW-078": 1,
+        "LAW-080": 1,
+        "LAW-088": 1,
+        "LAW-089": 1,
+        "LAW-104": 1,
+        "LAW-181": 1,
+        "LAW-254": 1,
+        "LOF-044": 1,
+        "LOF-045": 1,
+        "LOF-046": 1,
+        "LOF-093": 1,
+        "LOF-096": 1,
+        "LOF-142": 1,
+        "LOF-183": 1,
+        "LOF-192": 1,
+        "LOF-199": 1,
+        "SEC-082": 1,
+        "SEC-088": 1,
+        "SEC-094": 1,
+        "SEC-098": 1,
+        "SEC-101": 1,
+        "SEC-147": 1,
+        "SEC-148": 1,
+        "SEC-176": 1,
+        "SEC-188": 1,
+        "SEC-192": 1,
+        "SEC-198": 1,
+        "SHD-032": 1,
+        "SHD-084": 1,
+        "SHD-085": 1,
+        "SHD-090": 1,
+        "SHD-094": 1,
+        "SHD-148": 1,
+        "SHD-174": 1,
+        "SHD-188": 1,
+        "SHD-193": 1,
+        "SHD-194": 1,
+        "SHD-262": 1,
+        "SOR-041": 1,
+        "SOR-044": 1,
+        "SOR-045": 1,
+        "SOR-049": 1,
+        "SOR-087": 1,
+        "SOR-126": 1,
+        "SOR-132": 1,
+        "SOR-134": 1,
+        "SOR-139": 1,
+        "SOR-141": 1,
+        "SOR-142": 1,
+        "SOR-145": 1,
+        "SOR-149": 1,
+        "SOR-182": 1,
+        "SOR-193": 1,
+        "SOR-224": 1,
+        "TS26-21": 1,
+        "TS26-29": 1,
+        "TS26-40": 1,
+        "TS26-56": 1,
+        "TWI-193": 1
+      },
+      "name": "Saw/Palpatine/Sidious Colossus [All The Aspects]",
+      "publish_date": "2026-02-06T09:39:22.891733Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "ScrubGamesSWU",
+      "base": {
+        "key": "JTL-024",
+        "name": "Data Vault"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "LAW-133",
+          "name": "Lost and Forgotten",
+          "number": "133",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-035",
+          "name": "Ezra Bridger - Spectre Six",
+          "number": "035",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-096",
+          "name": "Blue Leader - Scarif Air Support",
+          "number": "096",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-044",
+          "name": "Loth-Wolf",
+          "number": "044",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-045",
+          "name": "Hera Syndulla - We've Lost Enough",
+          "number": "045",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-145",
+          "name": "R2-D2 - Part of the plan",
+          "number": "145",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-149",
+          "name": "Rey - Skywalker",
+          "number": "149",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-034",
+          "name": "Chewbacca - Mighty Rescuer",
+          "number": "034",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-152",
+          "name": "C-3PO - Translation Protocol",
+          "number": "152",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-041",
+          "name": "Nothing Left to Fear",
+          "number": "041",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-105",
+          "name": "Cinta Kaz - Stone Cold and Fearless",
+          "number": "105",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-051",
+          "name": "Bo-Katan Kryze - Alone",
+          "number": "051",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-104",
+          "name": "Bodhi Rook - Creating a Diversion",
+          "number": "104",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-046",
+          "name": "Ezra Bridger - Attuned With Life",
+          "number": "046",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-094",
+          "name": "Luke Skywalker - You Still With Me?",
+          "number": "094",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-103",
+          "name": "Chewbacca - Faithful First Mate",
+          "number": "103",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "SEC-123",
+          "name": "Unveiled Might",
+          "number": "123",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-168",
+          "name": "Haymaker",
+          "number": "168",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-078",
+          "name": "Hyperspace Disaster",
+          "number": "078",
+          "set": "SEC",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "JTL-250",
+          "name": "Sabine's Masterpiece - Crazy Colorful",
+          "number": "250",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-109",
+          "name": "Mynock",
+          "number": "109",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-053",
+          "name": "The Ghost - Heart of the Family",
+          "number": "053",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-126",
+          "name": "Eject",
+          "number": "126",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 2,
+          "key": "LOF-121",
+          "name": "The Purrgil King - Leading the Journey",
+          "number": "121",
+          "set": "LOF",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "xghFhtanHvAh",
+      "leader": {
+        "key": "LOF-004",
+        "name": "Kanan Jarrus - Help Us Survive"
+      },
+      "like_count": 17,
+      "main_counts": {
+        "JTL-045": 2,
+        "JTL-053": 3,
+        "JTL-094": 2,
+        "JTL-096": 3,
+        "JTL-103": 2,
+        "JTL-250": 3,
+        "LAW-034": 2,
+        "LAW-035": 3,
+        "LAW-041": 3,
+        "LAW-104": 3,
+        "LAW-105": 3,
+        "LAW-133": 3,
+        "LAW-145": 3,
+        "LAW-149": 3,
+        "LAW-152": 3,
+        "LAW-168": 3,
+        "LOF-044": 3,
+        "LOF-046": 3,
+        "LOF-109": 3,
+        "LOF-121": 2,
+        "SEC-051": 3,
+        "SEC-123": 2
+      },
+      "name": "[Rotation] Kanan Jarrus Data Vault Rebels",
+      "publish_date": "2026-02-06T14:07:26.731385Z",
+      "sideboard_counts": {
+        "JTL-103": 1,
+        "JTL-126": 3,
+        "SEC-078": 2
+      }
+    },
+    {
+      "author": "ScrubGamesSWU",
+      "base": {
+        "key": "SEC-023",
+        "name": "Imperial Prison Complex"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "LOF-160",
+          "name": "Merrin - Alone With the Dead",
+          "number": "160",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-059",
+          "name": "Nightsister Warrior",
+          "number": "059",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-043",
+          "name": "No Glory, Only Results",
+          "number": "043",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-132",
+          "name": "First Order Stormtrooper",
+          "number": "132",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-039",
+          "name": "Chimaera - Reinforcing the Center",
+          "number": "039",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-032",
+          "name": "Director Krennic - On the Verge of Greatness",
+          "number": "032",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-041",
+          "name": "Annihilator - Tagge's Flagship",
+          "number": "041",
+          "set": "JTL",
+          "sideboard_count": 2
+        },
+        {
+          "count": 2,
+          "key": "JTL-242",
+          "name": "Shuttle ST-149 - Under Krennic's Authority",
+          "number": "242",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-070",
+          "name": "Anakin Skywalker - Champion of Mortis",
+          "number": "070",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-044",
+          "name": "Single Reactor Ignition",
+          "number": "044",
+          "set": "LAW",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-148",
+          "name": "Rey - With Palpatine's Power",
+          "number": "148",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-132",
+          "name": "Imperial Occupier",
+          "number": "132",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-162",
+          "name": "Droid Missile Platform",
+          "number": "162",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "IBH-082",
+          "name": "Admiral Ozzel - As Clumsy As He Is Stupid",
+          "number": "082",
+          "set": "IBH",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-057",
+          "name": "Owen Lars - Devoted Uncle",
+          "number": "057",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-181",
+          "name": "Planetary Bombardment",
+          "number": "181",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 0,
+          "key": "JTL-164",
+          "name": "Cham Syndulla - Rallying Ryloth",
+          "number": "164",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 3,
+          "key": "SEC-038",
+          "name": "Condemn",
+          "number": "038",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-033",
+          "name": "Onyx Squadron Brute",
+          "number": "033",
+          "set": "JTL",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "JgSzcLTzI",
+      "leader": {
+        "key": "JTL-002",
+        "name": "Grand Admiral Thrawn - ...How Unfortunate"
+      },
+      "like_count": 14,
+      "main_counts": {
+        "IBH-082": 3,
+        "JTL-032": 3,
+        "JTL-033": 3,
+        "JTL-039": 3,
+        "JTL-043": 3,
+        "JTL-132": 3,
+        "JTL-143": 2,
+        "JTL-162": 3,
+        "JTL-181": 2,
+        "JTL-242": 2,
+        "LAW-044": 2,
+        "LOF-057": 3,
+        "LOF-059": 3,
+        "LOF-070": 3,
+        "LOF-148": 3,
+        "LOF-160": 3,
+        "SEC-038": 3,
+        "SEC-132": 3
+      },
+      "name": "[Rotation] Grand Admiral Thrawn Aggression",
+      "publish_date": "2026-02-06T12:01:09.242873Z",
+      "sideboard_counts": {
+        "JTL-041": 2,
+        "JTL-143": 1,
+        "JTL-164": 3,
+        "JTL-181": 1,
+        "LAW-044": 1
+      }
+    },
+    {
+      "author": "ScrubGamesSWU",
+      "base": {
+        "key": "SOR-027",
+        "name": "Kestro City"
+      },
+      "cards": [
+        {
+          "count": 0,
+          "key": "JTL-164",
+          "name": "Cham Syndulla - Rallying Ryloth",
+          "number": "164",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 3,
+          "key": "LAW-191",
+          "name": "Arvel Skeen - Win and Walk Away",
+          "number": "191",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-216",
+          "name": "Contracted Hunter",
+          "number": "216",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-133",
+          "name": "Lost and Forgotten",
+          "number": "133",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-059",
+          "name": "Corporate Defense Shuttle",
+          "number": "059",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-241",
+          "name": "The Blade Wing - The Secret of Shantipole",
+          "number": "241",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-233",
+          "name": "Galen Erso - Destroying His Creation",
+          "number": "233",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-179",
+          "name": "Aggressive Negotiations",
+          "number": "179",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-078",
+          "name": "Hyperspace Disaster",
+          "number": "078",
+          "set": "SEC",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "JTL-221",
+          "name": "Stolen AT-Hauler",
+          "number": "221",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-235",
+          "name": "Commandeer",
+          "number": "235",
+          "set": "JTL",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "LAW-048",
+          "name": "Chio Fain - Four-Armed Slicer",
+          "number": "048",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-163",
+          "name": "Outer Rim Constable",
+          "number": "163",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-084",
+          "name": "Krrsantan - Hit and Run",
+          "number": "084",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-092",
+          "name": "Two-Faced Troig",
+          "number": "092",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-082",
+          "name": "Urrr'k - Elite Sharpshooter",
+          "number": "082",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-052",
+          "name": "The Mandalorian - Let's See the Puck",
+          "number": "052",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-096",
+          "name": "Rhydonium Detonation",
+          "number": "096",
+          "set": "LAW",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "LAW-091",
+          "name": "Val - It's Been a Ride, Babe",
+          "number": "091",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-093",
+          "name": "Rio Durant - Beckett's Right Hands",
+          "number": "093",
+          "set": "LAW",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "MldkrocHrt",
+      "leader": {
+        "key": "LAW-002",
+        "name": "Tobias Beckett - People Are Predictable"
+      },
+      "like_count": 15,
+      "main_counts": {
+        "JTL-059": 3,
+        "JTL-216": 3,
+        "JTL-221": 3,
+        "LAW-048": 3,
+        "LAW-052": 3,
+        "LAW-082": 2,
+        "LAW-084": 3,
+        "LAW-091": 3,
+        "LAW-092": 3,
+        "LAW-093": 3,
+        "LAW-133": 3,
+        "LAW-191": 3,
+        "LAW-233": 3,
+        "LAW-241": 3,
+        "SEC-163": 3,
+        "SEC-179": 3,
+        "SEC-233": 3
+      },
+      "name": "[Rotation] Tobias Aggression",
+      "publish_date": "2026-02-20T13:11:43.239284Z",
+      "sideboard_counts": {
+        "JTL-164": 3,
+        "JTL-235": 2,
+        "LAW-096": 2,
+        "SEC-078": 2
+      }
+    },
+    {
+      "author": "Thorrk",
+      "base": {
+        "key": "LOF-019",
+        "name": "Vergence Temple"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "SEC-094",
+          "name": "Mina Bonteri - Stop This War",
+          "number": "094",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-100",
+          "name": "Kelleran Beq - The Sabered Hand",
+          "number": "100",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LOF-115",
+          "name": "Dagoyan Master",
+          "number": "115",
+          "set": "LOF",
+          "sideboard_count": 2
+        },
+        {
+          "count": 0,
+          "key": "JTL-112",
+          "name": "Eager Escort Fighter",
+          "number": "112",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 2,
+          "key": "LOF-070",
+          "name": "Anakin Skywalker - Champion of Mortis",
+          "number": "070",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-035",
+          "name": "Ezra Bridger - Spectre Six",
+          "number": "035",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-078",
+          "name": "Direct Hit",
+          "number": "078",
+          "set": "JTL",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "LOF-261",
+          "name": "Constructed Lightsaber",
+          "number": "261",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-078",
+          "name": "Hyperspace Disaster",
+          "number": "078",
+          "set": "SEC",
+          "sideboard_count": 1
+        },
+        {
+          "count": 2,
+          "key": "LAW-041",
+          "name": "Nothing Left to Fear",
+          "number": "041",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-096",
+          "name": "Obi-Wan Kenobi - Protective Padawan",
+          "number": "096",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-093",
+          "name": "Gungi - Finding Himself",
+          "number": "093",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-098",
+          "name": "Captain Typho - All Necessary Precautions",
+          "number": "098",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-149",
+          "name": "Rey - Skywalker",
+          "number": "149",
+          "set": "LAW",
+          "sideboard_count": 2
+        },
+        {
+          "count": 2,
+          "key": "LOF-079",
+          "name": "Shatterpoint",
+          "number": "079",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-045",
+          "name": "Yaddle - A Chance To Make Things Right",
+          "number": "045",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-094",
+          "name": "Jedi Consular",
+          "number": "094",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-048",
+          "name": "Itinerant Warrior",
+          "number": "048",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-101",
+          "name": "Yoda - My Ally is the Force",
+          "number": "101",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-046",
+          "name": "Ezra Bridger - Attuned With Life",
+          "number": "046",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-096",
+          "name": "Blue Leader - Scarif Air Support",
+          "number": "096",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-111",
+          "name": "Maz Kanata - The Light Guides",
+          "number": "111",
+          "set": "LOF",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "dpRsuyRllsejN",
+      "leader": {
+        "key": "LOF-008",
+        "name": "Obi-Wan Kenobi - Courage Makes Heroes"
+      },
+      "like_count": 16,
+      "main_counts": {
+        "JTL-096": 3,
+        "LAW-035": 3,
+        "LAW-041": 2,
+        "LOF-045": 3,
+        "LOF-046": 3,
+        "LOF-048": 3,
+        "LOF-070": 2,
+        "LOF-079": 2,
+        "LOF-093": 3,
+        "LOF-094": 3,
+        "LOF-096": 3,
+        "LOF-100": 3,
+        "LOF-101": 3,
+        "LOF-111": 3,
+        "LOF-261": 3,
+        "SEC-078": 2,
+        "SEC-094": 3,
+        "SEC-098": 3
+      },
+      "name": "Thorrk's Obi Blue post rotation",
+      "publish_date": "2026-02-02T22:18:54.59115Z",
+      "sideboard_counts": {
+        "JTL-078": 2,
+        "JTL-112": 3,
+        "LAW-149": 2,
+        "LOF-115": 2,
+        "SEC-078": 1
+      }
+    },
+    {
+      "author": "Thorrk",
+      "base": {
+        "key": "LAW-022",
+        "name": "Aldhani Garrison"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "SEC-101",
+          "name": "Queen Amidala - Championing Her People",
+          "number": "101",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-094",
+          "name": "Mina Bonteri - Stop This War",
+          "number": "094",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-044",
+          "name": "Loth-Wolf",
+          "number": "044",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-037",
+          "name": "Han Solo - Hibernation Sick",
+          "number": "037",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-041",
+          "name": "Nothing Left to Fear",
+          "number": "041",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-046",
+          "name": "Ezra Bridger - Attuned With Life",
+          "number": "046",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-250",
+          "name": "Sabine's Masterpiece - Crazy Colorful",
+          "number": "250",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-038",
+          "name": "Lepi Lookout",
+          "number": "038",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-053",
+          "name": "The Ghost - Heart of the Family",
+          "number": "053",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-132",
+          "name": "The Tree Remembers",
+          "number": "132",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-039",
+          "name": "Latts Razzi - Deadly Whipmaster",
+          "number": "039",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-089",
+          "name": "Kanan Jarrus - Spectre One",
+          "number": "089",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LOF-261",
+          "name": "Constructed Lightsaber",
+          "number": "261",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-098",
+          "name": "Captain Typho - All Necessary Precautions",
+          "number": "098",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-035",
+          "name": "Ezra Bridger - Spectre Six",
+          "number": "035",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-045",
+          "name": "Zeb Orellios - Spectre Four",
+          "number": "045",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-096",
+          "name": "Blue Leader - Scarif Air Support",
+          "number": "096",
+          "set": "JTL",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "fCgWpFkcoI",
+      "leader": {
+        "key": "LOF-004",
+        "name": "Kanan Jarrus - Help Us Survive"
+      },
+      "like_count": 12,
+      "main_counts": {
+        "JTL-053": 3,
+        "JTL-096": 3,
+        "JTL-250": 3,
+        "LAW-035": 3,
+        "LAW-037": 3,
+        "LAW-038": 3,
+        "LAW-039": 3,
+        "LAW-041": 3,
+        "LAW-045": 3,
+        "LAW-089": 3,
+        "LAW-132": 3,
+        "LOF-044": 3,
+        "LOF-046": 3,
+        "LOF-261": 2,
+        "SEC-094": 3,
+        "SEC-098": 3,
+        "SEC-101": 3
+      },
+      "name": "Thorrk's Kanan green",
+      "publish_date": "2026-02-17T22:47:00.93134Z",
+      "sideboard_counts": {}
+    },
+    {
+      "author": "StarWarsDad",
+      "base": {
+        "key": "JTL-030",
+        "name": "Mos Eisley"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "JTL-164",
+          "name": "Cham Syndulla - Rallying Ryloth",
+          "number": "164",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-221",
+          "name": "Lieutenant Gorn - I Deserve Worse",
+          "number": "221",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-244",
+          "name": "Unmarked Credits",
+          "number": "244",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-084",
+          "name": "Krrsantan - Hit and Run",
+          "number": "084",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "LAW-080",
+          "name": "Luke Skywalker - Profit or Be Destroyed",
+          "number": "080",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-191",
+          "name": "Arvel Skeen - Win and Walk Away",
+          "number": "191",
+          "set": "LAW",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "JTL-149",
+          "name": "Red Squadron Y-Wing",
+          "number": "149",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-203",
+          "name": "Han Solo - Has His Moments",
+          "number": "203",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "LAW-237",
+          "name": "Qui-Gon Jinn - Influencing Chance",
+          "number": "237",
+          "set": "LAW",
+          "sideboard_count": 3
+        },
+        {
+          "count": 0,
+          "key": "JTL-207",
+          "name": "Jam Communications",
+          "number": "207",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 2,
+          "key": "SEC-204",
+          "name": "Blue Ace - Colorful Racer",
+          "number": "204",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-202",
+          "name": "Commence the Festivities",
+          "number": "202",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-163",
+          "name": "Outer Rim Constable",
+          "number": "163",
+          "set": "SEC",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "LOF-192",
+          "name": "N-1 Starfighter",
+          "number": "192",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-083",
+          "name": "Broken Horn - Vizago's Pride",
+          "number": "083",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-215",
+          "name": "Emissary's Sheathipede",
+          "number": "215",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "SEC-179",
+          "name": "Aggressive Negotiations",
+          "number": "179",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-151",
+          "name": "Red Five - Running the Trench",
+          "number": "151",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-078",
+          "name": "Sabine Wren - Spectre Five",
+          "number": "078",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-249",
+          "name": "Millennium Falcon - Get Out And Push",
+          "number": "249",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-233",
+          "name": "Beguile",
+          "number": "233",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-148",
+          "name": "Karis Nemik - Freedom Is a Pure Idea",
+          "number": "148",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-079",
+          "name": "K-2SO - Locking the Vault",
+          "number": "079",
+          "set": "LAW",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "DlfQKqPQepVc",
+      "leader": {
+        "key": "LAW-013",
+        "name": "Chewbacca - Hero of Kessel"
+      },
+      "like_count": 16,
+      "main_counts": {
+        "JTL-149": 3,
+        "JTL-151": 3,
+        "JTL-164": 3,
+        "JTL-203": 2,
+        "JTL-249": 3,
+        "LAW-078": 3,
+        "LAW-079": 3,
+        "LAW-080": 2,
+        "LAW-083": 3,
+        "LAW-084": 2,
+        "LAW-202": 3,
+        "LAW-221": 2,
+        "LAW-244": 3,
+        "LOF-192": 3,
+        "SEC-148": 3,
+        "SEC-179": 2,
+        "SEC-204": 2,
+        "SEC-215": 3,
+        "SEC-233": 3
+      },
+      "name": "STAR WARS DAD Chewy Yellow",
+      "publish_date": "2026-02-16T21:01:14.513177Z",
+      "sideboard_counts": {
+        "JTL-207": 3,
+        "LAW-191": 2,
+        "LAW-237": 3,
+        "SEC-163": 2
+      }
+    },
+    {
+      "author": "ScrubGamesSWU",
+      "base": {
+        "key": "TWI-026",
+        "name": "KCM Mining Facility"
+      },
+      "cards": [
+        {
+          "count": 3,
+          "key": "LOF-052",
+          "name": "Jedi Trials",
+          "number": "052",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "SEC-180",
+          "name": "Let's Call It War",
+          "number": "180",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "JTL-043",
+          "name": "No Glory, Only Results",
+          "number": "043",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-140",
+          "name": "Darth Maul's Lightsaber",
+          "number": "140",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-044",
+          "name": "Single Reactor Ignition",
+          "number": "044",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-052",
+          "name": "The Mandalorian - Let's See the Puck",
+          "number": "052",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 2,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 1
+        },
+        {
+          "count": 3,
+          "key": "LOF-031",
+          "name": "Karis - We Don't Like Strangers",
+          "number": "031",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-261",
+          "name": "Constructed Lightsaber",
+          "number": "261",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "JTL-164",
+          "name": "Cham Syndulla - Rallying Ryloth",
+          "number": "164",
+          "set": "JTL",
+          "sideboard_count": 3
+        },
+        {
+          "count": 3,
+          "key": "SEC-038",
+          "name": "Condemn",
+          "number": "038",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-061",
+          "name": "Secretive Sage",
+          "number": "061",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LAW-048",
+          "name": "Chio Fain - Four-Armed Slicer",
+          "number": "048",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-139",
+          "name": "Battle Fury",
+          "number": "139",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-070",
+          "name": "Anakin Skywalker - Champion of Mortis",
+          "number": "070",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 0,
+          "key": "SEC-170",
+          "name": "Corellian Hounds",
+          "number": "170",
+          "set": "SEC",
+          "sideboard_count": 2
+        },
+        {
+          "count": 0,
+          "key": "JTL-181",
+          "name": "Planetary Bombardment",
+          "number": "181",
+          "set": "JTL",
+          "sideboard_count": 2
+        },
+        {
+          "count": 3,
+          "key": "LAW-051",
+          "name": "Beilert Valance - Target: Vader",
+          "number": "051",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-138",
+          "name": "Sith Holocron",
+          "number": "138",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 3,
+          "key": "LOF-059",
+          "name": "Nightsister Warrior",
+          "number": "059",
+          "set": "LOF",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "IWVeYJWUcWq",
+      "leader": {
+        "key": "LOF-001",
+        "name": "Kylo Ren - We're Not Done Yet"
+      },
+      "like_count": 11,
+      "main_counts": {
+        "JTL-043": 3,
+        "JTL-143": 2,
+        "LAW-044": 3,
+        "LAW-048": 3,
+        "LAW-051": 3,
+        "LAW-052": 3,
+        "LOF-031": 3,
+        "LOF-052": 3,
+        "LOF-059": 3,
+        "LOF-061": 3,
+        "LOF-070": 3,
+        "LOF-138": 3,
+        "LOF-139": 3,
+        "LOF-140": 3,
+        "LOF-261": 3,
+        "SEC-038": 3,
+        "SEC-180": 3
+      },
+      "name": "[Rotation] Kylo Ren Aggression",
+      "publish_date": "2026-02-09T14:35:32.481804Z",
+      "sideboard_counts": {
+        "JTL-143": 1,
+        "JTL-164": 3,
+        "JTL-181": 2,
+        "SEC-170": 2
+      }
+    },
+    {
+      "author": "ScrubGamesSWU",
+      "base": {
+        "key": "SOR-030",
+        "name": "Chopper Base"
+      },
+      "cards": [
+        {
+          "count": 1,
+          "key": "LAW-116",
+          "name": "Rodian Bondsman",
+          "number": "116",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-180",
+          "name": "Deceptive Shade",
+          "number": "180",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-229",
+          "name": "Ma Klounkee",
+          "number": "229",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-082",
+          "name": "Urrr'k - Elite Sharpshooter",
+          "number": "082",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-179",
+          "name": "Aurra Sing - Patient and Deadly",
+          "number": "179",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-033",
+          "name": "Sly Moore - Witness to Power",
+          "number": "033",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-048",
+          "name": "Chio Fain - Four-Armed Slicer",
+          "number": "048",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-058",
+          "name": "Honor-Bound Partisan",
+          "number": "058",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-042",
+          "name": "IG-88 - Programmed to Kill",
+          "number": "042",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-132",
+          "name": "Imperial Occupier",
+          "number": "132",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-057",
+          "name": "Owen Lars - Devoted Uncle",
+          "number": "057",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-142",
+          "name": "Darth Vader - Scourge of Squadrons",
+          "number": "142",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-031",
+          "name": "Inferno Four - Unforgetting",
+          "number": "031",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-244",
+          "name": "Unmarked Credits",
+          "number": "244",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-123",
+          "name": "Bounty Hunter's Quarry",
+          "number": "123",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-063",
+          "name": "Landing Shuttle",
+          "number": "063",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-072",
+          "name": "Max Rebo - Encore!",
+          "number": "072",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-086",
+          "name": "The Stranger - No Survivors",
+          "number": "086",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-121",
+          "name": "Salvage",
+          "number": "121",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-189",
+          "name": "Boba Fett - Feared Bounty Hunter",
+          "number": "189",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-262",
+          "name": "Confiscate",
+          "number": "262",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-224",
+          "name": "Change of Heart",
+          "number": "224",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-183",
+          "name": "Shin Hati - Overeager Apprentice",
+          "number": "183",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-213",
+          "name": "The Legacy Run - Doomed Debris",
+          "number": "213",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-083",
+          "name": "ISB Shuttle",
+          "number": "083",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-210",
+          "name": "The Mandalorian - Weathered Pilot",
+          "number": "210",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-090",
+          "name": "Maul - Shadow Collective Visionary",
+          "number": "090",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-032",
+          "name": "Lom Pyke - Dealer in Truths",
+          "number": "032",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TWI-238",
+          "name": "Merciless Contest",
+          "number": "238",
+          "set": "TWI",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-132",
+          "name": "First Order Stormtrooper",
+          "number": "132",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-040",
+          "name": "Taramyn Barcona - Eyes Front!",
+          "number": "040",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-082",
+          "name": "Chancellor Palpatine - I Am The Senate",
+          "number": "082",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-143",
+          "name": "Devastator - Hunting the Rebellion",
+          "number": "143",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-039",
+          "name": "Latts Razzi - Deadly Whipmaster",
+          "number": "039",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-075",
+          "name": "Interrogation Droid",
+          "number": "075",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-060",
+          "name": "Desperate Commando",
+          "number": "060",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-059",
+          "name": "Nightsister Warrior",
+          "number": "059",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-130",
+          "name": "HK-47 - Exclamation: Die, Meatbag!",
+          "number": "130",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-194",
+          "name": "Triple Dark Raid",
+          "number": "194",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-192",
+          "name": "Grand Moff Tarkin - Taking Krennic's Achievement",
+          "number": "192",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-051",
+          "name": "Beilert Valance - Target: Vader",
+          "number": "051",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "IBH-082",
+          "name": "Admiral Ozzel - As Clumsy As He Is Stupid",
+          "number": "082",
+          "set": "IBH",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-159",
+          "name": "Expendable Mercenary",
+          "number": "159",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-136",
+          "name": "Arihnda Pryce - On The Road To Power",
+          "number": "136",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-115",
+          "name": "Cobb Vanth - The Marshal",
+          "number": "115",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TWI-131",
+          "name": "OOM-Series Officer",
+          "number": "131",
+          "set": "TWI",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-172",
+          "name": "Cinta Kaz - The Struggle Comes First",
+          "number": "172",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-108",
+          "name": "Vanguard Infantry",
+          "number": "108",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-085",
+          "name": "Superlaser Technician",
+          "number": "085",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-183",
+          "name": "Zygerrian Starhopper",
+          "number": "183",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-111",
+          "name": "Seasoned Fleet Admiral",
+          "number": "111",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-176",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-057",
+          "name": "Benthic \u201cTwo Tubes\u201d - The War Has Just Begun",
+          "number": "057",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-094",
+          "name": "Palpatine's Return",
+          "number": "094",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-164",
+          "name": "Rhokai Gunship",
+          "number": "164",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-184",
+          "name": "Contracted Jumpmaster",
+          "number": "184",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-211",
+          "name": "Black Sun Patroller",
+          "number": "211",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-038",
+          "name": "Lepi Lookout",
+          "number": "038",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-135",
+          "name": "Kylo's TIE Silencer - Ruthlessly Efficient",
+          "number": "135",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-071",
+          "name": "The Max Rebo Band - Jatz-Wailers",
+          "number": "071",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-191",
+          "name": "Arvel Skeen - Win and Walk Away",
+          "number": "191",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-134",
+          "name": "Ruthless Raider",
+          "number": "134",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LOF-032",
+          "name": "Magistrate's Scout",
+          "number": "032",
+          "set": "LOF",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TS26-21",
+          "name": "Gar Saxon - Sundari Pillager",
+          "number": "21",
+          "set": "TS26",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-119",
+          "name": "Reinforcement Walker",
+          "number": "119",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-126",
+          "name": "Resupply",
+          "number": "126",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-062",
+          "name": "Defiant Hammerhead",
+          "number": "062",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-174",
+          "name": "Hotshot DL-44 Blaster",
+          "number": "174",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SOR-132",
+          "name": "Imperial Interceptor",
+          "number": "132",
+          "set": "SOR",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SEC-168",
+          "name": "Ziton Moj - Black Sun Bully",
+          "number": "168",
+          "set": "SEC",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-077",
+          "name": "Shadow of Stygeon Prime",
+          "number": "077",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-129",
+          "name": "Timely Intervention",
+          "number": "129",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-033",
+          "name": "Onyx Squadron Brute",
+          "number": "033",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "LAW-059",
+          "name": "Highsinger - Deadly Droid",
+          "number": "059",
+          "set": "LAW",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-036",
+          "name": "Iden Versio - Adapt or Die",
+          "number": "036",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "SHD-160",
+          "name": "Reckless Gunslinger",
+          "number": "160",
+          "set": "SHD",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-162",
+          "name": "Droid Missile Platform",
+          "number": "162",
+          "set": "JTL",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TS26-56",
+          "name": "Galactic Escalation",
+          "number": "56",
+          "set": "TS26",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "TWI-181",
+          "name": "Elite P-38 Starfighter",
+          "number": "181",
+          "set": "TWI",
+          "sideboard_count": 0
+        },
+        {
+          "count": 1,
+          "key": "JTL-039",
+          "name": "Chimaera - Reinforcing the Center",
+          "number": "039",
+          "set": "JTL",
+          "sideboard_count": 0
+        }
+      ],
+      "deck_id": "kWpAVomdISW",
+      "leader": {
+        "key": "JTL-002",
+        "name": "Grand Admiral Thrawn - ...How Unfortunate"
+      },
+      "like_count": 11,
+      "main_counts": {
+        "IBH-082": 1,
+        "JTL-033": 1,
+        "JTL-036": 1,
+        "JTL-039": 1,
+        "JTL-060": 1,
+        "JTL-063": 1,
+        "JTL-111": 1,
+        "JTL-121": 1,
+        "JTL-132": 1,
+        "JTL-142": 1,
+        "JTL-143": 1,
+        "JTL-162": 1,
+        "JTL-183": 1,
+        "JTL-184": 1,
+        "JTL-189": 1,
+        "JTL-210": 1,
+        "LAW-038": 1,
+        "LAW-039": 1,
+        "LAW-040": 1,
+        "LAW-042": 1,
+        "LAW-048": 1,
+        "LAW-051": 1,
+        "LAW-057": 1,
+        "LAW-058": 1,
+        "LAW-059": 1,
+        "LAW-062": 1,
+        "LAW-071": 1,
+        "LAW-072": 1,
+        "LAW-075": 1,
+        "LAW-077": 1,
+        "LAW-082": 1,
+        "LAW-086": 1,
+        "LAW-116": 1,
+        "LAW-159": 1,
+        "LAW-191": 1,
+        "LAW-211": 1,
+        "LAW-244": 1,
+        "LOF-032": 1,
+        "LOF-057": 1,
+        "LOF-059": 1,
+        "LOF-130": 1,
+        "LOF-179": 1,
+        "LOF-180": 1,
+        "LOF-183": 1,
+        "LOF-213": 1,
+        "SEC-033": 1,
+        "SEC-082": 1,
+        "SEC-083": 1,
+        "SEC-132": 1,
+        "SEC-136": 1,
+        "SEC-168": 1,
+        "SEC-172": 1,
+        "SEC-176": 1,
+        "SEC-192": 1,
+        "SHD-032": 1,
+        "SHD-085": 1,
+        "SHD-090": 1,
+        "SHD-094": 1,
+        "SHD-115": 1,
+        "SHD-123": 1,
+        "SHD-129": 1,
+        "SHD-135": 1,
+        "SHD-160": 1,
+        "SHD-164": 1,
+        "SHD-174": 1,
+        "SHD-194": 1,
+        "SHD-229": 1,
+        "SHD-262": 1,
+        "SOR-031": 1,
+        "SOR-108": 1,
+        "SOR-119": 1,
+        "SOR-126": 1,
+        "SOR-132": 1,
+        "SOR-134": 1,
+        "SOR-224": 1,
+        "TS26-21": 1,
+        "TS26-56": 1,
+        "TWI-131": 1,
+        "TWI-181": 1,
+        "TWI-238": 1
+      },
+      "name": "Thrawn/Saw Cunning [I Say Swing Boom Boom!]",
+      "publish_date": "2026-02-13T15:16:40.444361Z",
+      "sideboard_counts": {}
+    }
+  ],
+  "failed": {},
+  "fetched_at": "2026-04-22T16:47:57.108262+00:00",
+  "requested_limit": 20,
+  "source": "swudb_hot",
+  "source_url": "https://swudb.com/decks/hot",
+  "usage": {
+    "deck_counts": {
+      "IBH-064": 1,
+      "IBH-082": 2,
+      "JTL-032": 1,
+      "JTL-033": 2,
+      "JTL-036": 2,
+      "JTL-039": 2,
+      "JTL-041": 2,
+      "JTL-043": 5,
+      "JTL-045": 1,
+      "JTL-051": 1,
+      "JTL-053": 2,
+      "JTL-059": 1,
+      "JTL-060": 1,
+      "JTL-063": 1,
+      "JTL-078": 2,
+      "JTL-079": 1,
+      "JTL-082": 1,
+      "JTL-090": 1,
+      "JTL-094": 2,
+      "JTL-095": 2,
+      "JTL-096": 6,
+      "JTL-102": 1,
+      "JTL-103": 2,
+      "JTL-105": 1,
+      "JTL-106": 1,
+      "JTL-111": 2,
+      "JTL-112": 3,
+      "JTL-119": 1,
+      "JTL-121": 2,
+      "JTL-126": 1,
+      "JTL-130": 1,
+      "JTL-132": 2,
+      "JTL-133": 1,
+      "JTL-140": 1,
+      "JTL-142": 3,
+      "JTL-143": 8,
+      "JTL-144": 3,
+      "JTL-149": 2,
+      "JTL-151": 4,
+      "JTL-153": 1,
+      "JTL-162": 3,
+      "JTL-164": 4,
+      "JTL-176": 1,
+      "JTL-180": 1,
+      "JTL-181": 3,
+      "JTL-183": 2,
+      "JTL-184": 2,
+      "JTL-189": 2,
+      "JTL-198": 1,
+      "JTL-201": 1,
+      "JTL-203": 3,
+      "JTL-207": 2,
+      "JTL-210": 2,
+      "JTL-211": 1,
+      "JTL-212": 1,
+      "JTL-216": 2,
+      "JTL-218": 1,
+      "JTL-221": 3,
+      "JTL-226": 2,
+      "JTL-227": 1,
+      "JTL-235": 2,
+      "JTL-237": 1,
+      "JTL-240": 1,
+      "JTL-242": 3,
+      "JTL-249": 2,
+      "JTL-250": 4,
+      "LAW-034": 1,
+      "LAW-035": 5,
+      "LAW-037": 1,
+      "LAW-038": 2,
+      "LAW-039": 2,
+      "LAW-040": 1,
+      "LAW-041": 4,
+      "LAW-042": 1,
+      "LAW-044": 4,
+      "LAW-045": 3,
+      "LAW-048": 4,
+      "LAW-051": 2,
+      "LAW-052": 2,
+      "LAW-055": 1,
+      "LAW-057": 1,
+      "LAW-058": 1,
+      "LAW-059": 1,
+      "LAW-062": 1,
+      "LAW-066": 1,
+      "LAW-067": 3,
+      "LAW-068": 2,
+      "LAW-069": 1,
+      "LAW-071": 4,
+      "LAW-072": 4,
+      "LAW-075": 2,
+      "LAW-076": 2,
+      "LAW-077": 3,
+      "LAW-078": 2,
+      "LAW-079": 1,
+      "LAW-080": 3,
+      "LAW-082": 4,
+      "LAW-083": 3,
+      "LAW-084": 2,
+      "LAW-085": 1,
+      "LAW-086": 1,
+      "LAW-088": 1,
+      "LAW-089": 3,
+      "LAW-091": 1,
+      "LAW-092": 1,
+      "LAW-093": 1,
+      "LAW-096": 1,
+      "LAW-101": 2,
+      "LAW-104": 3,
+      "LAW-105": 3,
+      "LAW-116": 1,
+      "LAW-117": 1,
+      "LAW-132": 3,
+      "LAW-133": 4,
+      "LAW-145": 2,
+      "LAW-149": 3,
+      "LAW-152": 1,
+      "LAW-159": 2,
+      "LAW-168": 1,
+      "LAW-172": 1,
+      "LAW-173": 1,
+      "LAW-174": 1,
+      "LAW-176": 1,
+      "LAW-178": 1,
+      "LAW-181": 1,
+      "LAW-186": 1,
+      "LAW-191": 3,
+      "LAW-202": 1,
+      "LAW-206": 1,
+      "LAW-211": 3,
+      "LAW-214": 1,
+      "LAW-221": 1,
+      "LAW-233": 1,
+      "LAW-235": 2,
+      "LAW-237": 3,
+      "LAW-241": 1,
+      "LAW-244": 3,
+      "LAW-246": 1,
+      "LAW-254": 1,
+      "LOF-031": 3,
+      "LOF-032": 1,
+      "LOF-035": 2,
+      "LOF-039": 2,
+      "LOF-041": 3,
+      "LOF-044": 3,
+      "LOF-045": 3,
+      "LOF-046": 6,
+      "LOF-048": 2,
+      "LOF-052": 1,
+      "LOF-057": 2,
+      "LOF-059": 3,
+      "LOF-061": 3,
+      "LOF-067": 3,
+      "LOF-069": 1,
+      "LOF-070": 5,
+      "LOF-077": 1,
+      "LOF-079": 4,
+      "LOF-091": 1,
+      "LOF-093": 3,
+      "LOF-094": 2,
+      "LOF-096": 4,
+      "LOF-100": 3,
+      "LOF-101": 2,
+      "LOF-109": 1,
+      "LOF-111": 1,
+      "LOF-115": 1,
+      "LOF-118": 1,
+      "LOF-121": 2,
+      "LOF-129": 2,
+      "LOF-130": 1,
+      "LOF-131": 1,
+      "LOF-132": 1,
+      "LOF-138": 1,
+      "LOF-139": 1,
+      "LOF-140": 2,
+      "LOF-142": 1,
+      "LOF-146": 1,
+      "LOF-147": 1,
+      "LOF-148": 2,
+      "LOF-160": 2,
+      "LOF-179": 3,
+      "LOF-180": 1,
+      "LOF-182": 1,
+      "LOF-183": 2,
+      "LOF-186": 1,
+      "LOF-192": 2,
+      "LOF-199": 1,
+      "LOF-207": 1,
+      "LOF-213": 2,
+      "LOF-231": 2,
+      "LOF-237": 1,
+      "LOF-261": 4,
+      "SEC-028": 2,
+      "SEC-033": 2,
+      "SEC-037": 1,
+      "SEC-038": 5,
+      "SEC-039": 1,
+      "SEC-040": 1,
+      "SEC-048": 1,
+      "SEC-051": 1,
+      "SEC-075": 3,
+      "SEC-078": 6,
+      "SEC-080": 1,
+      "SEC-082": 3,
+      "SEC-083": 1,
+      "SEC-088": 2,
+      "SEC-090": 1,
+      "SEC-094": 6,
+      "SEC-098": 6,
+      "SEC-101": 5,
+      "SEC-104": 1,
+      "SEC-110": 2,
+      "SEC-119": 1,
+      "SEC-123": 1,
+      "SEC-127": 2,
+      "SEC-132": 2,
+      "SEC-136": 1,
+      "SEC-147": 1,
+      "SEC-148": 4,
+      "SEC-163": 4,
+      "SEC-164": 1,
+      "SEC-168": 2,
+      "SEC-170": 1,
+      "SEC-171": 1,
+      "SEC-172": 2,
+      "SEC-176": 6,
+      "SEC-179": 4,
+      "SEC-180": 4,
+      "SEC-183": 2,
+      "SEC-186": 1,
+      "SEC-188": 1,
+      "SEC-192": 3,
+      "SEC-193": 1,
+      "SEC-198": 1,
+      "SEC-204": 2,
+      "SEC-207": 1,
+      "SEC-211": 1,
+      "SEC-213": 1,
+      "SEC-215": 2,
+      "SEC-219": 1,
+      "SEC-233": 8,
+      "SEC-244": 1,
+      "SEC-260": 1,
+      "SHD-032": 2,
+      "SHD-084": 1,
+      "SHD-085": 2,
+      "SHD-090": 2,
+      "SHD-094": 2,
+      "SHD-115": 1,
+      "SHD-123": 1,
+      "SHD-129": 1,
+      "SHD-135": 1,
+      "SHD-148": 1,
+      "SHD-160": 1,
+      "SHD-164": 1,
+      "SHD-174": 2,
+      "SHD-188": 1,
+      "SHD-193": 1,
+      "SHD-194": 2,
+      "SHD-229": 1,
+      "SHD-262": 2,
+      "SOR-031": 1,
+      "SOR-041": 1,
+      "SOR-044": 1,
+      "SOR-045": 1,
+      "SOR-049": 1,
+      "SOR-087": 1,
+      "SOR-108": 1,
+      "SOR-119": 1,
+      "SOR-126": 2,
+      "SOR-132": 2,
+      "SOR-134": 2,
+      "SOR-139": 1,
+      "SOR-141": 1,
+      "SOR-142": 1,
+      "SOR-145": 1,
+      "SOR-149": 1,
+      "SOR-182": 1,
+      "SOR-193": 1,
+      "SOR-224": 2,
+      "TS26-21": 2,
+      "TS26-29": 1,
+      "TS26-40": 1,
+      "TS26-56": 2,
+      "TWI-131": 1,
+      "TWI-181": 1,
+      "TWI-193": 1,
+      "TWI-238": 1
+    },
+    "main_counts": {
+      "IBH-064": 1,
+      "IBH-082": 4,
+      "JTL-032": 3,
+      "JTL-033": 4,
+      "JTL-036": 2,
+      "JTL-039": 4,
+      "JTL-041": 1,
+      "JTL-043": 12,
+      "JTL-045": 2,
+      "JTL-051": 3,
+      "JTL-053": 6,
+      "JTL-059": 3,
+      "JTL-060": 1,
+      "JTL-063": 1,
+      "JTL-082": 3,
+      "JTL-090": 1,
+      "JTL-094": 3,
+      "JTL-095": 4,
+      "JTL-096": 18,
+      "JTL-102": 2,
+      "JTL-103": 2,
+      "JTL-105": 3,
+      "JTL-106": 3,
+      "JTL-111": 2,
+      "JTL-119": 3,
+      "JTL-121": 1,
+      "JTL-130": 2,
+      "JTL-132": 4,
+      "JTL-133": 3,
+      "JTL-140": 2,
+      "JTL-142": 5,
+      "JTL-143": 14,
+      "JTL-144": 9,
+      "JTL-149": 6,
+      "JTL-151": 9,
+      "JTL-153": 3,
+      "JTL-162": 7,
+      "JTL-164": 3,
+      "JTL-181": 4,
+      "JTL-183": 4,
+      "JTL-184": 1,
+      "JTL-189": 2,
+      "JTL-198": 1,
+      "JTL-201": 1,
+      "JTL-203": 6,
+      "JTL-210": 4,
+      "JTL-211": 2,
+      "JTL-212": 3,
+      "JTL-216": 6,
+      "JTL-218": 3,
+      "JTL-221": 9,
+      "JTL-226": 2,
+      "JTL-227": 3,
+      "JTL-235": 1,
+      "JTL-237": 3,
+      "JTL-240": 3,
+      "JTL-242": 5,
+      "JTL-249": 4,
+      "JTL-250": 8,
+      "LAW-034": 2,
+      "LAW-035": 13,
+      "LAW-037": 3,
+      "LAW-038": 4,
+      "LAW-039": 4,
+      "LAW-040": 1,
+      "LAW-041": 10,
+      "LAW-042": 1,
+      "LAW-044": 10,
+      "LAW-045": 7,
+      "LAW-048": 10,
+      "LAW-051": 4,
+      "LAW-052": 6,
+      "LAW-055": 1,
+      "LAW-057": 1,
+      "LAW-058": 1,
+      "LAW-059": 1,
+      "LAW-062": 1,
+      "LAW-066": 2,
+      "LAW-067": 7,
+      "LAW-068": 6,
+      "LAW-069": 1,
+      "LAW-071": 10,
+      "LAW-072": 9,
+      "LAW-075": 4,
+      "LAW-076": 4,
+      "LAW-077": 5,
+      "LAW-078": 4,
+      "LAW-079": 3,
+      "LAW-080": 4,
+      "LAW-082": 9,
+      "LAW-083": 5,
+      "LAW-084": 5,
+      "LAW-086": 1,
+      "LAW-088": 1,
+      "LAW-089": 7,
+      "LAW-091": 3,
+      "LAW-092": 3,
+      "LAW-093": 3,
+      "LAW-101": 4,
+      "LAW-104": 7,
+      "LAW-105": 9,
+      "LAW-116": 1,
+      "LAW-132": 6,
+      "LAW-133": 11,
+      "LAW-145": 6,
+      "LAW-149": 6,
+      "LAW-152": 3,
+      "LAW-159": 4,
+      "LAW-168": 3,
+      "LAW-173": 3,
+      "LAW-174": 3,
+      "LAW-176": 3,
+      "LAW-178": 2,
+      "LAW-181": 1,
+      "LAW-186": 3,
+      "LAW-191": 4,
+      "LAW-202": 3,
+      "LAW-206": 3,
+      "LAW-211": 7,
+      "LAW-214": 3,
+      "LAW-221": 2,
+      "LAW-233": 3,
+      "LAW-235": 6,
+      "LAW-237": 3,
+      "LAW-241": 3,
+      "LAW-244": 7,
+      "LAW-254": 1,
+      "LOF-031": 9,
+      "LOF-032": 1,
+      "LOF-035": 6,
+      "LOF-039": 3,
+      "LOF-041": 7,
+      "LOF-044": 7,
+      "LOF-045": 7,
+      "LOF-046": 16,
+      "LOF-048": 6,
+      "LOF-052": 3,
+      "LOF-057": 4,
+      "LOF-059": 7,
+      "LOF-061": 9,
+      "LOF-067": 7,
+      "LOF-070": 14,
+      "LOF-077": 3,
+      "LOF-079": 9,
+      "LOF-091": 3,
+      "LOF-093": 7,
+      "LOF-094": 6,
+      "LOF-096": 10,
+      "LOF-100": 9,
+      "LOF-101": 5,
+      "LOF-109": 3,
+      "LOF-111": 3,
+      "LOF-118": 3,
+      "LOF-121": 5,
+      "LOF-129": 5,
+      "LOF-130": 1,
+      "LOF-131": 3,
+      "LOF-132": 3,
+      "LOF-138": 3,
+      "LOF-139": 3,
+      "LOF-140": 3,
+      "LOF-142": 1,
+      "LOF-146": 2,
+      "LOF-147": 1,
+      "LOF-148": 6,
+      "LOF-160": 6,
+      "LOF-179": 7,
+      "LOF-180": 1,
+      "LOF-182": 3,
+      "LOF-183": 2,
+      "LOF-186": 3,
+      "LOF-192": 4,
+      "LOF-199": 1,
+      "LOF-213": 4,
+      "LOF-231": 6,
+      "LOF-237": 2,
+      "LOF-261": 11,
+      "SEC-028": 6,
+      "SEC-033": 4,
+      "SEC-038": 15,
+      "SEC-039": 2,
+      "SEC-040": 2,
+      "SEC-048": 2,
+      "SEC-051": 3,
+      "SEC-075": 6,
+      "SEC-078": 3,
+      "SEC-080": 3,
+      "SEC-082": 4,
+      "SEC-083": 1,
+      "SEC-088": 3,
+      "SEC-090": 3,
+      "SEC-094": 16,
+      "SEC-098": 15,
+      "SEC-101": 13,
+      "SEC-104": 2,
+      "SEC-110": 6,
+      "SEC-119": 3,
+      "SEC-123": 2,
+      "SEC-127": 3,
+      "SEC-132": 4,
+      "SEC-136": 1,
+      "SEC-147": 1,
+      "SEC-148": 10,
+      "SEC-163": 6,
+      "SEC-164": 3,
+      "SEC-168": 4,
+      "SEC-171": 3,
+      "SEC-172": 3,
+      "SEC-176": 12,
+      "SEC-179": 11,
+      "SEC-180": 9,
+      "SEC-183": 4,
+      "SEC-188": 1,
+      "SEC-192": 2,
+      "SEC-193": 2,
+      "SEC-198": 1,
+      "SEC-204": 4,
+      "SEC-207": 2,
+      "SEC-211": 3,
+      "SEC-213": 3,
+      "SEC-215": 6,
+      "SEC-219": 3,
+      "SEC-233": 22,
+      "SEC-244": 1,
+      "SEC-260": 3,
+      "SHD-032": 2,
+      "SHD-084": 1,
+      "SHD-085": 2,
+      "SHD-090": 2,
+      "SHD-094": 2,
+      "SHD-115": 1,
+      "SHD-123": 1,
+      "SHD-129": 1,
+      "SHD-135": 1,
+      "SHD-148": 1,
+      "SHD-160": 1,
+      "SHD-164": 1,
+      "SHD-174": 2,
+      "SHD-188": 1,
+      "SHD-193": 1,
+      "SHD-194": 2,
+      "SHD-229": 1,
+      "SHD-262": 2,
+      "SOR-031": 1,
+      "SOR-041": 1,
+      "SOR-044": 1,
+      "SOR-045": 1,
+      "SOR-049": 1,
+      "SOR-087": 1,
+      "SOR-108": 1,
+      "SOR-119": 1,
+      "SOR-126": 2,
+      "SOR-132": 2,
+      "SOR-134": 2,
+      "SOR-139": 1,
+      "SOR-141": 1,
+      "SOR-142": 1,
+      "SOR-145": 1,
+      "SOR-149": 1,
+      "SOR-182": 1,
+      "SOR-193": 1,
+      "SOR-224": 2,
+      "TS26-21": 2,
+      "TS26-29": 1,
+      "TS26-40": 1,
+      "TS26-56": 2,
+      "TWI-131": 1,
+      "TWI-181": 1,
+      "TWI-193": 1,
+      "TWI-238": 1
+    },
+    "sideboard_counts": {
+      "JTL-041": 3,
+      "JTL-043": 1,
+      "JTL-078": 5,
+      "JTL-079": 1,
+      "JTL-103": 4,
+      "JTL-112": 7,
+      "JTL-121": 1,
+      "JTL-126": 3,
+      "JTL-143": 3,
+      "JTL-164": 9,
+      "JTL-176": 1,
+      "JTL-180": 1,
+      "JTL-181": 4,
+      "JTL-184": 1,
+      "JTL-207": 6,
+      "JTL-235": 2,
+      "LAW-044": 1,
+      "LAW-083": 2,
+      "LAW-085": 2,
+      "LAW-096": 2,
+      "LAW-117": 1,
+      "LAW-132": 1,
+      "LAW-149": 2,
+      "LAW-172": 3,
+      "LAW-191": 2,
+      "LAW-237": 4,
+      "LAW-246": 1,
+      "LOF-039": 1,
+      "LOF-041": 1,
+      "LOF-067": 1,
+      "LOF-069": 2,
+      "LOF-115": 2,
+      "LOF-140": 1,
+      "LOF-207": 1,
+      "SEC-037": 1,
+      "SEC-075": 1,
+      "SEC-078": 9,
+      "SEC-127": 1,
+      "SEC-163": 5,
+      "SEC-170": 2,
+      "SEC-180": 1,
+      "SEC-186": 1,
+      "SEC-192": 1
+    }
+  }
+}

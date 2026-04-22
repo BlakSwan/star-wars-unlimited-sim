@@ -12,9 +12,10 @@ from statistics import median
 from urllib.parse import parse_qs, urlparse
 
 from card_analysis import analyze_card_database
-from deck_loader import _load_card_cache, available_decks
-from effect_audit import audit_deck, format_deck_audit
-from effect_store import get_effect, load_effects, save_effect
+from competitive_decks import competitive_usage_counters, load_competitive_decks
+from deck_loader import _load_card_cache, available_decks, resolve_deck_path
+from effect_audit import _audit_card, audit_deck, format_deck_audit
+from effect_store import effect_key, get_effect, load_effects, save_effect
 from effect_training import (
     CONDITION_TYPES,
     DURATIONS,
@@ -30,6 +31,7 @@ from effect_training import (
     execution_status_for_record,
     get_effect_suggestion_provider,
     rules_text,
+    should_execute_record,
 )
 from simulator import SimulationResult, run_single_game
 from strategies import get_strategy, list_strategies
@@ -206,6 +208,7 @@ def page(title: str, body: str) -> bytes:
       <a href="/audit">Audit</a>
       <a href="/simulate">Simulate</a>
       <a href="/cards">Cards</a>
+      <a href="/queue">Training Queue</a>
       <a href="/train">Train Effects</a>
     </nav>
   </header>
@@ -587,6 +590,203 @@ def cards_page() -> bytes:
     return page("Cards", body)
 
 
+QUEUE_PATTERNS = [
+    "when played",
+    "on attack",
+    "when defeated",
+    "action",
+    "damage",
+    "draw",
+    "discard",
+    "exhaust",
+    "ready",
+    "defeat",
+    "upgrade",
+    "capture",
+    "search",
+    "shield",
+    "experience",
+    "heal",
+    "exploit",
+    "coordinate",
+    "smuggle",
+    "bounty",
+]
+
+
+def card_key_from_data(card: dict) -> str:
+    return effect_key(str(card.get("Set") or ""), str(card.get("Number") or ""))
+
+
+def card_training_status(card: dict, effects: dict) -> str:
+    record = effects.get(card_key_from_data(card))
+    if not record:
+        return "missing"
+    status = str(record.get("status") or "draft")
+    execution_status = str(record.get("execution_status") or "manual")
+    if should_execute_record(record):
+        return "approved/executable"
+    if status == "approved":
+        return f"approved/{execution_status}"
+    return status
+
+
+def card_patterns(card: dict) -> list[str]:
+    text = rules_text(card).lower()
+    return [pattern for pattern in QUEUE_PATTERNS if pattern in text]
+
+
+def deck_usage_counts() -> Counter:
+    counts: Counter = Counter()
+    for deck_name in available_decks():
+        deck_path = resolve_deck_path(deck_name)
+        data = json.loads(Path(deck_path).read_text(encoding="utf-8"))
+        leader = data.get("leader") or {}
+        if leader:
+            counts[effect_key(str(leader.get("set") or leader.get("Set") or ""), str(leader.get("number") or leader.get("Number") or ""))] += 1
+        for entry in data.get("cards", []):
+            key = effect_key(str(entry.get("set") or entry.get("Set") or ""), str(entry.get("number") or entry.get("Number") or ""))
+            counts[key] += int(entry.get("count") or 1)
+    return counts
+
+
+def queue_priority(
+    audit_status: str,
+    training_status: str,
+    deck_count: int,
+    competitive_main_count: int,
+    competitive_deck_count: int,
+    patterns: list[str],
+) -> tuple[int, int, int, int, int]:
+    status_score = {"unsupported": 3, "partial": 2}.get(audit_status, 1)
+    training_score = 2 if training_status == "missing" else 1
+    pattern_score = len(patterns)
+    return (competitive_deck_count, competitive_main_count, deck_count, status_score + training_score, pattern_score)
+
+
+def training_queue_items(scope: str, status_filter: str, limit: int) -> list[dict]:
+    index = _load_card_index()
+    effects = load_effects()
+    usage = deck_usage_counts()
+    competitive_usage = competitive_usage_counters()
+    competitive_main_counts = competitive_usage["main_counts"]
+    competitive_sideboard_counts = competitive_usage["sideboard_counts"]
+    competitive_deck_counts = competitive_usage["deck_counts"]
+    items = []
+
+    for card in index.values():
+        key = card_key_from_data(card)
+        deck_count = usage.get(key, 0)
+        competitive_main_count = competitive_main_counts.get(key, 0)
+        competitive_sideboard_count = competitive_sideboard_counts.get(key, 0)
+        competitive_deck_count = competitive_deck_counts.get(key, 0)
+        if scope == "decks" and deck_count == 0:
+            continue
+        if scope == "competitive" and competitive_deck_count == 0:
+            continue
+
+        audit = _audit_card(card, count=1, trained_effects=effects)
+        training_status = card_training_status(card, effects)
+        if status_filter != "all":
+            if status_filter == "needs_work" and audit.status == "supported":
+                continue
+            if status_filter in {"unsupported", "partial", "supported"} and audit.status != status_filter:
+                continue
+            if status_filter == "missing" and training_status != "missing":
+                continue
+
+        patterns = card_patterns(card)
+        if status_filter == "all" and audit.status == "supported" and training_status == "approved/executable":
+            continue
+
+        items.append({
+            "key": key,
+            "card": card,
+            "audit": audit,
+            "training_status": training_status,
+            "deck_count": deck_count,
+            "competitive_main_count": competitive_main_count,
+            "competitive_sideboard_count": competitive_sideboard_count,
+            "competitive_deck_count": competitive_deck_count,
+            "patterns": patterns,
+            "priority": queue_priority(
+                audit.status,
+                training_status,
+                deck_count,
+                competitive_main_count,
+                competitive_deck_count,
+                patterns,
+            ),
+        })
+
+    return sorted(items, key=lambda item: item["priority"], reverse=True)[:limit]
+
+
+def training_queue_page(query: dict[str, list[str]]) -> bytes:
+    scope = query.get("scope", ["all"])[0]
+    status_filter = query.get("status", ["needs_work"])[0]
+    limit = parse_positive_int(query.get("limit", ["100"])[0], 100, 500)
+    items = training_queue_items(scope, status_filter, limit)
+    competitive_data = load_competitive_decks()
+    competitive_note = (
+        f"{competitive_data.get('deck_count', 0)} SWUDB hot decks cached"
+        if competitive_data.get("deck_count")
+        else "No SWUDB hot deck cache yet. Run `python main.py --fetch-competitive-decks`."
+    )
+    rows = []
+    for item in items:
+        card = item["card"]
+        selected = f"{card.get('Set')}-{card.get('Number')}"
+        train_href = f"/train?card={esc(selected)}"
+        draft_href = f"/train/suggest?card={esc(selected)}"
+        rows.append(
+            "<tr>"
+            f"<td>{esc(card.get('Set'))} {esc(card.get('Number'))}</td>"
+            f"<td>{esc(card.get('Name'))}<br><span class='muted'>{esc(card.get('Type'))}</span></td>"
+            f"<td>{item['deck_count']}</td>"
+            f"<td>{item['competitive_main_count']}</td>"
+            f"<td>{item['competitive_deck_count']}</td>"
+            f"<td class='status-{esc(item['audit'].status)}'>{esc(item['audit'].status)}</td>"
+            f"<td>{esc(item['training_status'])}</td>"
+            f"<td>{esc(', '.join(item['patterns']) or 'none')}</td>"
+            f"<td>{esc('; '.join(item['audit'].reasons))}</td>"
+            f"<td><a class='button secondary' href='{train_href}'>Train</a> <a class='button' href='{draft_href}'>Draft</a></td>"
+            "</tr>"
+        )
+    queue_rows = "\n".join(rows) or "<tr><td colspan='10'>No cards match this queue filter.</td></tr>"
+    body = f"""
+<section><h2>Unsupported Card Training Queue</h2><p>Prioritize unsupported and partially supported cards, especially cards used by cached competitive decks.</p><p class="muted">{esc(competitive_note)}</p></section>
+<section class="card">
+  <form method="get" action="/queue">
+    <div class="inline-field">
+      <div>
+        <label>Scope</label>
+        <select name="scope">{options(["all", "competitive", "decks"], scope)}</select>
+      </div>
+      <div>
+        <label>Status</label>
+        <select name="status">{options(["needs_work", "unsupported", "partial", "missing", "all"], status_filter)}</select>
+      </div>
+      <div>
+        <label>Limit</label>
+        <input name="limit" type="number" min="1" max="500" value="{esc(limit)}">
+      </div>
+    </div>
+    <button type="submit">Refresh Queue</button>
+  </form>
+</section>
+<section>
+  <table>
+    <thead>
+      <tr><th>Card</th><th>Name</th><th>Bundled Copies</th><th>Hot Copies</th><th>Hot Decks</th><th>Audit</th><th>Training</th><th>Patterns</th><th>Reason</th><th>Actions</th></tr>
+    </thead>
+    <tbody>{queue_rows}</tbody>
+  </table>
+</section>
+"""
+    return page("Training Queue", body)
+
+
 def _load_card_index():
     return _load_card_cache(DEFAULT_GAMEPLAY_OUTPUT_PATH)
 
@@ -865,6 +1065,7 @@ class UIHandler(BaseHTTPRequestHandler):
             "/audit": lambda: audit_page(query),
             "/simulate": lambda: simulate_page(query),
             "/cards": lambda: cards_page(),
+            "/queue": lambda: training_queue_page(query),
             "/train": lambda: train_page(query),
             "/train/suggest": lambda: suggest_train_effect(query),
         }

@@ -26,6 +26,7 @@ python main.py --test
 | `python main.py --fetch-cards` | Download SWU DB card data |
 | `python main.py --filter-gameplay-cards` | Remove cosmetic card variants from fetched data |
 | `python main.py --ui` | Start the local browser UI |
+| `python main.py --fetch-competitive-decks` | Cache top hot SWUDB deck usage for training priority |
 
 ## Available Strategies
 
@@ -86,6 +87,12 @@ Analyze the full card database to prioritize rules work:
 python main.py --analyze-cards
 ```
 
+Fetch hot competitive deck usage from SWUDB:
+
+```bash
+python main.py --fetch-competitive-decks --competitive-limit 20
+```
+
 Start the local UI for non-coder workflows:
 
 ```bash
@@ -108,6 +115,9 @@ The UI includes:
   choices, plays, attacks, and passes. Detailed log mode is capped at 50 games
   to keep the browser responsive.
 - Full-card database coverage analysis
+- Unsupported-card training queue that ranks cards needing simulator support,
+  shows bundled deck usage, hot SWUDB deck usage, unsupported text patterns,
+  audit status, training status, and links directly to Train or Draft actions
 - Human-in-the-loop effect training with a guided form for common effects and
   an advanced JSON editor for complex cards. Effects saved with `approved`
   status are loaded and executed by the simulator.

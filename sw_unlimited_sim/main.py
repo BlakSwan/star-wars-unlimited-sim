@@ -5,6 +5,7 @@ import argparse
 import sys
 
 from card_analysis import analyze_card_database, format_card_analysis
+from competitive_decks import COMPETITIVE_DECKS_PATH, write_hot_competitive_decks
 from deck_loader import available_decks
 from effect_audit import audit_deck, format_deck_audit
 from simulator import (
@@ -72,6 +73,11 @@ Examples:
                         help="Input JSON for --filter-gameplay-cards")
     parser.add_argument("--analyze-cards", action="store_true",
                         help="Analyze card database mechanics and simulator support")
+    parser.add_argument("--fetch-competitive-decks", nargs="?", const=str(COMPETITIVE_DECKS_PATH),
+                        metavar="OUTPUT",
+                        help="Fetch hot SWUDB deck usage JSON for training queue priority")
+    parser.add_argument("--competitive-limit", type=int, default=20,
+                        help="Deck count for --fetch-competitive-decks")
     parser.add_argument("--ui", action="store_true",
                         help="Start the local web UI")
     parser.add_argument("--ui-port", type=int, default=8765,
@@ -102,6 +108,16 @@ Examples:
     if args.analyze_cards:
         analysis = analyze_card_database(DEFAULT_GAMEPLAY_OUTPUT_PATH)
         print(format_card_analysis(analysis))
+        return
+
+    if args.fetch_competitive_decks:
+        print(f"Fetching top {args.competitive_limit} hot SWUDB decks...")
+        data = write_hot_competitive_decks(args.fetch_competitive_decks, limit=args.competitive_limit)
+        print(f"Wrote {data['deck_count']} decks to {args.fetch_competitive_decks}")
+        if data["failed"]:
+            print("Failed decks:")
+            for deck_id, error in data["failed"].items():
+                print(f"  - {deck_id}: {error}")
         return
 
     if args.ui:
