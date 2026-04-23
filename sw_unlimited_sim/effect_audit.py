@@ -54,6 +54,11 @@ SUPPORTED_CARD_NAMES = {
 
 SUPPORTED_CARD_KEYS = {
     "JTL-096",  # Blue Leader
+    "JTL-101",  # Red Leader
+    "JTL-057",  # Astromech Pilot
+    "JTL-150",  # Biggs Darklighter
+    "JTL-197",  # Anakin Skywalker
+    "JTL-203",  # Han Solo
     "JTL-143",  # Devastator
     "LOF-046",  # Ezra Bridger
     "SEC-094",  # Mina Bonteri
@@ -71,6 +76,11 @@ class CardAudit:
     status: str
     reasons: list[str] = field(default_factory=list)
     text: str = ""
+    keywords: list[str] = field(default_factory=list)
+
+    @property
+    def has_piloting(self) -> bool:
+        return "Piloting" in self.keywords or "piloting" in self.text.lower()
 
 
 @dataclass
@@ -106,6 +116,24 @@ class DeckAudit:
     @property
     def partial_count(self) -> int:
         return self.counts_by_status["partial"]
+
+    @property
+    def piloting_cards(self) -> list[CardAudit]:
+        return [card for card in self.all_cards if card.has_piloting]
+
+    @property
+    def piloting_counts_by_status(self) -> Counter:
+        counts = Counter()
+        for card in self.piloting_cards:
+            counts[card.status] += card.count
+        return counts
+
+    @property
+    def piloting_unique_counts_by_status(self) -> Counter:
+        counts = Counter()
+        for card in self.piloting_cards:
+            counts[card.status] += 1
+        return counts
 
     @property
     def is_valid_tournament_shape(self) -> bool:
@@ -210,6 +238,7 @@ def _audit_card(card_data: dict[str, Any], count: int, trained_effects: dict[str
         status=status,
         reasons=reasons,
         text=text,
+        keywords=sorted(_keywords(card_data)),
     )
 
 
@@ -257,6 +286,8 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
     """Format a deck audit for CLI output."""
     counts = audit.counts_by_status
     unique_counts = audit.unique_counts_by_status
+    piloting_counts = audit.piloting_counts_by_status
+    piloting_unique_counts = audit.piloting_unique_counts_by_status
     total_cards = sum(card.count for card in audit.cards)
     lines = [
         f"Deck: {audit.deck_name}",
@@ -275,6 +306,18 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
             f"supported={unique_counts['supported']}, "
             f"partial={unique_counts['partial']}, "
             f"unsupported={unique_counts['unsupported']}"
+        ),
+        (
+            "Piloting support by copies: "
+            f"supported={piloting_counts['supported']}, "
+            f"partial={piloting_counts['partial']}, "
+            f"unsupported={piloting_counts['unsupported']}"
+        ),
+        (
+            "Piloting support by unique cards: "
+            f"supported={piloting_unique_counts['supported']}, "
+            f"partial={piloting_unique_counts['partial']}, "
+            f"unsupported={piloting_unique_counts['unsupported']}"
         ),
     ]
 
@@ -298,6 +341,16 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
             if card.text:
                 compact_text = " ".join(card.text.split())
                 lines.append(f"  Text: {compact_text}")
+
+    if audit.piloting_cards:
+        lines.append("")
+        lines.append("Piloting Support")
+        for card in audit.piloting_cards:
+            reason = "; ".join(card.reasons)
+            lines.append(
+                f"- {card.count}x {card.set_code} {card.number} {card.name} "
+                f"[{card.status}]: {reason}"
+            )
 
     add_section("Unsupported", "unsupported")
     add_section("Partially Supported", "partial")

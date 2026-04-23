@@ -4,8 +4,13 @@ from typing import Any, Optional, List, Tuple
 import random
 import re
 from effect_store import effect_key, load_effects
-from effect_training import should_execute_record
 from models import *
+import combat_engine
+import event_engine
+import leader_engine
+import play_engine
+import rules as game_rules
+import structured_effects as structured_runtime
 
 
 TOKEN_TEMPLATES = {
@@ -66,6 +71,10 @@ class GameState:
         self.verbose = verbose
         self.card_effects = load_effects()
         self.token_counter = 0
+        self.strategy_tuning = {
+            "han_pilot_attack_with_attached_unit": True,
+            "anakin_return_after_attached_attack": True,
+        }
 
     def _emit(self, message: str):
         """Print a message only for verbose runs."""
@@ -275,114 +284,28 @@ class GameState:
     
     def _play_card(self, player: Player, card_id: str) -> bool:
         """Play a card from hand"""
-        # Find card
-        card = None
-        for c in player.hand:
-            if c.id == card_id:
-                card = c
-                break
-        
-        effective_cost = self._effective_cost(player, card) if card else 0
-        if not card or not player.can_afford(effective_cost):
-            return False
-        
-        # Pay cost
-        player.pay_cost(effective_cost)
-        player.hand.remove(card)
-        
-        if isinstance(card, UnitCard):
-            played = self._play_unit(player, card)
-        elif isinstance(card, UpgradeCard):
-            played = self._play_upgrade(player, card)
-        elif isinstance(card, EventCard):
-            played = self._play_event(player, card)
-        else:
-            return False
-        
-        if played:
-            self._record_played_card(player, card)
-        return played
+        return play_engine.play_card(self, player, card_id)
     
     def _play_unit(self, player: Player, unit: UnitCard):
         """Play a unit card"""
-        # Determine arena if first unit
-        if player.ground_arena and not player.space_arena:
-            # First unit determines arena
-            pass  # Simplified - use unit's declared arena
-        
-        # Add to appropriate arena
-        if unit.arena == Arena.GROUND:
-            player.ground_arena.append(unit)
-        else:
-            player.space_arena.append(unit)
-        
-        player.units.append(unit)
-        unit.is_exhausted = True  # Units enter exhausted
-
-        if self._has_keyword(unit, "shielded"):
-            unit.shield_tokens += 1
-            self.log(f"Turn {self.turn_count}: {unit.name} gains a Shield token")
-            self._emit(f"  {unit.name} gains a Shield token")
-        
-        # Check for Ambush
-        if unit.has_ambush:
-            unit.is_exhausted = False  # Ready to attack immediately
-            self.log(f"Turn {self.turn_count}: Player {player.id} plays {unit.name} ready with Ambush")
-            self._emit(f"  Player {player.id} plays {unit.name} (cost {unit.cost}) - AMBUSH, ready to attack")
-        else:
-            self.log(f"Turn {self.turn_count}: Player {player.id} plays {unit.name} exhausted")
-            self._emit(f"  Player {player.id} plays {unit.name} (cost {unit.cost}) - enters exhausted")
-
-        self._resolve_when_played_unit(player, unit)
-        
-        return True
+        return play_engine.play_unit(self, player, unit)
     
     def _play_upgrade(self, player: Player, upgrade: UpgradeCard):
         """Play an upgrade card"""
-        # Find a unit to attach to (simplified - first unit in arena)
-        target = None
-        for unit in player.units:
-            target = unit
-            break
-        
-        if not target:
-            # No units - discard upgrade
-            player.discard_pile.append(upgrade)
-            self.log(f"Turn {self.turn_count}: Player {player.id} plays {upgrade.name} but has no unit - discarded")
-            return True
-        
-        self._attach_upgrade(upgrade, target)
-        
-        self.log(f"Turn {self.turn_count}: Player {player.id} plays {upgrade.name} on {target.name}")
-        self._resolve_when_played_upgrade(player, upgrade, target)
-        return True
+        return play_engine.play_upgrade(self, player, upgrade)
 
     def _attach_upgrade(self, upgrade: Card, target: UnitCard):
         """Attach an upgrade and apply its printed stat bonuses."""
-        upgrade.attached_to = target
-        upgrade.structured_power_bonus = 0
-        upgrade.structured_hp_bonus = 0
-        if not hasattr(target, "attached_upgrades"):
-            target.attached_upgrades = []
-        target.attached_upgrades.append(upgrade)
-        self._modify_unit_stats(target, self._printed_attached_power_bonus(upgrade), self._printed_attached_hp_bonus(upgrade))
-        if self._upgrade_grants_keyword(upgrade, "shielded"):
-            target.shield_tokens += 1
-            self.log(f"Turn {self.turn_count}: {upgrade.name} gives {target.name} a Shield token")
+        play_engine.attach_upgrade(self, upgrade, target)
 
     def _printed_attached_power_bonus(self, upgrade: Card) -> int:
-        if isinstance(upgrade, UpgradeCard):
-            return int(getattr(upgrade, "power_bonus", 0) or 0)
-        if getattr(upgrade, "played_as_pilot", False):
-            return int(getattr(upgrade, "power", 0) or 0)
-        return 0
+        return game_rules.printed_attached_power_bonus(self, upgrade)
 
     def _printed_attached_hp_bonus(self, upgrade: Card) -> int:
-        if isinstance(upgrade, UpgradeCard):
-            return int(getattr(upgrade, "hp_bonus", 0) or 0)
-        if getattr(upgrade, "played_as_pilot", False):
-            return int(getattr(upgrade, "hp", 0) or 0)
-        return 0
+        return game_rules.printed_attached_hp_bonus(self, upgrade)
+
+    def _conditional_attached_hp_bonus(self, upgrade: Card, target: Optional[UnitCard]) -> int:
+        return game_rules.conditional_attached_hp_bonus(self, upgrade, target)
 
     def _modify_unit_stats(self, unit: UnitCard, power_delta: int = 0, hp_delta: int = 0):
         unit.power += power_delta
@@ -396,74 +319,34 @@ class GameState:
             unit.damage = max(0, unit.hp - unit.current_hp)
 
     def _upgrade_total_power_bonus(self, upgrade: UpgradeCard) -> int:
-        return self._printed_attached_power_bonus(upgrade) + int(getattr(upgrade, "structured_power_bonus", 0) or 0)
+        return game_rules.upgrade_total_power_bonus(self, upgrade)
 
     def _upgrade_total_hp_bonus(self, upgrade: UpgradeCard) -> int:
-        return self._printed_attached_hp_bonus(upgrade) + int(getattr(upgrade, "structured_hp_bonus", 0) or 0)
+        return game_rules.upgrade_total_hp_bonus(self, upgrade)
 
     def _discard_attached_upgrades(self, owner: Player, unit: UnitCard):
-        attached = list(getattr(unit, "attached_upgrades", []) or [])
-        for upgrade in attached:
-            self._modify_unit_stats(unit, -self._upgrade_total_power_bonus(upgrade), -self._upgrade_total_hp_bonus(upgrade))
-            upgrade.attached_to = None
-            upgrade.played_as_pilot = False
-            upgrade.structured_power_bonus = 0
-            upgrade.structured_hp_bonus = 0
-            owner.discard_pile.append(upgrade)
-            self.log(f"Turn {self.turn_count}: {upgrade.name} is discarded from {unit.name}")
-        unit.attached_upgrades = []
+        play_engine.discard_attached_upgrades(self, owner, unit)
+
+    def _detach_upgrade_to_hand(self, owner: Player, unit: UnitCard, upgrade: Card, source_name: str) -> bool:
+        return play_engine.detach_upgrade_to_hand(self, owner, unit, upgrade, source_name)
 
     def _piloting_cost(self, card: Card) -> Optional[int]:
-        if "Piloting" not in (getattr(card, "abilities", []) or []) and not self._has_keyword(card, "piloting"):
-            return None
-        match = re.search(r"piloting\s+\[C=(\d+)", self._text(card), flags=re.IGNORECASE)
-        return int(match.group(1)) if match else None
+        return game_rules.piloting_cost(self, card)
 
     def _unit_has_pilot(self, unit: UnitCard) -> bool:
-        for upgrade in getattr(unit, "attached_upgrades", []) or []:
-            if getattr(upgrade, "played_as_pilot", False) or self._has_trait(upgrade, "PILOT"):
-                return True
-        return False
+        return play_engine.unit_has_pilot(self, unit)
 
     def _eligible_pilot_targets(self, player: Player) -> list[UnitCard]:
-        return [
-            unit for unit in player.units
-            if self._has_trait(unit, "VEHICLE") and not self._unit_has_pilot(unit)
-        ]
+        return play_engine.eligible_pilot_targets(self, player)
 
     def _choose_pilot_target(self, player: Player) -> Optional[UnitCard]:
-        targets = self._eligible_pilot_targets(player)
-        if not targets:
-            return None
-        return max(targets, key=lambda unit: (unit.power + unit.current_hp, unit.power))
+        return play_engine.choose_pilot_target(self, player)
 
     def _can_play_as_pilot(self, player: Player, card: Card) -> bool:
-        if not isinstance(card, UnitCard) or isinstance(card, LeaderCard):
-            return False
-        cost = self._piloting_cost(card)
-        return cost is not None and player.can_afford(cost) and bool(self._eligible_pilot_targets(player))
+        return play_engine.can_play_as_pilot(self, player, card)
 
     def _play_card_as_pilot(self, player: Player, card_id: str) -> bool:
-        card = next((candidate for candidate in player.hand if candidate.id == card_id), None)
-        if not card or not self._can_play_as_pilot(player, card):
-            return False
-
-        target = self._choose_pilot_target(player)
-        cost = self._piloting_cost(card)
-        if target is None or cost is None or not player.pay_cost(cost):
-            return False
-
-        player.hand.remove(card)
-        card.played_as_pilot = True
-        card.is_exhausted = False
-        card.damage = 0
-        card.current_hp = getattr(card, "hp", 0)
-        self._attach_upgrade(card, target)
-        self.log(f"Turn {self.turn_count}: Player {player.id} plays {card.name} as a Pilot on {target.name}")
-        self._resolve_structured_effects(player, card, "when_played_as_upgrade", defender=target)
-        self._resolve_structured_effects(player, card, "when_played", defender=target)
-        self._record_played_card(player, card)
-        return True
+        return play_engine.play_card_as_pilot(self, player, card_id)
     
     def _play_event(self, player: Player, event: EventCard):
         """Play an event card"""
@@ -474,244 +357,67 @@ class GameState:
     
     def _attack(self, player: Player, unit_id: str, target: str) -> bool:
         """Execute an attack"""
-        # Find attacker
-        attacker = None
-        for unit in player.units:
-            if unit.id == unit_id:
-                attacker = unit
-                break
-        
-        if not attacker or getattr(attacker, 'is_exhausted', False):
-            return False
-        
-        enemy = self._get_enemy(player)
-        
-        if target == "base":
-            # Attack base
-            self._resolve_on_attack(player, attacker, None)
-            damage = self._attack_power(player, attacker, None)
-            enemy.base.take_damage(damage)
-            attacker.is_exhausted = True
-            attacker.attacked_this_phase = True
-            self._resolve_base_combat_damage(player, attacker, damage)
-            self.log(
-                f"Turn {self.turn_count}: Player {player.id}'s {attacker.name} attacks Player {enemy.id}'s base "
-                f"for {damage} damage; base HP {enemy.base.current_hp}/25"
-            )
-            self._emit(f"  Player {player.id}'s {attacker.name} attacks BASE for {damage} damage")
-            self._emit(f"     Base HP: {enemy.base.current_hp}/25")
-            
-        else:
-            # Attack enemy unit
-            defender = None
-            for unit in enemy.units:
-                if unit.id == target:
-                    defender = unit
-                    break
-            
-            if not defender:
-                return False
-
-            if not self._can_attack_unit(player, attacker, defender):
-                return False
-            
-            # Simultaneous damage
-            defender_hp_before_damage = defender.current_hp
-            self._resolve_on_attack(player, attacker, defender)
-            if attacker not in player.units:
-                return True
-            if defender not in enemy.units:
-                attacker.is_exhausted = True
-                attacker.attacked_this_phase = True
-                return True
-            attack_damage = self._attack_power(player, attacker, defender)
-            defender_damage = defender.power
-            attacker.take_damage(defender_damage)
-            defender.take_damage(attack_damage)
-            attacker.is_exhausted = True
-            attacker.attacked_this_phase = True
-            self.log(
-                f"Turn {self.turn_count}: Player {player.id}'s {attacker.name} attacks {defender.name}; "
-                f"{attacker.name} takes {defender_damage}, {defender.name} takes {attack_damage}"
-            )
-            
-            self._emit(f"  {attacker.name} ({attack_damage} power) attacks {defender.name} ({defender.power} power)")
-            self._emit(f"     Simultaneous damage: both take {defender_damage}/{attack_damage}")
-
-            if defender.is_defeated() and self._has_overwhelm(player, attacker, defender):
-                excess = max(0, attack_damage - defender_hp_before_damage)
-                if excess:
-                    enemy.base.take_damage(excess)
-                    self.log(f"Turn {self.turn_count}: Overwhelm deals {excess} excess damage to Player {enemy.id}'s base")
-                    self._emit(f"     Overwhelm deals {excess} excess damage to base")
-            
-            # Remove defeated units
-            if attacker.is_defeated() and attacker in player.units:
-                self._remove_unit(player, attacker)
-                self._emit(f"     {attacker.name} was defeated")
-            if defender.is_defeated() and defender in enemy.units:
-                self._remove_unit(enemy, defender)
-                self._emit(f"     {defender.name} was defeated")
-        
-        return True
+        return combat_engine.attack(self, player, unit_id, target)
     
     def _remove_unit(self, player: Player, unit: UnitCard):
         """Remove defeated unit"""
-        enemy = self._get_enemy(player)
-        self._resolve_when_defeated(player, unit, enemy)
-        self._discard_attached_upgrades(player, unit)
-        player.units.remove(unit)
-        if unit in player.ground_arena:
-            player.ground_arena.remove(unit)
-        if unit in player.space_arena:
-            player.space_arena.remove(unit)
-
-        if unit is player.leader:
-            player.leader.is_deployed = False
-            player.leader.is_exhausted = False
-            if hasattr(player.leader, "heal"):
-                player.leader.heal()
-            self.log(f"Turn {self.turn_count}: {unit.name} was defeated and returned to leader side")
-            return
-
-        if getattr(unit, "is_token", False):
-            self.log(f"Turn {self.turn_count}: {unit.name} token was defeated and removed from the game")
-            return
-
-        player.discard_pile.append(unit)
-        self.log(f"Turn {self.turn_count}: {unit.name} was defeated")
+        combat_engine.remove_unit(self, player, unit)
 
     def _return_unit_to_hand(self, owner: Player, unit: UnitCard, source_name: str):
-        if unit not in owner.units:
-            return
-        self._discard_attached_upgrades(owner, unit)
-        owner.units.remove(unit)
-        if unit in owner.ground_arena:
-            owner.ground_arena.remove(unit)
-        if unit in owner.space_arena:
-            owner.space_arena.remove(unit)
-        unit.damage = 0
-        unit.current_hp = unit.hp
-        unit.is_exhausted = False
-        unit.attacked_this_phase = False
-        unit.abilities_lost_until_ready = False
-        if getattr(unit, "is_token", False):
-            self.log(f"Turn {self.turn_count}: {source_name} removes {unit.name} token from the game")
-            return
-        owner.hand.append(unit)
-        self.log(f"Turn {self.turn_count}: {source_name} returns {unit.name} to Player {owner.id}'s hand")
+        combat_engine.return_unit_to_hand(self, owner, unit, source_name)
 
     # ==================== CARD TEXT / KEYWORDS ====================
 
     def _text(self, card: Card) -> str:
-        pieces = []
-        if isinstance(card, EventCard):
-            pieces.append(card.effect)
-        pieces.extend(getattr(card, "abilities", []) or [])
-        if isinstance(card, LeaderCard):
-            pieces.append(card.action_effect)
-            pieces.append(card.epic_action_effect)
-        return "\n".join(piece for piece in pieces if piece).lower()
+        return game_rules.text(self, card)
 
     def _attached_upgrade_texts(self, unit: UnitCard) -> list[str]:
         return [self._text(upgrade) for upgrade in getattr(unit, "attached_upgrades", []) or []]
 
     def _effective_cost(self, player: Player, card: Card) -> int:
-        if card.name == "Force Choke" and self._friendly_force_unit(player):
-            return max(0, card.cost - 1)
-        return card.cost
+        return game_rules.effective_cost(self, player, card)
+
+    def _friendly_pilot_count(self, player: Player) -> int:
+        return game_rules.friendly_pilot_count(self, player)
 
     def _has_trait(self, card: Card, trait: str) -> bool:
-        return trait.upper() in {str(value).upper() for value in getattr(card, "traits", [])}
+        return game_rules.has_trait(self, card, trait)
 
     def _has_aspect(self, card: Card, aspect: str) -> bool:
-        return aspect.upper() in {str(value).upper() for value in getattr(card, "aspects", [])}
+        return game_rules.has_aspect(self, card, aspect)
 
     def _is_card(self, card: Card, set_code: str, number: str) -> bool:
-        return self._card_effect_key(card) == effect_key(set_code, number)
+        return game_rules.is_card(self, card, set_code, number)
 
     def _has_keyword(self, unit: UnitCard, keyword: str) -> bool:
-        if getattr(unit, "abilities_lost_until_ready", False):
-            return False
-        keyword = keyword.lower()
-        if keyword in self._text(unit):
-            return True
-        return any(self._upgrade_grants_keyword(upgrade, keyword) for upgrade in getattr(unit, "attached_upgrades", []) or [])
+        return game_rules.has_keyword(self, unit, keyword)
 
     def _upgrade_grants_keyword(self, upgrade: Card, keyword: str) -> bool:
-        keyword = keyword.lower()
-        text = self._text(upgrade)
-        attached_patterns = [
-            f"attached unit gains {keyword}",
-            f"attached unit gains: {keyword}",
-            f"attached unit gains {keyword.capitalize()}".lower(),
-        ]
-        return any(pattern in text for pattern in attached_patterns)
+        return game_rules.upgrade_grants_keyword(self, upgrade, keyword)
 
     def _raid_bonus(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> int:
-        if getattr(attacker, "abilities_lost_until_ready", False):
-            return 0
-
-        text = self._text(attacker)
-        bonus = 0
-
-        if "raid 2" in text:
-            bonus += 2
-        elif "raid 1" in text:
-            bonus += 1
-
-        if attacker.name == "Partisan Insurgent":
-            if any(unit is not attacker and self._has_aspect(unit, "Aggression") for unit in player.units):
-                bonus += 2
-
-        if attacker.name == "Fifth Brother":
-            bonus += attacker.damage
-
-        for unit in player.units:
-            if unit is attacker or getattr(unit, "abilities_lost_until_ready", False):
-                continue
-            if unit.name == "Red Three" and self._has_aspect(attacker, "Heroism"):
-                bonus += 1
-
-        if attacker.name == "First Legion Snowtrooper" and defender and defender.damage > 0:
-            bonus += 2
-
-        return bonus
+        return game_rules.raid_bonus(self, player, attacker, defender)
 
     def _attack_power(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> int:
-        grit_bonus = attacker.damage if self._has_keyword(attacker, "grit") else 0
-        return attacker.power + self._raid_bonus(player, attacker, defender) + grit_bonus
+        return game_rules.attack_power(self, player, attacker, defender)
 
     def _has_overwhelm(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> bool:
-        if getattr(attacker, "abilities_lost_until_ready", False):
-            return False
-        if "overwhelm" in self._text(attacker):
-            if attacker.name == "First Legion Snowtrooper":
-                return bool(defender and defender.damage > 0)
-            return True
-        return False
+        return game_rules.has_overwhelm(self, player, attacker, defender)
 
     def _sentinel_units(self, player: Player, arena: Arena) -> List[UnitCard]:
-        return [
-            unit for unit in self._get_enemy_units(player, arena)
-            if self._has_keyword(unit, "sentinel")
-        ]
+        return game_rules.sentinel_units(self, player, arena)
 
     def _can_ignore_sentinel(self, attacker: UnitCard) -> bool:
-        return self._has_keyword(attacker, "saboteur")
+        return game_rules.can_ignore_sentinel(self, attacker)
 
     def _attackable_enemy_units(self, player: Player, attacker: UnitCard) -> List[UnitCard]:
-        enemy_units = self._get_enemy_units(player, attacker.arena)
-        sentinels = self._sentinel_units(player, attacker.arena)
-        if sentinels and not self._can_ignore_sentinel(attacker):
-            return sentinels
-        return enemy_units
+        return game_rules.attackable_enemy_units(self, player, attacker)
 
     def _can_attack_unit(self, player: Player, attacker: UnitCard, defender: UnitCard) -> bool:
-        return defender in self._attackable_enemy_units(player, attacker)
+        return game_rules.can_attack_unit(self, player, attacker, defender)
 
     def _can_attack_base(self, player: Player, attacker: UnitCard) -> bool:
-        return not self._sentinel_units(player, attacker.arena) or self._can_ignore_sentinel(attacker)
+        return game_rules.can_attack_base(self, player, attacker)
 
     def _record_played_card(self, player: Player, card: Card):
         if not hasattr(player, "played_aspects_this_phase"):
@@ -780,98 +486,32 @@ class GameState:
                 self._damage_unit(enemy, enemy.ground_arena[0], 4)
                 self._emit("  Vader's Lightsaber deals 4 damage to a ground unit")
 
+    def _resolve_when_pilot_attached(self, player: Player, pilot: UnitCard, target: UnitCard):
+        combat_engine.resolve_when_pilot_attached(self, player, pilot, target)
+
+    def _resolve_after_attack_completed(self, player: Player, attacker: UnitCard):
+        combat_engine.resolve_after_attack_completed(self, player, attacker)
+
     def _resolve_on_attack(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]):
-        enemy = self._get_enemy(player)
-
-        if getattr(attacker, "abilities_lost_until_ready", False):
-            return
-
-        self._resolve_structured_effects(player, attacker, "on_attack", defender=defender)
-
-        if attacker.name == "Sabine Wren":
-            if defender:
-                self._damage_unit(enemy, defender, 1)
-            else:
-                enemy.base.take_damage(1)
-            self._emit("  Sabine Wren deals 1 on-attack damage")
-
-        if attacker.name == "Fifth Brother":
-            self._damage_unit(player, attacker, 1)
-            targets = [unit for unit in enemy.ground_arena if unit is not defender]
-            if targets:
-                self._damage_unit(enemy, targets[0], 1)
-            self._emit("  Fifth Brother deals 1 damage to himself on attack")
-
-        if self._is_card(attacker, "LOF", "046"):
-            targets = [
-                unit for unit in player.units
-                if unit is not attacker and (self._has_trait(unit, "CREATURE") or self._has_trait(unit, "SPECTRE"))
-            ]
-            if targets:
-                target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
-                target.experience_tokens += 1
-                target.power += 1
-                target.hp += 1
-                target.current_hp += 1
-                self.log(f"Turn {self.turn_count}: Ezra Bridger gives an Experience token to {target.name}")
-
-        restore_amount = self._restore_amount(attacker)
-        if restore_amount:
-            before = player.base.current_hp
-            player.base.current_hp = min(player.base.hp, player.base.current_hp + restore_amount)
-            healed = player.base.current_hp - before
-            self.log(f"Turn {self.turn_count}: {attacker.name} restores {healed} damage from Player {player.id}'s base")
-            self._emit(f"  {attacker.name} restores {restore_amount} base HP")
+        combat_engine.resolve_on_attack(self, player, attacker, defender)
 
     def _resolve_base_combat_damage(self, player: Player, attacker: UnitCard, damage: int):
-        enemy = self._get_enemy(player)
-
-        if getattr(attacker, "abilities_lost_until_ready", False):
-            return
-
-        if attacker.name == "Seventh Sister" and enemy.ground_arena:
-            self._damage_unit(enemy, enemy.ground_arena[0], 3)
-            self._emit("  Seventh Sister deals 3 damage to a ground unit")
+        combat_engine.resolve_base_combat_damage(self, player, attacker, damage)
 
     def _resolve_when_defeated(self, owner: Player, unit: UnitCard, enemy: Player):
-        if getattr(unit, "abilities_lost_until_ready", False):
-            return
-        self._resolve_structured_effects(owner, unit, "when_defeated")
-        if unit.name == "K-2SO":
-            enemy.base.take_damage(3)
-            self.log(f"Turn {self.turn_count}: K-2SO deals 3 damage to Player {enemy.id}'s base when defeated")
-            self._emit("  K-2SO deals 3 damage to enemy base when defeated")
-
-        if self._is_card(unit, "SEC", "094") and self._can_disclose_aspects(owner, ["COMMAND", "COMMAND", "HEROISM"]):
-            self._draw_cards(owner, 1, "Mina Bonteri")
+        combat_engine.resolve_when_defeated(self, owner, unit, enemy)
 
     def _restore_amount(self, unit: UnitCard) -> int:
-        if getattr(unit, "abilities_lost_until_ready", False):
-            return 0
-        text = self._text(unit)
-        if "restore" not in text:
-            return 0
-        import re
-        match = re.search(r"restore\\s+(\\d+)", text)
-        return int(match.group(1)) if match else 0
+        return game_rules.restore_amount(self, unit)
 
     def _damage_unit(self, owner: Player, unit: UnitCard, amount: int):
-        actual = unit.take_damage(amount)
-        self.log(
-            f"Turn {self.turn_count}: {unit.name} takes {actual} damage "
-            f"({unit.current_hp}/{unit.hp} HP remaining)"
-        )
-        if unit.is_defeated() and unit in owner.units:
-            self._remove_unit(owner, unit)
+        combat_engine.damage_unit(self, owner, unit, amount)
 
     def _card_effect_record(self, card: Card) -> Optional[dict[str, Any]]:
-        key = self._card_effect_key(card)
-        if not key:
-            return None
-        record = self.card_effects.get(key)
-        if not record or not should_execute_record(record):
-            return None
-        return record
+        return structured_runtime.card_effect_record(self, card)
+
+    def _has_approved_structured_trigger(self, card: Card, trigger: str) -> bool:
+        return structured_runtime.has_approved_structured_trigger(self, card, trigger)
 
     def _resolve_structured_effects(
         self,
@@ -880,70 +520,16 @@ class GameState:
         trigger: str,
         defender: Optional[UnitCard] = None,
     ):
-        record = self._card_effect_record(source)
-        if not record:
-            return
-
-        for trigger_record in record.get("triggers", []):
-            if trigger_record.get("event") != trigger:
-                continue
-            if trigger_record.get("conditions"):
-                self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported conditions")
-                continue
-            for step in trigger_record.get("steps", []):
-                if not self._can_execute_structured_step(source, step):
-                    continue
-                self._apply_structured_step(player, source, step, defender)
+        structured_runtime.resolve_structured_effects(self, player, source, trigger, defender)
 
     def _can_execute_structured_step(self, source: Card, step: dict[str, Any]) -> bool:
-        target = step.get("target") or {}
-        if target.get("filter"):
-            self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported target filter")
-            return False
-        duration = step.get("duration")
-        if step.get("type") == "modify_stats" and duration == "while_attached" and isinstance(source, UpgradeCard):
-            pass
-        elif duration not in (None, "", "instant"):
-            self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect with unsupported duration")
-            return False
-        if step.get("optional") or step.get("choice_group"):
-            self.log(f"Turn {self.turn_count}: {source.name} skipped trained effect that needs a choice")
-            return False
-        return True
+        return structured_runtime.can_execute_structured_step(self, source, step)
 
     def _target_player(self, player: Player, target_spec: dict[str, Any]) -> Player:
-        controller = str(target_spec.get("controller") or "self").lower()
-        if controller in {"enemy", "opponent"}:
-            return self._get_enemy(player)
-        return player
+        return structured_runtime.target_player(self, player, target_spec)
 
     def _target_unit(self, player: Player, target_spec: dict[str, Any], defender: Optional[UnitCard] = None) -> tuple[Optional[Player], Optional[UnitCard]]:
-        controller = str(target_spec.get("controller") or "enemy").lower()
-        if controller == "self":
-            candidates = player.units
-            owner = player
-        elif controller == "friendly":
-            candidates = player.units
-            owner = player
-        elif controller == "any":
-            enemy = self._get_enemy(player)
-            candidates = enemy.units + player.units
-            owner = enemy if candidates and candidates[0] in enemy.units else player
-        else:
-            owner = self._get_enemy(player)
-            candidates = owner.units
-
-        if defender and defender in candidates:
-            return owner, defender
-        if not candidates:
-            return None, None
-        if controller in {"friendly", "self"}:
-            unit = self._choose_friendly_unit(player, damaged=True) or self._choose_friendly_unit(player)
-            return player, unit
-        unit = min(candidates, key=lambda candidate: (candidate.current_hp, -candidate.power))
-        if controller == "any" and unit in player.units:
-            owner = player
-        return owner, unit
+        return structured_runtime.target_unit(self, player, target_spec, defender)
 
     def _damage_base(self, player: Player, amount: int, source_name: str):
         before = player.base.current_hp
@@ -983,84 +569,7 @@ class GameState:
         step: dict[str, Any],
         defender: Optional[UnitCard] = None,
     ):
-        effect_type = str(step.get("type") or "").lower()
-        target_spec = step.get("target") or {}
-        amount = int(step.get("amount") or 1)
-        target_type = str(target_spec.get("type") or "unit").lower()
-        source_name = source.name
-
-        if effect_type == "draw_cards":
-            target_player = self._target_player(player, target_spec)
-            self._draw_cards(target_player, amount, source_name)
-            return
-
-        if effect_type == "discard_cards":
-            target_player = self._target_player(player, target_spec)
-            self._discard_cards(target_player, amount, source_name)
-            return
-
-        if effect_type == "create_token":
-            target_player = self._target_player(player, target_spec)
-            self._create_tokens(
-                target_player,
-                str(step.get("token_name") or "Battle Droid"),
-                amount,
-                source_name,
-                ready=self._step_bool(step.get("ready", False)),
-            )
-            return
-
-        if target_type in {"base", "player"}:
-            target_player = self._target_player(player, target_spec)
-            if effect_type == "deal_damage":
-                self._damage_base(target_player, amount, source_name)
-            elif effect_type == "heal_damage":
-                self._heal_base(target_player, amount, source_name)
-            else:
-                self.log(f"Turn {self.turn_count}: {source_name} skipped unsupported base effect {effect_type}")
-            return
-
-        owner, unit = self._target_unit(player, target_spec, defender)
-        if not owner or not unit:
-            self.log(f"Turn {self.turn_count}: {source_name} found no target for {effect_type}")
-            return
-
-        if effect_type == "deal_damage":
-            self._damage_unit(owner, unit, amount)
-        elif effect_type == "heal_damage":
-            before = unit.current_hp
-            unit.heal(amount)
-            self.log(f"Turn {self.turn_count}: {source_name} heals {unit.current_hp - before} damage from {unit.name}")
-        elif effect_type == "exhaust_unit":
-            unit.is_exhausted = True
-            self.log(f"Turn {self.turn_count}: {source_name} exhausts {unit.name}")
-        elif effect_type == "ready_unit":
-            unit.is_exhausted = False
-            self.log(f"Turn {self.turn_count}: {source_name} readies {unit.name}")
-        elif effect_type == "defeat_unit":
-            self._remove_unit(owner, unit)
-            self.log(f"Turn {self.turn_count}: {source_name} defeats {unit.name}")
-        elif effect_type == "give_shield":
-            unit.shield_tokens += amount
-            self.log(f"Turn {self.turn_count}: {source_name} gives {amount} Shield token(s) to {unit.name}")
-        elif effect_type == "give_experience":
-            unit.experience_tokens += amount
-            self._modify_unit_stats(unit, amount, amount)
-            self.log(f"Turn {self.turn_count}: {source_name} gives {amount} Experience token(s) to {unit.name}")
-        elif effect_type == "modify_stats":
-            power_delta, hp_delta = self._structured_stat_deltas(step)
-            if not power_delta and not hp_delta:
-                self.log(f"Turn {self.turn_count}: {source_name} skipped empty stat modifier")
-                return
-            self._modify_unit_stats(unit, power_delta, hp_delta)
-            if isinstance(source, UpgradeCard) and step.get("duration") == "while_attached":
-                source.structured_power_bonus = int(getattr(source, "structured_power_bonus", 0) or 0) + power_delta
-                source.structured_hp_bonus = int(getattr(source, "structured_hp_bonus", 0) or 0) + hp_delta
-            self.log(f"Turn {self.turn_count}: {source_name} modifies {unit.name} by {power_delta:+}/{hp_delta:+}")
-        elif effect_type == "capture_unit":
-            self.log(f"Turn {self.turn_count}: {source_name} skipped capture effect; capture zones are not modeled yet")
-        else:
-            self.log(f"Turn {self.turn_count}: {source_name} skipped unknown structured effect {effect_type}")
+        structured_runtime.apply_structured_step(self, player, source, step, defender)
 
     def _create_tokens(self, player: Player, token_name: str, amount: int, source_name: str, ready: bool = False) -> list[UnitCard]:
         template = self._token_template(token_name)
@@ -1105,13 +614,12 @@ class GameState:
             return value.strip().lower() in {"1", "true", "yes", "y"}
         return bool(value)
 
+    def _strategy_setting(self, name: str, default: Any = None) -> Any:
+        settings = getattr(self, "strategy_tuning", {}) or {}
+        return settings.get(name, default)
+
     def _structured_stat_deltas(self, step: dict[str, Any]) -> tuple[int, int]:
-        if "power" in step or "hp" in step:
-            return int(step.get("power") or 0), int(step.get("hp") or 0)
-        if "power_bonus" in step or "hp_bonus" in step:
-            return int(step.get("power_bonus") or 0), int(step.get("hp_bonus") or 0)
-        amount = int(step.get("amount") or 0)
-        return amount, amount
+        return structured_runtime.structured_stat_deltas(step)
 
     def _friendly_force_unit(self, player: Player) -> Optional[UnitCard]:
         for unit in player.units:
@@ -1131,6 +639,18 @@ class GameState:
         if not units:
             return None
         return min(units, key=lambda unit: (unit.current_hp, -unit.power))
+
+    def _choose_damaged_unit(self, player: Player) -> Optional[tuple[Player, UnitCard]]:
+        enemy = self._get_enemy(player)
+        candidates = [
+            (owner, unit)
+            for owner in (player, enemy)
+            for unit in owner.units
+            if getattr(unit, "damage", 0) > 0
+        ]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda entry: (entry[1].damage, entry[1].power, entry[0].id == player.id))
 
     def _choose_friendly_unit(self, player: Player, *, damaged: bool = False, trait: Optional[str] = None) -> Optional[UnitCard]:
         units = player.units
@@ -1157,244 +677,36 @@ class GameState:
             unit.power -= power_bonus
 
     def _resolve_event(self, player: Player, event: EventCard):
-        enemy = self._get_enemy(player)
-        self._resolve_structured_effects(player, event, "when_played")
-
-        if event.name == "Heroic Sacrifice":
-            self._draw_cards(player, 1, "Heroic Sacrifice")
-            unit = self._choose_friendly_unit(player)
-            if unit:
-                defeated = self._attack_with_unit(player, unit, power_bonus=2)
-                if defeated and unit in player.units:
-                    self._remove_unit(player, unit)
-            return
-
-        if event.name == "Karabast":
-            friendly = self._choose_friendly_unit(player, damaged=True) or self._choose_friendly_unit(player)
-            target = self._choose_enemy_unit(player)
-            if friendly and target:
-                self._damage_unit(enemy, target, friendly.damage + 1)
-            return
-
-        if event.name == "Rebel Assault":
-            rebels = [unit for unit in player.units if self._has_trait(unit, "REBEL") and not getattr(unit, "is_exhausted", False)]
-            for unit in rebels[:2]:
-                self._attack_with_unit(player, unit, power_bonus=1)
-            return
-
-        if event.name == "Medal Ceremony":
-            rebels = [
-                unit for unit in player.units
-                if self._has_trait(unit, "REBEL") and getattr(unit, "attacked_this_phase", False)
-            ]
-            for unit in rebels[:3]:
-                unit.experience_tokens += 1
-                unit.power += 1
-                unit.hp += 1
-                unit.current_hp += 1
-            return
-
-        if event.name == "Force Choke":
-            target = self._choose_enemy_unit(player, non_vehicle=True)
-            if target:
-                self._damage_unit(enemy, target, 5)
-                self._draw_cards(enemy, 1, "Force Choke")
-            return
-
-        if event.name == "Force Lightning":
-            target = self._choose_enemy_unit(player)
-            if target:
-                target.abilities_lost_until_ready = True
-                resources = len(player.get_ready_resources())
-                if self._friendly_force_unit(player) and resources:
-                    player.pay_cost(resources)
-                    self._damage_unit(enemy, target, 2 * resources)
-            return
-
-        if self._is_card(event, "SEC", "233"):
-            targets = [unit for unit in enemy.units if not isinstance(unit, LeaderCard) and unit.cost <= 6]
-            if targets:
-                target = max(targets, key=lambda unit: (unit.cost, unit.power + unit.hp))
-                self._return_unit_to_hand(enemy, target, "Beguile")
-            return
+        event_engine.resolve_event(self, player, event)
 
     def _unit_action_has_target(self, player: Player, unit: UnitCard) -> bool:
-        if getattr(unit, "abilities_lost_until_ready", False):
-            return False
-        record = self._card_effect_record(unit)
-        if record and any(trigger.get("event") == "action" for trigger in record.get("triggers", [])):
-            return True
-        if unit.name == "Admiral Ozzel":
-            return any(
-                self._has_trait(card, "IMPERIAL") and isinstance(card, UnitCard) and player.can_afford(card.cost)
-                for card in player.hand
-            )
-        return False
+        return leader_engine.unit_action_has_target(self, player, unit)
 
     def _use_unit_action(self, player: Player, unit_id: str) -> bool:
-        unit = next((candidate for candidate in player.units if candidate.id == unit_id), None)
-        if not unit or getattr(unit, "is_exhausted", False):
-            return False
-        if not self._unit_action_has_target(player, unit):
-            return False
-
-        if unit.name == "Admiral Ozzel":
-            return self._use_admiral_ozzel_action(player, unit)
-
-        if self._card_effect_record(unit):
-            unit.is_exhausted = True
-            self._resolve_structured_effects(player, unit, "action")
-            self.log(f"Turn {self.turn_count}: Player {player.id} uses {unit.name}'s trained action")
-            return True
-
-        return False
+        return leader_engine.use_unit_action(self, player, unit_id)
 
     def _use_admiral_ozzel_action(self, player: Player, unit: UnitCard) -> bool:
-        imperial_units = [
-            card for card in player.hand
-            if isinstance(card, UnitCard) and self._has_trait(card, "IMPERIAL") and player.can_afford(card.cost)
-        ]
-        if not imperial_units:
-            return False
-
-        unit.is_exhausted = True
-        card = max(imperial_units, key=lambda candidate: (candidate.cost, candidate.power + candidate.hp))
-        player.pay_cost(card.cost)
-        player.hand.remove(card)
-        self._play_unit(player, card)
-        card.is_exhausted = False
-        self._record_played_card(player, card)
-
-        enemy = self._get_enemy(player)
-        exhausted_enemy_units = [enemy_unit for enemy_unit in enemy.units if getattr(enemy_unit, "is_exhausted", False)]
-        if exhausted_enemy_units:
-            exhausted_enemy_units[0].is_exhausted = False
-
-        self.log(f"Turn {self.turn_count}: Player {player.id} uses Admiral Ozzel's action")
-        self._emit(f"  Player {player.id} uses Admiral Ozzel to play {card.name} ready")
-        return True
+        return leader_engine.use_admiral_ozzel_action(self, player, unit)
     
     def _use_leader_action(self, player: Player) -> bool:
         """Use leader action ability"""
-        if not player.leader or player.leader.is_deployed or player.leader.is_exhausted:
-            return False
-        
-        if not player.can_afford(player.leader.action_cost):
-            return False
-
-        if not self._leader_action_has_target(player):
-            return False
-        
-        player.pay_cost(player.leader.action_cost)
-        player.leader.is_exhausted = True
-        self._resolve_leader_action(player)
-        self.log(f"Turn {self.turn_count}: Player {player.id} uses {player.leader.name}'s action")
-        self._emit(f"  Player {player.id} uses {player.leader.name}'s action")
-        return True
+        return leader_engine.use_leader_action(self, player)
 
     def _leader_action_has_target(self, player: Player) -> bool:
         """Check whether the simplified leader action can affect game state."""
-        if not player.leader:
-            return False
-
-        record = self._card_effect_record(player.leader)
-        if record and any(trigger.get("event") == "action" for trigger in record.get("triggers", [])):
-            return True
-
-        effect = player.leader.action_effect.lower()
-        enemy = self._get_enemy(player)
-
-        if "heal" in effect:
-            return any(unit.current_hp < unit.hp for unit in player.units)
-        if "played a villainy card this phase" in effect:
-            return "VILLAINY" in getattr(player, "played_aspects_this_phase", set())
-        if "deal" in effect and "damage" in effect and "base" in effect:
-            return True
-        if "deal" in effect and "damage" in effect:
-            return bool(enemy.units)
-        if "draw" in effect:
-            return bool(player.deck or player.discard_pile)
-        if "look at opponent" in effect:
-            return bool(enemy.hand)
-
-        return True
+        return leader_engine.leader_action_has_target(self, player)
 
     def _resolve_leader_action(self, player: Player):
         """Resolve a small subset of sample leader actions."""
-        effect = player.leader.action_effect.lower()
-        enemy = self._get_enemy(player)
-
-        self._resolve_structured_effects(player, player.leader, "action")
-
-        if "heal" in effect:
-            damaged_units = [unit for unit in player.units if unit.current_hp < unit.hp]
-            if damaged_units:
-                damaged_units[0].heal(1)
-            return
-
-        if "played a villainy card this phase" in effect:
-            if "VILLAINY" not in getattr(player, "played_aspects_this_phase", set()):
-                return
-            target = self._choose_enemy_unit(player)
-            if target:
-                self._damage_unit(enemy, target, 1)
-            enemy.base.take_damage(1)
-            return
-
-        if "each base" in effect and "deal" in effect and "damage" in effect:
-            self.player1.base.take_damage(1)
-            self.player2.base.take_damage(1)
-            return
-
-        if "deal" in effect and "damage" in effect and "base" in effect:
-            enemy.base.take_damage(1)
-            return
-
-        if "deal" in effect and "damage" in effect and enemy.units:
-            target = min(enemy.units, key=lambda unit: unit.current_hp)
-            target.take_damage(2)
-            if target.is_defeated():
-                self._remove_unit(enemy, target)
-            return
-
-        if "draw" in effect:
-            self._draw_cards(player, 1, f"{player.leader.name}'s action")
+        leader_engine.resolve_leader_action(self, player)
 
     def _deploy_leader(self, player: Player) -> bool:
         """Use the leader's once-per-game epic action to deploy it ready."""
-        leader = player.leader
-        if not leader or leader.is_deployed or leader.epic_action_used:
-            return False
-
-        if not player.can_afford(leader.epic_action_cost):
-            return False
-
-        player.pay_cost(leader.epic_action_cost)
-        leader.epic_action_used = True
-        leader.is_deployed = True
-        leader.is_exhausted = False
-
-        power, hp = self._leader_deployed_stats(leader)
-        leader.power = power
-        leader.hp = hp
-        leader.current_hp = hp
-        leader.damage = 0
-        leader.arena = Arena.GROUND
-
-        player.units.append(leader)
-        player.ground_arena.append(leader)
-        self.log(f"Turn {self.turn_count}: Player {player.id} deploys {leader.name}")
-        self._emit(f"  Player {player.id} deploys {leader.name} ready")
-        return True
+        return leader_engine.deploy_leader(self, player)
 
     def _leader_deployed_stats(self, leader: LeaderCard) -> Tuple[int, int]:
         """Parse sample epic action text like 'Deploy as 4/4 unit'."""
-        for token in leader.epic_action_effect.split():
-            if "/" in token:
-                power, hp = token.split("/", 1)
-                if power.isdigit() and hp.isdigit():
-                    return int(power), int(hp)
-        return 3, 3
+        return leader_engine.leader_deployed_stats(self, leader)
     
     def _pass_phase(self, player: Player):
         """Player passes their action"""

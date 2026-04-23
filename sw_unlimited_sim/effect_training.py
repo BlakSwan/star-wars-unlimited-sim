@@ -23,6 +23,7 @@ TRIGGERS = [
     "when_event_played",
     "regroup_start",
     "when_played_as_upgrade",
+    "when_pilot_attached",
 ]
 
 EFFECT_TYPES = [
@@ -96,7 +97,14 @@ ENGINE_EXECUTABLE_EFFECTS = {
     "modify_stats",
 }
 
-ENGINE_EXECUTABLE_TRIGGERS = {"when_played", "on_attack", "when_defeated", "action", "when_played_as_upgrade"}
+ENGINE_EXECUTABLE_TRIGGERS = {
+    "when_played",
+    "on_attack",
+    "when_defeated",
+    "action",
+    "when_played_as_upgrade",
+    "when_pilot_attached",
+}
 
 
 class EffectSuggestionError(RuntimeError):

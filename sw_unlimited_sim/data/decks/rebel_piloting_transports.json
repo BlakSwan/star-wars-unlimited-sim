@@ -1,0 +1,27 @@
+{
+  "name": "Rebel Piloting Transports",
+  "minimum_cards": 50,
+  "leader": {
+    "set": "SOR",
+    "number": "014"
+  },
+  "cards": [
+    {"set": "JTL", "number": "095", "count": 3},
+    {"set": "JTL", "number": "101", "count": 3},
+    {"set": "SOR", "number": "250", "count": 3},
+    {"set": "SOR", "number": "141", "count": 3},
+    {"set": "SOR", "number": "144", "count": 3},
+    {"set": "JTL", "number": "096", "count": 3},
+    {"set": "JTL", "number": "057", "count": 3},
+    {"set": "JTL", "number": "150", "count": 3},
+    {"set": "JTL", "number": "197", "count": 3},
+    {"set": "JTL", "number": "203", "count": 3},
+    {"set": "SOR", "number": "140", "count": 3},
+    {"set": "SOR", "number": "142", "count": 3},
+    {"set": "SOR", "number": "143", "count": 3},
+    {"set": "SOR", "number": "145", "count": 3},
+    {"set": "SOR", "number": "150", "count": 3},
+    {"set": "SOR", "number": "151", "count": 3},
+    {"set": "SOR", "number": "245", "count": 2}
+  ]
+}
