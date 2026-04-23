@@ -53,10 +53,21 @@ SUPPORTED_CARD_NAMES = {
 }
 
 SUPPORTED_CARD_KEYS = {
+    "JTL-008",  # Wedge Antilles
+    "JTL-050",  # Phantom II
+    "JTL-051",  # Red Squadron X-Wing
+    "JTL-054",  # Gold Leader
+    "JTL-071",  # CR90 Relief Runner
     "JTL-096",  # Blue Leader
     "JTL-101",  # Red Leader
+    "JTL-103",  # Chewbacca
+    "JTL-045",  # Hera Syndulla
     "JTL-057",  # Astromech Pilot
+    "JTL-058",  # Academy Graduate
+    "JTL-093",  # Nien Nunb
+    "JTL-108",  # Clone Pilot
     "JTL-150",  # Biggs Darklighter
+    "JTL-196",  # Dagger Squadron Pilot
     "JTL-197",  # Anakin Skywalker
     "JTL-203",  # Han Solo
     "JTL-143",  # Devastator
@@ -64,6 +75,8 @@ SUPPORTED_CARD_KEYS = {
     "SEC-094",  # Mina Bonteri
     "SEC-233",  # Beguile
 }
+
+PARTIAL_CARD_KEYS = set()
 
 
 @dataclass
@@ -81,6 +94,24 @@ class CardAudit:
     @property
     def has_piloting(self) -> bool:
         return "Piloting" in self.keywords or "piloting" in self.text.lower()
+
+    @property
+    def mechanic_tags(self) -> list[str]:
+        tags = []
+        text = self.text.lower()
+        if self.has_piloting:
+            tags.append("Piloting")
+        if "when played" in text:
+            tags.append("When Played")
+        if "on attack" in text:
+            tags.append("On Attack")
+        if "when defeated" in text:
+            tags.append("When Defeated")
+        if "action [" in text:
+            tags.append("Action")
+        if "restore" in text or "Restore" in self.keywords:
+            tags.append("Restore")
+        return tags
 
 
 @dataclass
@@ -138,6 +169,16 @@ class DeckAudit:
     @property
     def is_valid_tournament_shape(self) -> bool:
         return not self.validation_errors
+
+    @property
+    def issue_mechanic_counts_by_status(self) -> dict[str, Counter]:
+        counts: dict[str, Counter] = {"partial": Counter(), "unsupported": Counter()}
+        for card in self.all_cards:
+            if card.status not in counts:
+                continue
+            for tag in card.mechanic_tags:
+                counts[card.status][tag] += card.count
+        return counts
 
 
 def _text(card_data: dict[str, Any]) -> str:
@@ -212,8 +253,12 @@ def _audit_card(card_data: dict[str, Any], count: int, trained_effects: dict[str
     elif _is_supported_keyword_only(card_data):
         status = "supported"
         reasons.append("supported keyword-only card")
+    elif card_key in PARTIAL_CARD_KEYS:
+        status = "partial"
+        reasons.append("card-specific handler implemented with known remaining gaps")
     elif name in SUPPORTED_CARD_NAMES or card_key in SUPPORTED_CARD_KEYS:
         unsupported_keywords = _unsupported_keywords(card_data)
+        unsupported_keywords = [keyword for keyword in unsupported_keywords if keyword != "Piloting"]
         if unsupported_keywords:
             status = "partial"
             reasons.append(f"unsupported keywords: {', '.join(unsupported_keywords)}")
@@ -288,6 +333,7 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
     unique_counts = audit.unique_counts_by_status
     piloting_counts = audit.piloting_counts_by_status
     piloting_unique_counts = audit.piloting_unique_counts_by_status
+    issue_mechanics = audit.issue_mechanic_counts_by_status
     total_cards = sum(card.count for card in audit.cards)
     lines = [
         f"Deck: {audit.deck_name}",
@@ -326,6 +372,19 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
         lines.append("Validation Issues")
         for issue in audit.validation_errors:
             lines.append(f"- {issue}")
+
+    mechanic_lines = []
+    for status in ("partial", "unsupported"):
+        if not issue_mechanics[status]:
+            continue
+        summary = ", ".join(
+            f"{name}={count}" for name, count in issue_mechanics[status].most_common()
+        )
+        mechanic_lines.append(f"{status}: {summary}")
+    if mechanic_lines:
+        lines.append("")
+        lines.append("Mechanic Buckets")
+        lines.extend(mechanic_lines)
 
     def add_section(title: str, status: str):
         cards = [card for card in audit.all_cards if card.status == status]

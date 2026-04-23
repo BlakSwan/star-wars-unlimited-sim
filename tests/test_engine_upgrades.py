@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "sw_unlimited_sim"))
 from effect_store import effect_key  # noqa: E402
 from effect_training import execution_status_for_record  # noqa: E402
 from engine import GameState  # noqa: E402
-from models import Arena, LeaderCard, Resource, UnitCard, UpgradeCard  # noqa: E402
+from models import Arena, EventCard, LeaderCard, Resource, UnitCard, UpgradeCard  # noqa: E402
 
 
 def game_state() -> GameState:
@@ -29,6 +29,21 @@ def unit(name: str = "Test Unit") -> UnitCard:
 
 
 class EngineUpgradeTests(unittest.TestCase):
+    def test_basic_piloting_cards_are_now_supported_by_generic_pilot_flow(self):
+        game = game_state()
+        vehicle = unit("Alliance Shuttle")
+        vehicle.traits = ["VEHICLE", "TRANSPORT"]
+        clone_pilot = UnitCard("JTL_108_1", "Clone Pilot", 2, 1, 2, Arena.GROUND, traits=["PILOT"], abilities=["Piloting [C=2 Command]"])
+        dagger_pilot = UnitCard("JTL_196_1", "Dagger Squadron Pilot", 1, 1, 1, Arena.GROUND, traits=["PILOT"], abilities=["Piloting [C=1 Cunning Heroism]"])
+        game.player1.units.append(vehicle)
+        game.player1.ground_arena.append(vehicle)
+        game.player1.hand.extend([clone_pilot, dagger_pilot])
+        game.player1.resources = [Resource(CardStub("R1")), Resource(CardStub("R2"))]
+
+        self.assertIn("pilot_JTL_108_1", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "pilot_JTL_108_1"))
+        self.assertNotIn("pilot_JTL_196_1", game.get_legal_actions(game.player1))
+
     def test_played_upgrade_tracks_attachment_and_printed_stats(self):
         game = game_state()
         target = unit()
@@ -184,6 +199,193 @@ class EngineUpgradeTests(unittest.TestCase):
         self.assertTrue(game.execute_action(game.player1, "pilot_JTL_997_1"))
 
         self.assertTrue(game._has_keyword(vehicle, "sentinel"))
+
+    def test_hera_attached_upgrade_grants_restore(self):
+        game = game_state()
+        vehicle = UnitCard("SHIP_045_1", "Ghost Shuttle", 2, 2, 3, Arena.SPACE)
+        vehicle.traits = ["VEHICLE", "TRANSPORT"]
+        hera = UnitCard(
+            "JTL_045_1",
+            "Hera Syndulla",
+            3,
+            power=2,
+            hp=4,
+            arena=Arena.SPACE,
+            traits=["PILOT"],
+            abilities=[
+                "Restore 1",
+                "Piloting [C=2 Vigilance Heroism]",
+                "Attached unit gains Restore 1.",
+            ],
+        )
+        game.player1.base.current_hp = 20
+        game.player1.units.append(vehicle)
+        game.player1.space_arena.append(vehicle)
+        game.player1.hand.append(hera)
+        game.player1.resources = [Resource(CardStub("R1")), Resource(CardStub("R2"))]
+
+        self.assertTrue(game.execute_action(game.player1, "pilot_JTL_045_1"))
+        self.assertEqual(game._restore_amount(vehicle), 1)
+
+        enemy_defender = UnitCard("ENEMY_1", "Enemy Ship", 2, 1, 2, Arena.SPACE)
+        game.player2.units.append(enemy_defender)
+        game.player2.space_arena.append(enemy_defender)
+
+        self.assertTrue(game._attack(game.player1, vehicle.id, enemy_defender.id))
+        self.assertEqual(game.player1.base.current_hp, 21)
+
+    def test_nien_nunb_pilot_bonus_scales_with_other_friendly_pilots(self):
+        game = game_state()
+        ship = UnitCard("SHIP_1", "Freighter", 2, 2, 4, Arena.SPACE, traits=["VEHICLE"])
+        other_pilot = UnitCard("JTL_108_1", "Clone Pilot", 2, 1, 2, Arena.GROUND, traits=["PILOT"], abilities=["Piloting [C=2 Command]"])
+        nien = UnitCard(
+            "JTL_093_1",
+            "Nien Nunb",
+            2,
+            power=1,
+            hp=3,
+            arena=Arena.GROUND,
+            traits=["PILOT"],
+            abilities=["Piloting [C=1 Command Heroism]", "Attached unit gets +1/+0 for each other friendly Pilot unit and upgrade."],
+        )
+        game.player1.units.extend([ship, other_pilot])
+        game.player1.space_arena.append(ship)
+        game.player1.ground_arena.append(other_pilot)
+        game.player1.hand.append(nien)
+        game.player1.resources = [Resource(CardStub("R1"))]
+
+        self.assertTrue(game.execute_action(game.player1, "pilot_JTL_093_1"))
+        self.assertEqual(game._unit_power(game.player1, ship), 4)
+
+    def test_red_squadron_x_wing_self_damages_to_draw_on_play(self):
+        game = game_state()
+        x_wing = UnitCard("JTL_051_1", "Red Squadron X-Wing", 3, 3, 4, Arena.SPACE, traits=["VEHICLE", "FIGHTER"])
+        x_wing.abilities = ["When Played: You may deal 2 damage to this unit. If you do, draw a card."]
+        draw_card = UnitCard("DRAW_1", "Spare Ship", 1, 1, 1, Arena.SPACE)
+        game.player1.deck = [draw_card]
+
+        self.assertTrue(game._play_unit(game.player1, x_wing))
+        self.assertEqual(x_wing.current_hp, 2)
+        self.assertIn(draw_card, game.player1.hand)
+
+    def test_gold_leader_reduces_attacker_power_while_defending(self):
+        game = game_state()
+        gold_leader = UnitCard("JTL_054_1", "Gold Leader", 6, 5, 5, Arena.SPACE, traits=["VEHICLE", "TRANSPORT"])
+        gold_leader.abilities = ["Shielded", "While this unit is defending, the attacker gets -1/-0."]
+        attacker = UnitCard("ATK_1", "TIE Fighter", 2, 4, 3, Arena.SPACE)
+        game.player1.units.append(gold_leader)
+        game.player1.space_arena.append(gold_leader)
+        game.player2.units.append(attacker)
+        game.player2.space_arena.append(attacker)
+        attacker.is_exhausted = False
+
+        self.assertTrue(game._attack(game.player2, attacker.id, gold_leader.id))
+        self.assertEqual(gold_leader.current_hp, 2)
+
+    def test_cr90_relief_runner_heals_base_when_defeated(self):
+        game = game_state()
+        cr90 = UnitCard("JTL_071_1", "CR90 Relief Runner", 6, 4, 6, Arena.SPACE, traits=["VEHICLE", "CAPITAL SHIP"])
+        cr90.abilities = ["Restore 2", "When Defeated: Heal up to 3 damage from a unit or base."]
+        game.player1.base.current_hp = 20
+        game.player1.units.append(cr90)
+        game.player1.space_arena.append(cr90)
+
+        game._remove_unit(game.player1, cr90)
+        self.assertEqual(game.player1.base.current_hp, 23)
+
+    def test_phantom_two_action_attaches_to_the_ghost(self):
+        game = game_state()
+        ghost = UnitCard("JTL_053_1", "The Ghost", 5, 5, 6, Arena.SPACE, traits=["VEHICLE", "TRANSPORT", "SPECTRE"])
+        phantom = UnitCard("JTL_050_1", "Phantom II", 3, 3, 3, Arena.SPACE, traits=["VEHICLE", "TRANSPORT", "SPECTRE"], abilities=[
+            "Grit",
+            "Action [C=1]: If this card is a unit, attach it as an upgrade to The Ghost.",
+            "Attached unit gets +3/+3 and gains Grit.",
+        ])
+        game.player1.units.extend([ghost, phantom])
+        game.player1.space_arena.extend([ghost, phantom])
+        game.player1.resources = [Resource(CardStub("R1"))]
+
+        self.assertIn(f"unit_action_{phantom.id}", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, f"unit_action_{phantom.id}"))
+        self.assertNotIn(phantom, game.player1.units)
+        self.assertIs(phantom.attached_to, ghost)
+        self.assertEqual(ghost.power, 8)
+        self.assertEqual(ghost.hp, 9)
+        self.assertTrue(game._has_keyword(ghost, "grit"))
+
+    def test_wedge_leader_action_plays_pilot_with_discount(self):
+        leader = LeaderCard(
+            "JTL_008",
+            "Wedge Antilles",
+            5,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Play a card from your hand using Piloting. It costs 1 less.",
+            epic_action_cost=5,
+            epic_action_effect="Deploy as 3/6 unit",
+        )
+        leader.traits = ["REBEL", "PILOT"]
+        leader.abilities = [
+            "Action [Exhaust]: Play a card from your hand using Piloting. It costs 1 less.",
+            'Attached unit is a leader unit. It gains: "On Attack: The next Pilot card you play this phase costs 1 less. (This includes Piloting costs.)"',
+            "Epic Action: Deploy this leader or deploy this leader as an upgrade on a friendly Vehicle unit without a Pilot on it.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        vehicle = UnitCard("SHIP_008_1", "Red Squadron Craft", 3, 2, 4, Arena.SPACE, traits=["VEHICLE", "FIGHTER"])
+        pilot = UnitCard("JTL_196_1", "Dagger Squadron Pilot", 1, 1, 1, Arena.GROUND, traits=["PILOT"], abilities=["Piloting [C=1 Cunning Heroism]"])
+        game.player1.units.append(vehicle)
+        game.player1.space_arena.append(vehicle)
+        game.player1.hand.append(pilot)
+
+        self.assertIn("leader_action_JTL_008", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "leader_action_JTL_008"))
+        self.assertIs(pilot.attached_to, vehicle)
+
+    def test_wedge_attached_on_attack_reduces_next_pilot_cost_this_phase(self):
+        leader = LeaderCard(
+            "JTL_008",
+            "Wedge Antilles",
+            5,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Play a card from your hand using Piloting. It costs 1 less.",
+            epic_action_cost=5,
+            epic_action_effect="Deploy as 3/6 unit",
+        )
+        leader.traits = ["REBEL", "PILOT"]
+        leader.abilities = [
+            "Action [Exhaust]: Play a card from your hand using Piloting. It costs 1 less.",
+            'Attached unit is a leader unit. It gains: "On Attack: The next Pilot card you play this phase costs 1 less. (This includes Piloting costs.)"',
+            "Epic Action: Deploy this leader or deploy this leader as an upgrade on a friendly Vehicle unit without a Pilot on it.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        attacker = UnitCard("SHIP_100_1", "Wedge Carrier", 3, 3, 6, Arena.SPACE, traits=["VEHICLE"])
+        second_vehicle = UnitCard("SHIP_100_2", "Reserve Craft", 3, 2, 4, Arena.SPACE, traits=["VEHICLE"])
+        enemy = UnitCard("ENEMY_100", "Enemy Fighter", 2, 1, 1, Arena.SPACE)
+        pilot = UnitCard("JTL_196_1", "Dagger Squadron Pilot", 1, 1, 1, Arena.GROUND, traits=["PILOT"], abilities=["Piloting [C=1 Cunning Heroism]"])
+        game.player1.units.extend([attacker, second_vehicle])
+        game.player1.space_arena.extend([attacker, second_vehicle])
+        game.player2.units.append(enemy)
+        game.player2.space_arena.append(enemy)
+        game.player1.hand.append(pilot)
+        game.player1.resources = [Resource(CardStub("R1")), Resource(CardStub("R2")), Resource(CardStub("R3")), Resource(CardStub("R4")), Resource(CardStub("R5"))]
+
+        self.assertTrue(game.execute_action(game.player1, "leader_epic_JTL_008"))
+        self.assertTrue(game._attack(game.player1, attacker.id, enemy.id))
+        self.assertIn("pilot_JTL_196_1", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "pilot_JTL_196_1"))
+        self.assertIs(pilot.attached_to, second_vehicle)
+
+    def test_chewbacca_blocks_enemy_bounce_effects(self):
+        game = game_state()
+        chewie = UnitCard("JTL_103_1", "Chewbacca", 5, 5, 6, Arena.GROUND, traits=["WOOKIEE", "PILOT"], abilities=[
+            "This unit can't be defeated or returned to hand by enemy card abilities.",
+            "Piloting [C=3 Command Heroism]",
+        ])
+        enemy_event = EventCard("SEC_233_1", "Beguile", 3, effect="Return a unit to hand")
+        game.player1.units.append(chewie)
+        game.player1.ground_arena.append(chewie)
+
+        game._resolve_event(game.player2, enemy_event)
+        self.assertIn(chewie, game.player1.units)
 
     def test_when_played_as_upgrade_trained_effect_fires_for_piloting(self):
         game = game_state()
@@ -365,6 +567,32 @@ class EngineUpgradeTests(unittest.TestCase):
         self.assertTrue(vehicle.is_exhausted)
         self.assertTrue(vehicle.attacked_this_phase)
         self.assertEqual(enemy.current_hp, 0)
+
+    def test_han_pilot_on_millennium_falcon_deals_combat_damage_first(self):
+        game = game_state()
+        falcon = UnitCard("JTL_249_1", "Millennium Falcon", 4, 3, 5, Arena.SPACE, traits=["VEHICLE", "TRANSPORT"])
+        enemy = UnitCard("ENEMY_FALCON_1", "Enemy Gunship", 4, 5, 4, Arena.SPACE)
+        han = UnitCard(
+            "JTL_203_1",
+            "Han Solo",
+            2,
+            power=2,
+            hp=1,
+            arena=Arena.GROUND,
+            traits=["PILOT"],
+            abilities=["Ambush", "Piloting [C=2 Cunning Heroism]"],
+            has_ambush=True,
+        )
+        game.player1.units.append(falcon)
+        game.player1.space_arena.append(falcon)
+        game.player2.units.append(enemy)
+        game.player2.space_arena.append(enemy)
+        game.player1.hand.append(han)
+        game.player1.resources = [Resource(CardStub("R1")), Resource(CardStub("R2"))]
+
+        self.assertTrue(game.execute_action(game.player1, "pilot_JTL_203_1"))
+        self.assertNotIn(enemy, game.player2.units)
+        self.assertEqual(falcon.current_hp, 6)
 
     def test_han_pilot_attack_can_be_disabled_by_strategy_tuning(self):
         game = game_state()

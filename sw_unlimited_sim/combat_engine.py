@@ -46,10 +46,16 @@ def attack(game: Any, player: Player, unit_id: str, target: str) -> bool:
         attacker.attacked_this_phase = True
         return True
 
-    attack_damage = game._attack_power(player, attacker, defender)
-    defender_damage = defender.power
-    attacker.take_damage(defender_damage)
-    defender.take_damage(attack_damage)
+    attack_damage = max(0, game._attack_power(player, attacker, defender) - game._defensive_attack_penalty(defender))
+    defender_damage = game._unit_power(enemy, defender)
+    first_strike = bool(getattr(attacker, "combat_damage_before_defender_once", False))
+    if first_strike:
+        defender.take_damage(attack_damage)
+        if defender in enemy.units and not defender.is_defeated():
+            attacker.take_damage(defender_damage)
+    else:
+        attacker.take_damage(defender_damage)
+        defender.take_damage(attack_damage)
     attacker.is_exhausted = True
     attacker.attacked_this_phase = True
     game.log(
@@ -57,7 +63,10 @@ def attack(game: Any, player: Player, unit_id: str, target: str) -> bool:
         f"{attacker.name} takes {defender_damage}, {defender.name} takes {attack_damage}"
     )
     game._emit(f"  {attacker.name} ({attack_damage} power) attacks {defender.name} ({defender.power} power)")
-    game._emit(f"     Simultaneous damage: both take {defender_damage}/{attack_damage}")
+    if first_strike:
+        game._emit(f"     {attacker.name} deals combat damage before the defender")
+    else:
+        game._emit(f"     Simultaneous damage: both take {defender_damage}/{attack_damage}")
 
     if defender.is_defeated() and game._has_overwhelm(player, attacker, defender):
         excess = max(0, attack_damage - defender_hp_before_damage)
@@ -145,7 +154,8 @@ def resolve_when_pilot_attached(game: Any, player: Player, pilot: UnitCard, targ
 
     if game._is_card(pilot, "JTL", "203"):
         if game._strategy_setting("han_pilot_attack_with_attached_unit", True):
-            if game._attack_with_unit(player, target):
+            fast_combat = target.name == "Millennium Falcon"
+            if game._attack_with_unit_tuning(player, target, combat_damage_before_defender=fast_combat):
                 game.log(f"Turn {game.turn_count}: Han Solo's pilot effect attacks with {target.name}")
             else:
                 game.log(f"Turn {game.turn_count}: Han Solo's pilot effect found no ready attached unit to attack with")
@@ -174,6 +184,13 @@ def resolve_on_attack(game: Any, player: Player, attacker: UnitCard, defender: O
         return
 
     game._resolve_structured_effects(player, attacker, "on_attack", defender=defender)
+
+    for upgrade in list(getattr(attacker, "attached_upgrades", []) or []):
+        if game._is_card(upgrade, "JTL", "008"):
+            game._grant_next_pilot_discount_this_phase(player, 1)
+            game.log(
+                f"Turn {game.turn_count}: Wedge Antilles reduces the next Pilot card played this phase by 1"
+            )
 
     if attacker.name == "Sabine Wren":
         if defender:
@@ -231,6 +248,21 @@ def resolve_when_defeated(game: Any, owner: Player, unit: UnitCard, enemy: Playe
 
     if game._is_card(unit, "SEC", "094") and game._can_disclose_aspects(owner, ["COMMAND", "COMMAND", "HEROISM"]):
         game._draw_cards(owner, 1, "Mina Bonteri")
+
+    if game._is_card(unit, "JTL", "071"):
+        candidates = [(owner, None, owner.base.hp - owner.base.current_hp)]
+        candidates.extend((owner, friendly, friendly.hp - friendly.current_hp) for friendly in owner.units if friendly is not unit)
+        owner_target, heal_target, missing_hp = max(candidates, key=lambda entry: entry[2])
+        if missing_hp > 0:
+            if heal_target is None:
+                game._heal_base(owner_target, 3, "CR90 Relief Runner")
+            else:
+                before = heal_target.current_hp
+                heal_target.heal(3)
+                game.log(
+                    f"Turn {game.turn_count}: CR90 Relief Runner heals "
+                    f"{heal_target.current_hp - before} damage from {heal_target.name}"
+                )
 
 
 def damage_unit(game: Any, owner: Player, unit: UnitCard, amount: int) -> None:

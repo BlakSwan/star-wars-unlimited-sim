@@ -25,7 +25,7 @@ def effective_cost(game: Any, player: Player, card: Card) -> int:
         return max(0, card.cost - 1)
     if is_card(game, card, "JTL", "101"):
         return max(0, card.cost - friendly_pilot_count(game, player))
-    return card.cost
+    return max(0, card.cost - pilot_discount(game, player, card))
 
 
 def friendly_pilot_count(game: Any, player: Player) -> int:
@@ -77,7 +77,9 @@ def upgrade_grants_keyword(game: Any, upgrade: Card, keyword: str) -> bool:
             return True
         if keyword == "grit" and attached_to and has_trait(game, attached_to, "SPEEDER"):
             return True
-    return any(pattern in upgrade_text for pattern in attached_patterns)
+    return any(pattern in upgrade_text for pattern in attached_patterns) or bool(
+        re.search(rf"attached unit .*gains {re.escape(keyword)}", upgrade_text)
+    )
 
 
 def conditional_attached_hp_bonus(game: Any, upgrade: Card, target: Optional[UnitCard]) -> int:
@@ -148,7 +150,21 @@ def raid_bonus(game: Any, player: Player, attacker: UnitCard, defender: Optional
 
 def attack_power(game: Any, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> int:
     grit_bonus = attacker.damage if has_keyword(game, attacker, "grit") else 0
-    return attacker.power + raid_bonus(game, player, attacker, defender) + grit_bonus
+    return unit_power(game, player, attacker) + raid_bonus(game, player, attacker, defender) + grit_bonus
+
+
+def unit_power(game: Any, player: Player, unit: UnitCard) -> int:
+    return unit.power + pilot_synergy_power_bonus(game, player, unit)
+
+
+def pilot_synergy_power_bonus(game: Any, player: Player, unit: UnitCard) -> int:
+    bonus = 0
+    if is_card(game, unit, "JTL", "093"):
+        bonus += max(0, friendly_pilot_count(game, player) - 1)
+    for upgrade in getattr(unit, "attached_upgrades", []) or []:
+        if is_card(game, upgrade, "JTL", "093"):
+            bonus += max(0, friendly_pilot_count(game, player) - 1)
+    return bonus
 
 
 def has_overwhelm(game: Any, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> bool:
@@ -188,14 +204,39 @@ def can_attack_base(game: Any, player: Player, attacker: UnitCard) -> bool:
     return not sentinel_units(game, player, attacker.arena) or can_ignore_sentinel(game, attacker)
 
 
+def defensive_attack_penalty(game: Any, defender: UnitCard) -> int:
+    if getattr(defender, "abilities_lost_until_ready", False):
+        return 0
+    penalty = 0
+    if is_card(game, defender, "JTL", "054"):
+        penalty += 1
+    return penalty
+
+
 def restore_amount(game: Any, unit: UnitCard) -> int:
     if getattr(unit, "abilities_lost_until_ready", False):
         return 0
     unit_text = text(game, unit)
-    if "restore" not in unit_text:
-        return 0
+    amount = 0
     match = re.search(r"restore\s+(\d+)", unit_text)
-    return int(match.group(1)) if match else 0
+    if match:
+        amount += int(match.group(1))
+
+    for upgrade in getattr(unit, "attached_upgrades", []) or []:
+        upgrade_text = text(game, upgrade)
+        for attached_match in re.finditer(r"attached unit gains restore\s+(\d+)", upgrade_text):
+            amount += int(attached_match.group(1))
+    return amount
+
+
+def blocks_enemy_defeat_or_bounce(game: Any, unit: UnitCard) -> bool:
+    protected_text = "can't be defeated or returned to hand by enemy card abilities"
+    if protected_text in text(game, unit):
+        return True
+    return any(
+        protected_text in text(game, upgrade)
+        for upgrade in getattr(unit, "attached_upgrades", []) or []
+    )
 
 
 def piloting_cost(game: Any, card: Card) -> Optional[int]:
@@ -203,3 +244,14 @@ def piloting_cost(game: Any, card: Card) -> Optional[int]:
         return None
     match = re.search(r"piloting\s+\[C=(\d+)", text(game, card), flags=re.IGNORECASE)
     return int(match.group(1)) if match else None
+
+
+def is_pilot_card(game: Any, card: Card) -> bool:
+    return has_trait(game, card, "PILOT") or piloting_cost(game, card) is not None
+
+
+def pilot_discount(game: Any, player: Player, card: Card) -> int:
+    available = int(getattr(player, "pilot_discount_this_phase", 0) or 0)
+    if available <= 0 or not is_pilot_card(game, card):
+        return 0
+    return available

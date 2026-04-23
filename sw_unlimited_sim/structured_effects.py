@@ -177,6 +177,9 @@ def apply_structured_step(
         unit.is_exhausted = False
         game.log(f"Turn {game.turn_count}: {source_name} readies {unit.name}")
     elif effect_type == "defeat_unit":
+        if game._blocks_enemy_defeat_or_bounce(unit):
+            game.log(f"Turn {game.turn_count}: {source_name} cannot defeat {unit.name} due to enemy-ability protection")
+            return
         game._remove_unit(owner, unit)
         game.log(f"Turn {game.turn_count}: {source_name} defeats {unit.name}")
     elif effect_type == "give_shield":

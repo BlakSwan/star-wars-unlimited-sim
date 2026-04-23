@@ -66,7 +66,12 @@ def resolve_event(game: Any, player: Player, event: EventCard) -> None:
         return
 
     if game._is_card(event, "SEC", "233"):
-        targets = [unit for unit in enemy.units if not isinstance(unit, LeaderCard) and unit.cost <= 6]
+        targets = [
+            unit for unit in enemy.units
+            if not isinstance(unit, LeaderCard)
+            and unit.cost <= 6
+            and not game._blocks_enemy_defeat_or_bounce(unit)
+        ]
         if targets:
             target = max(targets, key=lambda unit: (unit.cost, unit.power + unit.hp))
             game._return_unit_to_hand(enemy, target, "Beguile")

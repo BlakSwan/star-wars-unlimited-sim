@@ -345,8 +345,14 @@ class GameState:
     def _can_play_as_pilot(self, player: Player, card: Card) -> bool:
         return play_engine.can_play_as_pilot(self, player, card)
 
+    def _can_play_as_pilot_with_discount(self, player: Player, card: Card, discount: int = 0) -> bool:
+        return play_engine.can_play_as_pilot_with_discount(self, player, card, discount)
+
     def _play_card_as_pilot(self, player: Player, card_id: str) -> bool:
         return play_engine.play_card_as_pilot(self, player, card_id)
+
+    def _play_specific_card_as_pilot(self, player: Player, card: Card, cost_discount: int = 0) -> bool:
+        return play_engine.play_specific_card_as_pilot(self, player, card, cost_discount)
     
     def _play_event(self, player: Player, event: EventCard):
         """Play an event card"""
@@ -377,6 +383,12 @@ class GameState:
     def _effective_cost(self, player: Player, card: Card) -> int:
         return game_rules.effective_cost(self, player, card)
 
+    def _pilot_discount(self, player: Player, card: Card) -> int:
+        return game_rules.pilot_discount(self, player, card)
+
+    def _is_pilot_card(self, card: Card) -> bool:
+        return game_rules.is_pilot_card(self, card)
+
     def _friendly_pilot_count(self, player: Player) -> int:
         return game_rules.friendly_pilot_count(self, player)
 
@@ -401,6 +413,9 @@ class GameState:
     def _attack_power(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> int:
         return game_rules.attack_power(self, player, attacker, defender)
 
+    def _unit_power(self, player: Player, unit: UnitCard) -> int:
+        return game_rules.unit_power(self, player, unit)
+
     def _has_overwhelm(self, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> bool:
         return game_rules.has_overwhelm(self, player, attacker, defender)
 
@@ -419,6 +434,12 @@ class GameState:
     def _can_attack_base(self, player: Player, attacker: UnitCard) -> bool:
         return game_rules.can_attack_base(self, player, attacker)
 
+    def _defensive_attack_penalty(self, defender: UnitCard) -> int:
+        return game_rules.defensive_attack_penalty(self, defender)
+
+    def _blocks_enemy_defeat_or_bounce(self, unit: UnitCard) -> bool:
+        return game_rules.blocks_enemy_defeat_or_bounce(self, unit)
+
     def _record_played_card(self, player: Player, card: Card):
         if not hasattr(player, "played_aspects_this_phase"):
             player.played_aspects_this_phase = set()
@@ -426,6 +447,13 @@ class GameState:
             player.played_aspects_this_phase.add(str(aspect).upper())
 
         self._resolve_on_played_card(player, card)
+
+    def _grant_next_pilot_discount_this_phase(self, player: Player, amount: int = 1):
+        player.pilot_discount_this_phase = int(getattr(player, "pilot_discount_this_phase", 0) or 0) + amount
+
+    def _consume_pilot_discount(self, player: Player, card: Card):
+        if self._is_pilot_card(card) and getattr(player, "pilot_discount_this_phase", 0):
+            player.pilot_discount_this_phase = max(0, int(player.pilot_discount_this_phase) - 1)
 
     def _resolve_on_played_card(self, player: Player, card: Card):
         """Resolve simple triggers that care about played card aspects."""
@@ -476,6 +504,11 @@ class GameState:
             unit.hp += 2
             unit.current_hp += 2
             self.log("Turn {0}: Blue Leader pays 2, moves to ground, and gains 2 Experience tokens".format(self.turn_count))
+
+        if self._is_card(unit, "JTL", "051") and unit.current_hp > 2:
+            self._damage_unit(player, unit, 2)
+            if unit in player.units:
+                self._draw_cards(player, 1, "Red Squadron X-Wing")
 
     def _resolve_when_played_upgrade(self, player: Player, upgrade: UpgradeCard, target: UnitCard):
         self._resolve_structured_effects(player, upgrade, "when_played", defender=target)
@@ -663,10 +696,21 @@ class GameState:
         return max(units, key=lambda unit: (unit.power, unit.current_hp))
 
     def _attack_with_unit(self, player: Player, unit: UnitCard, power_bonus: int = 0):
+        return self._attack_with_unit_tuning(player, unit, power_bonus=power_bonus, combat_damage_before_defender=False)
+
+    def _attack_with_unit_tuning(
+        self,
+        player: Player,
+        unit: UnitCard,
+        power_bonus: int = 0,
+        combat_damage_before_defender: bool = False,
+    ):
         if unit not in player.units or getattr(unit, "is_exhausted", False):
             return False
 
         unit.power += power_bonus
+        previous_flag = getattr(unit, "combat_damage_before_defender_once", False)
+        unit.combat_damage_before_defender_once = combat_damage_before_defender
         try:
             target = "base"
             attackable = self._attackable_enemy_units(player, unit)
@@ -674,6 +718,7 @@ class GameState:
                 target = attackable[0].id
             return self._attack(player, unit.id, target)
         finally:
+            unit.combat_damage_before_defender_once = previous_flag
             unit.power -= power_bonus
 
     def _resolve_event(self, player: Player, event: EventCard):
@@ -881,5 +926,6 @@ class GameState:
         """Reset per-action-phase tracking."""
         for player in (self.player1, self.player2):
             player.played_aspects_this_phase = set()
+            player.pilot_discount_this_phase = 0
             for unit in player.units:
                 unit.attacked_this_phase = False

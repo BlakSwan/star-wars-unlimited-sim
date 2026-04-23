@@ -26,6 +26,7 @@ def play_card(game: Any, player: Player, card_id: str) -> bool:
         return False
 
     if played:
+        game._consume_pilot_discount(player, card)
         game._record_played_card(player, card)
     return played
 
@@ -147,7 +148,18 @@ def can_play_as_pilot(game: Any, player: Player, card: Card) -> bool:
     if not isinstance(card, UnitCard) or isinstance(card, LeaderCard):
         return False
     cost = game._piloting_cost(card)
-    return cost is not None and player.can_afford(cost) and bool(game._eligible_pilot_targets(player))
+    discount = game._pilot_discount(player, card)
+    return cost is not None and player.can_afford(max(0, cost - discount)) and bool(game._eligible_pilot_targets(player))
+
+
+def can_play_as_pilot_with_discount(game: Any, player: Player, card: Card, discount: int = 0) -> bool:
+    if not isinstance(card, UnitCard):
+        return False
+    cost = game._piloting_cost(card)
+    if cost is None:
+        return False
+    total_discount = discount + game._pilot_discount(player, card)
+    return player.can_afford(max(0, cost - total_discount)) and bool(game._eligible_pilot_targets(player))
 
 
 def play_card_as_pilot(game: Any, player: Player, card_id: str) -> bool:
@@ -155,12 +167,21 @@ def play_card_as_pilot(game: Any, player: Player, card_id: str) -> bool:
     if not card or not game._can_play_as_pilot(player, card):
         return False
 
-    target = game._choose_pilot_target(player)
-    cost = game._piloting_cost(card)
-    if target is None or cost is None or not player.pay_cost(cost):
+    return play_specific_card_as_pilot(game, player, card, cost_discount=0)
+
+
+def play_specific_card_as_pilot(game: Any, player: Player, card: Card, cost_discount: int = 0) -> bool:
+    if not isinstance(card, UnitCard):
         return False
 
-    player.hand.remove(card)
+    target = game._choose_pilot_target(player)
+    cost = game._piloting_cost(card)
+    discounted_cost = max(0, cost - cost_discount - game._pilot_discount(player, card)) if cost is not None else None
+    if target is None or discounted_cost is None or not player.pay_cost(discounted_cost):
+        return False
+
+    if card in player.hand:
+        player.hand.remove(card)
     card.played_as_pilot = True
     card.is_exhausted = False
     card.damage = 0
@@ -170,5 +191,6 @@ def play_card_as_pilot(game: Any, player: Player, card_id: str) -> bool:
     game._resolve_when_pilot_attached(player, card, target)
     game._resolve_structured_effects(player, card, "when_played_as_upgrade", defender=target)
     game._resolve_structured_effects(player, card, "when_played", defender=target)
+    game._consume_pilot_discount(player, card)
     game._record_played_card(player, card)
     return True
