@@ -1,0 +1,27 @@
+{
+  "name": "Vehicle Piloting Test",
+  "minimum_cards": 50,
+  "leader": {
+    "set": "JTL",
+    "number": "008"
+  },
+  "cards": [
+    {"set": "JTL", "number": "095", "count": 3},
+    {"set": "JTL", "number": "050", "count": 3},
+    {"set": "JTL", "number": "051", "count": 3},
+    {"set": "JTL", "number": "096", "count": 3},
+    {"set": "JTL", "number": "101", "count": 3},
+    {"set": "JTL", "number": "045", "count": 3},
+    {"set": "JTL", "number": "057", "count": 3},
+    {"set": "JTL", "number": "093", "count": 3},
+    {"set": "JTL", "number": "108", "count": 3},
+    {"set": "JTL", "number": "196", "count": 3},
+    {"set": "JTL", "number": "197", "count": 3},
+    {"set": "JTL", "number": "203", "count": 3},
+    {"set": "JTL", "number": "103", "count": 3},
+    {"set": "JTL", "number": "058", "count": 3},
+    {"set": "JTL", "number": "150", "count": 3},
+    {"set": "JTL", "number": "071", "count": 3},
+    {"set": "JTL", "number": "054", "count": 2}
+  ]
+}

@@ -225,6 +225,10 @@ def options(values: list[str], selected: str | None = None) -> str:
     )
 
 
+def option_with_all(values: list[str], selected: str, all_label: str = "all") -> str:
+    return f'<option value="all" {"selected" if selected == "all" else ""}>{esc(all_label)}</option>' + options(values, selected)
+
+
 def card_sort_key(card: dict) -> tuple[str, int | str]:
     number = str(card.get("Number") or "")
     return (str(card.get("Set") or ""), int(number) if number.isdigit() else number)
@@ -232,6 +236,114 @@ def card_sort_key(card: dict) -> tuple[str, int | str]:
 
 def card_display(card: dict) -> str:
     return f"{card.get('Set')} {card.get('Number')} {card.get('Name')}"
+
+
+def unique_card_values(cards: list[dict], field: str) -> list[str]:
+    values = set()
+    for card in cards:
+        value = card.get(field)
+        if isinstance(value, list):
+            values.update(str(item) for item in value if item not in (None, ""))
+        elif value not in (None, ""):
+            values.add(str(value))
+    return sorted(values)
+
+
+def card_has_value(card: dict, field: str, selected: str) -> bool:
+    if selected == "all":
+        return True
+    value = card.get(field)
+    if isinstance(value, list):
+        return selected.lower() in {str(item).lower() for item in value}
+    return str(value or "").lower() == selected.lower()
+
+
+def card_matches_official_filters(card: dict, filters: dict[str, str]) -> bool:
+    if filters.get("set", "all") != "all" and str(card.get("Set") or "") != filters["set"]:
+        return False
+    if not card_has_value(card, "Type", filters.get("type", "all")):
+        return False
+    if not card_has_value(card, "Aspects", filters.get("aspect", "all")):
+        return False
+    if not card_has_value(card, "Keywords", filters.get("keyword", "all")):
+        return False
+    if not card_has_value(card, "Traits", filters.get("trait", "all")):
+        return False
+    if not card_has_value(card, "Arenas", filters.get("arena", "all")):
+        return False
+    if not card_has_value(card, "Rarity", filters.get("rarity", "all")):
+        return False
+    search = filters.get("search", "").strip().lower()
+    if search:
+        haystack = " ".join(
+            str(card.get(field) or "")
+            for field in ("Set", "Number", "Name", "Subtitle", "Type", "FrontText", "BackText", "EpicAction")
+        ).lower()
+        if search not in haystack:
+            return False
+    return True
+
+
+def official_filter_values(cards: list[dict]) -> dict[str, list[str]]:
+    return {
+        "sets": unique_card_values(cards, "Set"),
+        "types": unique_card_values(cards, "Type"),
+        "aspects": unique_card_values(cards, "Aspects"),
+        "keywords": unique_card_values(cards, "Keywords"),
+        "traits": unique_card_values(cards, "Traits"),
+        "arenas": unique_card_values(cards, "Arenas"),
+        "rarities": unique_card_values(cards, "Rarity"),
+    }
+
+
+def official_filters_from_query(query: dict[str, list[str]]) -> dict[str, str]:
+    return {
+        "set": query.get("set", ["all"])[0],
+        "type": query.get("type", ["all"])[0],
+        "aspect": query.get("aspect", ["all"])[0],
+        "keyword": query.get("keyword", ["all"])[0],
+        "trait": query.get("trait", ["all"])[0],
+        "arena": query.get("arena", ["all"])[0],
+        "rarity": query.get("rarity", ["all"])[0],
+        "search": query.get("search", [""])[0],
+    }
+
+
+def official_filter_controls(values: dict[str, list[str]], filters: dict[str, str]) -> str:
+    return f"""
+<div>
+  <label>Search</label>
+  <input name="search" value="{esc(filters.get('search', ''))}" placeholder="Name, text, trait, etc.">
+</div>
+<div>
+  <label>Set</label>
+  <select name="set">{option_with_all(values['sets'], filters.get('set', 'all'))}</select>
+</div>
+<div>
+  <label>Type</label>
+  <select name="type">{option_with_all(values['types'], filters.get('type', 'all'))}</select>
+</div>
+<div>
+  <label>Keyword</label>
+  <select name="keyword">{option_with_all(values['keywords'], filters.get('keyword', 'all'))}</select>
+</div>
+<div>
+  <label>Trait</label>
+  <select name="trait">{option_with_all(values['traits'], filters.get('trait', 'all'))}</select>
+</div>
+<div>
+  <label>Arena</label>
+  <select name="arena">{option_with_all(values['arenas'], filters.get('arena', 'all'))}</select>
+</div>
+<div>
+  <label>Aspect</label>
+  <select name="aspect">{option_with_all(values['aspects'], filters.get('aspect', 'all'))}</select>
+</div>
+<div>
+  <label>Rarity</label>
+  <select name="rarity">{option_with_all(values['rarities'], filters.get('rarity', 'all'))}</select>
+</div>
+"""
 
 
 def build_effect_record(
@@ -558,9 +670,36 @@ def simulate_page(query: dict[str, list[str]]) -> bytes:
     return page("Simulation", body)
 
 
-def cards_page() -> bytes:
+def cards_page(query: dict[str, list[str]]) -> bytes:
     analysis = analyze_card_database(DEFAULT_GAMEPLAY_OUTPUT_PATH)
     support = analysis["support_counts"]
+    cards = sorted(_load_card_index().values(), key=card_sort_key)
+    filter_values = official_filter_values(cards)
+    filters = official_filters_from_query(query)
+    support_filter = query.get("support", ["all"])[0]
+    limit = parse_positive_int(query.get("limit", ["100"])[0], 100, 500)
+    effects = load_effects()
+    filtered_cards = []
+    for card in cards:
+        if not card_matches_official_filters(card, filters):
+            continue
+        audit = _audit_card(card, count=1, trained_effects=effects)
+        if support_filter != "all" and audit.status != support_filter:
+            continue
+        filtered_cards.append((card, audit))
+
+    filtered_rows = "".join(
+        "<tr>"
+        f"<td>{esc(card.get('Set'))} {esc(card.get('Number'))}</td>"
+        f"<td>{esc(card.get('Name'))}<br><span class='muted'>{esc(card.get('Type'))}</span></td>"
+        f"<td>{esc(', '.join(card.get('Keywords') or []) or 'none')}</td>"
+        f"<td>{esc(', '.join(card.get('Traits') or []) or 'none')}</td>"
+        f"<td>{esc(', '.join(card.get('Arenas') or []) or 'none')}</td>"
+        f"<td class='status-{esc(audit.status)}'>{esc(audit.status)}</td>"
+        f"<td><a class='button secondary' href='/train?card={esc(card.get('Set'))}-{esc(card.get('Number'))}'>Train</a></td>"
+        "</tr>"
+        for card, audit in filtered_cards[:limit]
+    ) or "<tr><td colspan='7'>No cards match these filters.</td></tr>"
     keyword_rows = "".join(
         f"<tr><td>{esc(name)}</td><td>{count}</td></tr>"
         for name, count in list(analysis["keyword_counts"].items())[:20]
@@ -571,11 +710,37 @@ def cards_page() -> bytes:
     )
     body = f"""
 <section><h2>Card Database Analysis</h2><p>Use this to decide which mechanics to implement next.</p></section>
+<section class="card">
+  <h3>Official-Style Card Filters</h3>
+  <form method="get" action="/cards">
+    <div class="inline-field">
+      {official_filter_controls(filter_values, filters)}
+      <div>
+        <label>Support</label>
+        <select name="support">{option_with_all(["supported", "partial", "unsupported"], support_filter)}</select>
+      </div>
+      <div>
+        <label>Limit</label>
+        <input name="limit" type="number" min="1" max="500" value="{esc(limit)}">
+      </div>
+    </div>
+    <button type="submit">Apply Filters</button>
+    <a class="button secondary" href="/cards">Clear</a>
+  </form>
+</section>
 <section class="grid">
   <div class="card"><h3>Total Cards</h3><div class="metric">{analysis['total_cards']}</div></div>
   <div class="card"><h3>Supported</h3><div class="metric">{support.get('supported', 0)}</div></div>
   <div class="card"><h3>Partial</h3><div class="metric">{support.get('partial', 0)}</div></div>
   <div class="card"><h3>Unsupported</h3><div class="metric">{support.get('unsupported', 0)}</div></div>
+  <div class="card"><h3>Filtered</h3><div class="metric">{len(filtered_cards)}</div><p>Showing up to {limit} cards.</p></div>
+</section>
+<section class="card">
+  <h3>Filtered Cards</h3>
+  <table>
+    <thead><tr><th>Card</th><th>Name</th><th>Keywords</th><th>Traits</th><th>Arenas</th><th>Support</th><th>Action</th></tr></thead>
+    <tbody>{filtered_rows}</tbody>
+  </table>
 </section>
 <section class="grid">
   <div class="card">
@@ -666,6 +831,15 @@ def queue_priority(
 
 
 def training_queue_items(scope: str, status_filter: str, limit: int) -> list[dict]:
+    return training_queue_items_filtered(scope, status_filter, limit, {})
+
+
+def training_queue_items_filtered(
+    scope: str,
+    status_filter: str,
+    limit: int,
+    card_filters: dict[str, str],
+) -> list[dict]:
     index = _load_card_index()
     effects = load_effects()
     usage = deck_usage_counts()
@@ -676,6 +850,8 @@ def training_queue_items(scope: str, status_filter: str, limit: int) -> list[dic
     items = []
 
     for card in index.values():
+        if card_filters and not card_matches_official_filters(card, card_filters):
+            continue
         key = card_key_from_data(card)
         deck_count = usage.get(key, 0)
         competitive_main_count = competitive_main_counts.get(key, 0)
@@ -727,7 +903,9 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
     scope = query.get("scope", ["all"])[0]
     status_filter = query.get("status", ["needs_work"])[0]
     limit = parse_positive_int(query.get("limit", ["100"])[0], 100, 500)
-    items = training_queue_items(scope, status_filter, limit)
+    card_filters = official_filters_from_query(query)
+    filter_values = official_filter_values(list(_load_card_index().values()))
+    items = training_queue_items_filtered(scope, status_filter, limit, card_filters)
     competitive_data = load_competitive_decks()
     competitive_note = (
         f"{competitive_data.get('deck_count', 0)} SWUDB hot decks cached"
@@ -774,8 +952,10 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
         <label>Limit</label>
         <input name="limit" type="number" min="1" max="500" value="{esc(limit)}">
       </div>
+      {official_filter_controls(filter_values, card_filters)}
     </div>
     <button type="submit">Refresh Queue</button>
+    <a class="button secondary" href="/queue">Clear</a>
   </form>
 </section>
 <section>
@@ -1107,7 +1287,7 @@ class UIHandler(BaseHTTPRequestHandler):
             "/": lambda: dashboard(),
             "/audit": lambda: audit_page(query),
             "/simulate": lambda: simulate_page(query),
-            "/cards": lambda: cards_page(),
+            "/cards": lambda: cards_page(query),
             "/queue": lambda: training_queue_page(query),
             "/train": lambda: train_page(query),
             "/train/suggest": lambda: suggest_train_effect(query),

@@ -59,6 +59,7 @@ class UnitCard(Card):
         self.damage = 0
         self.experience_tokens = 0
         self.shield_tokens = 0
+        self.is_token = False
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
         self.attached_upgrades = []

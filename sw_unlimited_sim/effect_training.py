@@ -92,6 +92,7 @@ ENGINE_EXECUTABLE_EFFECTS = {
     "defeat_unit",
     "give_shield",
     "give_experience",
+    "create_token",
     "modify_stats",
 }
 
@@ -323,6 +324,12 @@ def _normalize_step(step: Any, warnings: list[str]) -> dict[str, Any] | None:
             normalized[normalized_key] = value
     if step.get("choice_group"):
         normalized["choice_group"] = str(step.get("choice_group"))
+    if effect_type == "create_token":
+        token_name = step.get("token_name") or step.get("token") or step.get("name")
+        if token_name not in (None, ""):
+            normalized["token_name"] = str(token_name)
+        if step.get("ready") not in (None, ""):
+            normalized["ready"] = _coerce_bool(step.get("ready"))
     return normalized
 
 

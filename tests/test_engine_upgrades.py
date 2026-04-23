@@ -228,6 +228,69 @@ class EngineUpgradeTests(unittest.TestCase):
 
         self.assertEqual(vehicle.shield_tokens, 1)
 
+    def test_create_token_structured_effect_adds_token_unit(self):
+        game = game_state()
+        source = UnitCard("TST_300_1", "Token Maker", 2, 1, 3, Arena.GROUND)
+        game.player1.hand.append(source)
+        game.player1.resources = [Resource(CardStub("R1")), Resource(CardStub("R2"))]
+        record = {
+            "status": "approved",
+            "execution_status": "executable",
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "create_token",
+                            "amount": 2,
+                            "token_name": "X-Wing",
+                            "duration": "instant",
+                            "target": {"controller": "friendly", "type": "player"},
+                        }
+                    ],
+                }
+            ],
+        }
+        game.card_effects = {effect_key("TST", "300"): record}
+
+        self.assertEqual(execution_status_for_record(record), "executable")
+        self.assertTrue(game.execute_action(game.player1, "play_TST_300_1"))
+
+        tokens = [unit for unit in game.player1.units if getattr(unit, "is_token", False)]
+        self.assertEqual(len(tokens), 2)
+        self.assertTrue(all(token.name == "X-Wing" for token in tokens))
+        self.assertTrue(all(token.arena == Arena.SPACE for token in tokens))
+        self.assertTrue(all(token.is_exhausted for token in tokens))
+
+    def test_create_token_can_target_opponent_and_enter_ready(self):
+        game = game_state()
+        source = UnitCard("TST_301_1", "Enemy Token Maker", 2, 1, 3, Arena.GROUND)
+        step = {
+            "type": "create_token",
+            "amount": 1,
+            "token_name": "Battle Droid token",
+            "ready": "true",
+            "target": {"controller": "opponent", "type": "player"},
+        }
+
+        game._apply_structured_step(game.player1, source, step)
+
+        self.assertEqual(len(game.player1.units), 0)
+        self.assertEqual(len(game.player2.units), 1)
+        self.assertEqual(game.player2.units[0].name, "Battle Droid")
+        self.assertFalse(game.player2.units[0].is_exhausted)
+
+    def test_token_units_are_removed_from_game_when_defeated(self):
+        game = game_state()
+        game._create_tokens(game.player1, "Battle Droid", 1, "Test Source")
+        token = next(unit for unit in game.player1.units if getattr(unit, "is_token", False))
+
+        game._damage_unit(game.player1, token, 1)
+
+        self.assertNotIn(token, game.player1.units)
+        self.assertNotIn(token, game.player1.discard_pile)
+
 
 class CardStub:
     def __init__(self, card_id: str):

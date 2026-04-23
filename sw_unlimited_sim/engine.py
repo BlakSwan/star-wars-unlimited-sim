@@ -8,6 +8,45 @@ from effect_training import should_execute_record
 from models import *
 
 
+TOKEN_TEMPLATES = {
+    "battle droid": {
+        "name": "Battle Droid",
+        "power": 1,
+        "hp": 1,
+        "arena": Arena.GROUND,
+        "traits": ["DROID", "SEPARATIST"],
+    },
+    "clone trooper": {
+        "name": "Clone Trooper",
+        "power": 2,
+        "hp": 2,
+        "arena": Arena.GROUND,
+        "traits": ["CLONE", "TROOPER", "REPUBLIC"],
+    },
+    "spy": {
+        "name": "Spy",
+        "power": 1,
+        "hp": 1,
+        "arena": Arena.GROUND,
+        "traits": ["SPY"],
+    },
+    "tie fighter": {
+        "name": "TIE Fighter",
+        "power": 1,
+        "hp": 1,
+        "arena": Arena.SPACE,
+        "traits": ["IMPERIAL", "VEHICLE", "FIGHTER"],
+    },
+    "x wing": {
+        "name": "X-Wing",
+        "power": 2,
+        "hp": 2,
+        "arena": Arena.SPACE,
+        "traits": ["REBEL", "VEHICLE", "FIGHTER"],
+    },
+}
+
+
 class GameState:
     """Complete game state"""
     
@@ -26,6 +65,7 @@ class GameState:
         self.game_log: List[str] = []
         self.verbose = verbose
         self.card_effects = load_effects()
+        self.token_counter = 0
 
     def _emit(self, message: str):
         """Print a message only for verbose runs."""
@@ -534,6 +574,10 @@ class GameState:
             self.log(f"Turn {self.turn_count}: {unit.name} was defeated and returned to leader side")
             return
 
+        if getattr(unit, "is_token", False):
+            self.log(f"Turn {self.turn_count}: {unit.name} token was defeated and removed from the game")
+            return
+
         player.discard_pile.append(unit)
         self.log(f"Turn {self.turn_count}: {unit.name} was defeated")
 
@@ -551,6 +595,9 @@ class GameState:
         unit.is_exhausted = False
         unit.attacked_this_phase = False
         unit.abilities_lost_until_ready = False
+        if getattr(unit, "is_token", False):
+            self.log(f"Turn {self.turn_count}: {source_name} removes {unit.name} token from the game")
+            return
         owner.hand.append(unit)
         self.log(f"Turn {self.turn_count}: {source_name} returns {unit.name} to Player {owner.id}'s hand")
 
@@ -866,7 +913,7 @@ class GameState:
 
     def _target_player(self, player: Player, target_spec: dict[str, Any]) -> Player:
         controller = str(target_spec.get("controller") or "self").lower()
-        if controller == "enemy":
+        if controller in {"enemy", "opponent"}:
             return self._get_enemy(player)
         return player
 
@@ -952,6 +999,17 @@ class GameState:
             self._discard_cards(target_player, amount, source_name)
             return
 
+        if effect_type == "create_token":
+            target_player = self._target_player(player, target_spec)
+            self._create_tokens(
+                target_player,
+                str(step.get("token_name") or "Battle Droid"),
+                amount,
+                source_name,
+                ready=self._step_bool(step.get("ready", False)),
+            )
+            return
+
         if target_type in {"base", "player"}:
             target_player = self._target_player(player, target_spec)
             if effect_type == "deal_damage":
@@ -1003,6 +1061,49 @@ class GameState:
             self.log(f"Turn {self.turn_count}: {source_name} skipped capture effect; capture zones are not modeled yet")
         else:
             self.log(f"Turn {self.turn_count}: {source_name} skipped unknown structured effect {effect_type}")
+
+    def _create_tokens(self, player: Player, token_name: str, amount: int, source_name: str, ready: bool = False) -> list[UnitCard]:
+        template = self._token_template(token_name)
+        if not template:
+            self.log(f"Turn {self.turn_count}: {source_name} skipped unknown token type {token_name!r}")
+            return []
+
+        created = []
+        for _ in range(max(0, amount)):
+            self.token_counter += 1
+            token = UnitCard(
+                f"TOKEN_{self.token_counter}",
+                template["name"],
+                0,
+                int(template["power"]),
+                int(template["hp"]),
+                template["arena"],
+                traits=list(template["traits"]),
+            )
+            token.is_token = True
+            token.is_exhausted = not ready
+            player.units.append(token)
+            if token.arena == Arena.SPACE:
+                player.space_arena.append(token)
+            else:
+                player.ground_arena.append(token)
+            created.append(token)
+
+        state = "ready" if ready else "exhausted"
+        self.log(f"Turn {self.turn_count}: {source_name} creates {len(created)} {template['name']} token(s) {state}")
+        return created
+
+    def _token_template(self, token_name: str) -> Optional[dict[str, Any]]:
+        normalized = re.sub(r"\s+token(s)?\b", "", str(token_name).strip().lower()).strip()
+        normalized = normalized.replace("-", " ")
+        return TOKEN_TEMPLATES.get(normalized)
+
+    def _step_bool(self, value: Any) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "y"}
+        return bool(value)
 
     def _structured_stat_deltas(self, step: dict[str, Any]) -> tuple[int, int]:
         if "power" in step or "hp" in step:

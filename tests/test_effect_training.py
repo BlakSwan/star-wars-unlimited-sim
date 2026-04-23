@@ -18,6 +18,7 @@ from effect_training import (  # noqa: E402
     MLXBackend,
     OllamaBackend,
     OllamaEffectSuggestionProvider,
+    execution_status_for_record,
     get_effect_suggestion_provider,
     normalize_effect_record,
 )
@@ -154,6 +155,34 @@ class EffectTrainingTests(unittest.TestCase):
         self.assertEqual(record["review"]["triage"], "needs_review")
         self.assertEqual(record["execution_status"], "partial")
         self.assertIn("Dropped invalid effect step type", record["review"]["notes"])
+
+    def test_create_token_output_normalizes_as_executable_draft(self):
+        candidate = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "create_token",
+                            "amount": "2",
+                            "token": "X-Wing token",
+                            "duration": "instant",
+                            "target": {"controller": "friendly", "type": "player"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        record = normalize_effect_record(CARD, candidate, "local:test")
+
+        step = record["triggers"][0]["steps"][0]
+        self.assertEqual(step["amount"], 2)
+        self.assertEqual(step["token_name"], "X-Wing token")
+        self.assertEqual(execution_status_for_record(record), "executable")
+        self.assertEqual(record["status"], "draft")
+        self.assertFalse(record["review"]["human_verified"])
 
     def test_ollama_generate_parses_response_field(self):
         backend = OllamaBackend(model="test-model", host="http://127.0.0.1:11434", timeout=1)
