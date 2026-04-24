@@ -35,6 +35,7 @@ LEADER_CARD_DATA = {
     "Number": "001",
     "Name": "Profiled Leader",
     "Type": "Leader",
+    "Arenas": ["Ground"],
     "Cost": 5,
     "Power": 3,
     "HP": 6,
@@ -120,6 +121,14 @@ class CardProfileTests(unittest.TestCase):
         self.assertEqual(leader.profile.card_type, "Leader")
         self.assertIn("Action", leader.profile.mechanic_tags)
         self.assertEqual(leader.action_cost, 1)
+        self.assertEqual(leader.deployed_arena.name, "GROUND")
+
+    def test_leader_from_data_preserves_space_deploy_arena(self):
+        leader_data = dict(LEADER_CARD_DATA, Arenas=["Space"])
+
+        leader = leader_from_data(leader_data)
+
+        self.assertEqual(leader.deployed_arena.name, "SPACE")
 
     def test_base_from_data_uses_printed_hp_and_profile(self):
         base = base_from_data(BASE_CARD_DATA)

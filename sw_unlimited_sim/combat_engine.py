@@ -114,6 +114,7 @@ def remove_unit(game: Any, player: Player, unit: UnitCard) -> None:
     if unit is player.leader:
         player.leader.is_deployed = False
         player.leader.is_exhausted = False
+        player.leader.arena = Arena.NONE
         if hasattr(player.leader, "heal"):
             player.leader.heal()
         game.log(f"Turn {game.turn_count}: {unit.name} was defeated and returned to leader side")

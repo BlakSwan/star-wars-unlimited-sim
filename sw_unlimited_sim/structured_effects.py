@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from effect_training import should_execute_record
-from models import Card, Player, UnitCard, UpgradeCard
+from models import Arena, Card, Player, UnitCard, UpgradeCard
 
 
 def card_effect_record(game: Any, card: Card) -> Optional[dict[str, Any]]:
@@ -55,7 +55,7 @@ def resolve_structured_effects(
 
 def can_execute_structured_step(game: Any, source: Card, step: dict[str, Any]) -> bool:
     target = step.get("target") or {}
-    if target.get("filter"):
+    if target.get("filter") not in (None, "", "attached_unit", "ground", "space"):
         game.log(f"Turn {game.turn_count}: {source.name} skipped trained effect with unsupported target filter")
         return False
     duration = step.get("duration")
@@ -79,12 +79,33 @@ def target_player(game: Any, player: Player, target_spec: dict[str, Any]) -> Pla
     return player
 
 
+def _unit_matches_filter(unit: UnitCard, target_filter: str) -> bool:
+    if target_filter in (None, "", "none"):
+        return True
+    normalized = str(target_filter).lower()
+    if normalized == "ground":
+        return getattr(unit, "arena", None) == Arena.GROUND
+    if normalized == "space":
+        return getattr(unit, "arena", None) == Arena.SPACE
+    return True
+
+
 def target_unit(
     game: Any,
     player: Player,
+    source: Card,
     target_spec: dict[str, Any],
     defender: Optional[UnitCard] = None,
 ) -> tuple[Optional[Player], Optional[UnitCard]]:
+    target_filter = str(target_spec.get("filter") or "").lower()
+    if target_filter == "attached_unit":
+        attached = getattr(source, "attached_to", None) or defender
+        if not attached:
+            return None, None
+        enemy = game._get_enemy(player)
+        owner = player if attached in player.units else enemy
+        return owner, attached
+
     controller = str(target_spec.get("controller") or "enemy").lower()
     if controller == "self":
         candidates = player.units
@@ -100,12 +121,16 @@ def target_unit(
         owner = game._get_enemy(player)
         candidates = owner.units
 
+    candidates = [candidate for candidate in candidates if _unit_matches_filter(candidate, target_filter)]
+
     if defender and defender in candidates:
         return owner, defender
     if not candidates:
         return None, None
     if controller in {"friendly", "self"}:
-        unit = game._choose_friendly_unit(player, damaged=True) or game._choose_friendly_unit(player)
+        damaged_candidates = [candidate for candidate in candidates if candidate.damage > 0]
+        pool = damaged_candidates or candidates
+        unit = max(pool, key=lambda candidate: (candidate.power, candidate.current_hp))
         return player, unit
     unit = min(candidates, key=lambda candidate: (candidate.current_hp, -candidate.power))
     if controller == "any" and unit in player.units:
@@ -157,7 +182,7 @@ def apply_structured_step(
         return
 
     if effect_type == "attack_with_unit":
-        owner, unit = target_unit(game, player, target_spec, defender)
+        owner, unit = target_unit(game, player, source, target_spec, defender)
         if not owner or not unit:
             game.log(f"Turn {game.turn_count}: {source_name} found no target for attack_with_unit")
             return
@@ -187,7 +212,7 @@ def apply_structured_step(
             game.log(f"Turn {game.turn_count}: {source_name} skipped unsupported base effect {effect_type}")
         return
 
-    owner, unit = target_unit(game, player, target_spec, defender)
+    owner, unit = target_unit(game, player, source, target_spec, defender)
     if not owner or not unit:
         game.log(f"Turn {game.turn_count}: {source_name} found no target for {effect_type}")
         return

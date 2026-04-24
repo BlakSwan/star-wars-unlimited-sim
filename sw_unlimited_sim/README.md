@@ -30,6 +30,7 @@ python main.py --test
 | `python main.py --test-local-provider` | Check Ollama or MLX setup for local card-effect drafting |
 | `python main.py --draft-card SET NUMBER` | Draft one card effect with a local model |
 | `python main.py --draft-missing-cards` | Bulk-draft missing effect records with a local model |
+| `python main.py --draft-simple-llm-cards` | Bulk-draft only the filtered simple unsupported card queue |
 | `python main.py --validate-effects` | Validate stored effect records and summarize runtime blockers |
 | `python main.py --validate-effect SET NUMBER` | Inspect one stored effect record with schema/runtime validation |
 | `python main.py --archive-effect-draft SET NUMBER` | Archive the current draft record before replacing it |
@@ -37,6 +38,7 @@ python main.py --test
 | `python main.py --delete-draft-artifact SET NUMBER` | Delete archived draft artifacts for one card |
 | `python main.py --dump-card-profile SET NUMBER` | Dump one compact compiled card profile as JSON for local LLM workflows |
 | `python main.py --dump-deck-profiles DECK` | Dump compact compiled profiles for a deck's unique cards as JSON |
+| `python main.py --list-simple-llm-cards` | Print a filtered queue of short unsupported cards for local LLM drafting |
 
 ## Available Strategies
 
@@ -195,6 +197,35 @@ python main.py --dump-card-profile SOR 128 > /tmp/card.json
 python main.py --draft-card SOR 128
 python main.py --validate-effect SOR 128
 ```
+
+To build a larger batch queue of simple unsupported cards for a local model,
+use the filtered list command:
+
+```bash
+python main.py --list-simple-llm-cards
+python main.py --list-simple-llm-cards --simple-card-limit 20
+python main.py --list-simple-llm-cards --simple-card-format json > /tmp/simple_cards.json
+python main.py --draft-simple-llm-cards --simple-card-limit 20
+```
+
+The command excludes already-supported cards plus higher-complexity keywords and
+phrases such as `Capture`, `Hidden`, `Plot`, `Smuggle`, `Bounty`, `Coordinate`,
+`Exploit`, `choose`, `may`, `another`, `up to`, `for each`, `search`, and
+`piloting`. By default it only includes cards whose combined rules text is 10
+words or fewer. Adjust that threshold with `--simple-card-max-words`.
+
+To send that filtered queue directly to your configured local model instead of
+just printing it, use:
+
+```bash
+python main.py --draft-simple-llm-cards
+python main.py --draft-simple-llm-cards --simple-card-limit 20
+python main.py --draft-simple-llm-cards --sets SOR SHD --simple-card-limit 20
+```
+
+This uses the same local provider settings as `--draft-card`, skips approved
+records, skips existing drafts unless `--overwrite-drafts` is passed, and saves
+new drafts through the normal validation and review pipeline.
 
 If you want to keep a bad or superseded draft for later review before replacing
 it, archive it first:

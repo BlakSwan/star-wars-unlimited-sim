@@ -33,6 +33,9 @@ def aggressive_strategy(game: GameState, player: Player, actions: List[str]) -> 
                 if card.id == card_id and isinstance(card, UnitCard):
                     return action
 
+    if "base_epic" in actions:
+        return "base_epic"
+
     for action in actions:
         if action.startswith("pilot_"):
             return action
@@ -55,6 +58,9 @@ def control_strategy(game: GameState, player: Player, actions: List[str]) -> str
     for action in actions:
         if action.startswith("leader_action_"):
             return action
+
+    if "base_epic" in actions:
+        return "base_epic"
 
     # Then use unit action abilities if available
     for action in actions:
@@ -157,6 +163,9 @@ def greedy_value_strategy(game: GameState, player: Player, actions: List[str]) -
 
         elif action.startswith("unit_action_"):
             value = 8
+
+        elif action == "base_epic":
+            value = 8
         
         if value > best_value:
             best_value = value
@@ -194,6 +203,9 @@ def economic_strategy(game: GameState, player: Player, actions: List[str]) -> st
     for action in actions:
         if action.startswith("attack_") and "_base" in action:
             return action
+
+    if "base_epic" in actions:
+        return "base_epic"
     
     return "pass"
 

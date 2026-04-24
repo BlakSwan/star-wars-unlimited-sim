@@ -200,6 +200,9 @@ class GameState:
         if player.leader and not player.leader.is_deployed and not player.leader.epic_action_used:
             if player.can_afford(player.leader.epic_action_cost):
                 actions.append(f"leader_epic_{player.leader.id}")
+
+        if self._base_epic_has_target(player):
+            actions.append("base_epic")
         
         return actions
     
@@ -246,6 +249,9 @@ class GameState:
 
         if action.startswith("leader_epic_"):
             return self._deploy_leader(player)
+
+        if action == "base_epic":
+            return self._use_base_epic(player)
 
         if action.startswith("unit_action_"):
             unit_id = action[12:]
@@ -829,6 +835,80 @@ class GameState:
             return False
         player.has_force_token = False
         self.log(f"Turn {self.turn_count}: Player {player.id} uses the Force")
+        return True
+
+    def _is_base(self, base: Base, set_code: str, number: str) -> bool:
+        return (
+            str(getattr(base, "set_code", "")).upper() == set_code.upper()
+            and str(getattr(base, "number", "")) == str(number)
+        )
+
+    def _base_epic_has_target(self, player: Player) -> bool:
+        base = getattr(player, "base", None)
+        if not base or getattr(base, "epic_action_used", False):
+            return False
+        enemy = self._get_enemy(player)
+
+        if self._is_base(base, "SOR", "019"):
+            return any(not isinstance(unit, LeaderCard) for unit in player.units)
+        if self._is_base(base, "SOR", "022"):
+            return any(isinstance(card, UnitCard) and not isinstance(card, LeaderCard) and card.cost <= 6 for card in player.hand)
+        if self._is_base(base, "SOR", "025"):
+            return any(not isinstance(unit, LeaderCard) and unit.damage > 0 for unit in enemy.units)
+        if self._is_base(base, "SOR", "028"):
+            return any(not isinstance(unit, LeaderCard) for unit in enemy.units)
+        return False
+
+    def _use_base_epic(self, player: Player) -> bool:
+        base = getattr(player, "base", None)
+        if not base or not self._base_epic_has_target(player):
+            return False
+        enemy = self._get_enemy(player)
+
+        if self._is_base(base, "SOR", "019"):
+            targets = [unit for unit in player.units if not isinstance(unit, LeaderCard)]
+            if not targets:
+                return False
+            target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+            target.shield_tokens += 1
+            self.log(f"Turn {self.turn_count}: {base.name} gives a Shield token to {target.name}")
+        elif self._is_base(base, "SOR", "022"):
+            candidates = [
+                card for card in player.hand
+                if isinstance(card, UnitCard) and not isinstance(card, LeaderCard) and card.cost <= 6
+            ]
+            if not candidates:
+                return False
+            card = max(candidates, key=lambda candidate: (candidate.cost, candidate.power + candidate.hp))
+            player.hand.remove(card)
+            original_ambush = getattr(card, "has_ambush", False)
+            card.has_ambush = True
+            played = self._play_unit(player, card)
+            card.has_ambush = original_ambush
+            if not played:
+                player.hand.append(card)
+                return False
+            self._record_played_card(player, card)
+            self.log(f"Turn {self.turn_count}: {base.name} uses Epic Action to play {card.name}")
+        elif self._is_base(base, "SOR", "025"):
+            targets = [unit for unit in enemy.units if not isinstance(unit, LeaderCard) and unit.damage > 0]
+            if not targets:
+                return False
+            target = max(targets, key=lambda unit: (unit.cost, unit.power, unit.current_hp))
+            self._damage_unit(enemy, target, 3)
+            self.log(f"Turn {self.turn_count}: {base.name} deals 3 damage to {target.name}")
+        elif self._is_base(base, "SOR", "028"):
+            targets = [unit for unit in enemy.units if not isinstance(unit, LeaderCard)]
+            if not targets:
+                return False
+            target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+            self._apply_temporary_modifier(target, power_delta=-4, duration="this_phase")
+            self.log(f"Turn {self.turn_count}: {base.name} gives {target.name} -4/-0 for this phase")
+        else:
+            return False
+
+        base.epic_action_used = True
+        self._emit(f"  Player {player.id} uses {base.name}'s Epic Action")
         return True
 
     def _choose_enemy_unit(self, player: Player, *, arena: Optional[Arena] = None, non_vehicle: bool = False) -> Optional[UnitCard]:

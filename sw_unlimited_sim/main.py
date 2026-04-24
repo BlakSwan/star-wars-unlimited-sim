@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 
@@ -10,7 +11,7 @@ from card_analysis import analyze_card_database, format_card_analysis
 from card_profiles import compact_profile_payload, compile_card_profile
 from competitive_decks import COMPETITIVE_DECKS_PATH, write_hot_competitive_decks
 from deck_loader import _load_card_cache, _lookup_card, available_decks, resolve_deck_path
-from effect_audit import audit_deck, format_deck_audit
+from effect_audit import _audit_card, audit_deck, format_deck_audit
 from effect_store import (
     delete_draft_artifact,
     effect_key,
@@ -45,6 +46,33 @@ from swu_db_client import (
 )
 
 
+SIMPLE_LLM_BLOCKED_KEYWORDS = {
+    "Bounty",
+    "Capture",
+    "Coordinate",
+    "Exploit",
+    "Hidden",
+    "Plot",
+    "Smuggle",
+}
+
+SIMPLE_LLM_BLOCKED_PHRASES = (
+    "choose",
+    "may",
+    "another",
+    "up to",
+    "for each",
+    "if you do",
+    "instead",
+    "search",
+    "look at",
+    "divided as you choose",
+    "attached unit gains",
+    "attach to",
+    "piloting",
+)
+
+
 def _drafting_provider(args) -> LocalEffectSuggestionProvider:
     provider = get_effect_suggestion_provider(
         "local",
@@ -64,6 +92,181 @@ def _find_card(set_code: str, number: str) -> dict:
     if key not in index:
         raise KeyError(f"Card {set_code.upper()} {number} was not found in gameplay card data")
     return index[key]
+
+
+def _compact_rules_text(card: dict) -> str:
+    parts = []
+    for field in ("FrontText", "BackText", "EpicAction"):
+        value = str(card.get(field) or "").strip()
+        if value:
+            parts.append(" ".join(value.split()))
+    return " ".join(parts)
+
+
+def _rules_word_count(text: str) -> int:
+    return len([token for token in re.split(r"\s+", text.strip()) if token])
+
+
+def _simple_llm_bucket(card: dict, text: str) -> str:
+    lowered = text.lower()
+    if lowered.startswith("when played:"):
+        return "when_played"
+    if lowered.startswith("on attack:"):
+        return "on_attack"
+    if lowered.startswith("action"):
+        return "action"
+    if str(card.get("Type") or "").lower() == "event":
+        return "event"
+    return "other"
+
+
+def simple_llm_candidates(
+    max_words: int = 10,
+    limit: int | None = None,
+    selected_sets: set[str] | None = None,
+) -> list[dict]:
+    selected_sets = {set_code.upper() for set_code in (selected_sets or set())}
+    cards = sorted(
+        _load_card_cache(DEFAULT_GAMEPLAY_OUTPUT_PATH).values(),
+        key=lambda card: (
+            str(card.get("_source_set_code") or card.get("Set") or ""),
+            str(card.get("Number") or ""),
+        ),
+    )
+    effects = load_effects()
+    candidates: list[dict] = []
+
+    for card in cards:
+        set_code = str(card.get("_source_set_code") or card.get("Set") or "").upper()
+        if selected_sets and set_code not in selected_sets:
+            continue
+
+        text = _compact_rules_text(card)
+        if not text:
+            continue
+        word_count = _rules_word_count(text)
+        if word_count > max_words:
+            continue
+        if SIMPLE_LLM_BLOCKED_KEYWORDS.intersection(set(card.get("Keywords") or [])):
+            continue
+
+        lowered = text.lower()
+        if any(phrase in lowered for phrase in SIMPLE_LLM_BLOCKED_PHRASES):
+            continue
+
+        audit = _audit_card(card, count=1, trained_effects=effects)
+        if audit.status == "supported":
+            continue
+
+        number = str(card.get("Number") or "").zfill(3)
+        candidates.append({
+            "key": f"{set_code}-{number}",
+            "title": str(card.get("Name") or ""),
+            "type": str(card.get("Type") or ""),
+            "bucket": _simple_llm_bucket(card, text),
+            "words": word_count,
+            "text": text,
+            "card": card,
+        })
+
+    candidates.sort(key=lambda entry: (
+        ("when_played", "on_attack", "action", "event", "other").index(entry["bucket"]),
+        entry["words"],
+        entry["key"],
+    ))
+    if limit is not None:
+        candidates = candidates[:limit]
+    return candidates
+
+
+def list_simple_llm_cards(
+    max_words: int = 10,
+    limit: int | None = None,
+    output_format: str = "text",
+) -> int:
+    ordered = [{k: v for k, v in entry.items() if k != "card"} for entry in simple_llm_candidates(max_words=max_words, limit=limit)]
+
+    if output_format == "json":
+        print(json.dumps({
+            "filters": {
+                "max_words": max_words,
+                "excluded_keywords": sorted(SIMPLE_LLM_BLOCKED_KEYWORDS),
+                "excluded_phrases": list(SIMPLE_LLM_BLOCKED_PHRASES),
+                "unsupported_only": True,
+            },
+            "count": len(ordered),
+            "cards": ordered,
+        }, indent=2))
+        return 0
+
+    print(f"Simple unsupported cards for local LLM drafting (max_words={max_words})")
+    print("Excluded keywords: " + ", ".join(sorted(SIMPLE_LLM_BLOCKED_KEYWORDS)))
+    print("Excluded phrases: " + ", ".join(SIMPLE_LLM_BLOCKED_PHRASES))
+    current_bucket = None
+    for entry in ordered:
+        if entry["bucket"] != current_bucket:
+            current_bucket = entry["bucket"]
+            print(f"\n[{current_bucket}]")
+        print(f"{entry['key']} | {entry['title']} | {entry['text']}")
+    print(f"\nTotal cards: {len(ordered)}")
+    return 0
+
+
+def draft_simple_llm_cards(args) -> int:
+    try:
+        provider = _drafting_provider(args)
+        effects = load_effects()
+        candidates = simple_llm_candidates(
+            max_words=args.simple_card_max_words,
+            limit=args.simple_card_limit,
+            selected_sets=set(args.sets or []),
+        )
+    except Exception as exc:
+        print(f"Could not prepare simple local drafting: {exc}")
+        return 1
+
+    summary: Counter = Counter()
+    errors: list[str] = []
+
+    for entry in candidates:
+        card = entry["card"]
+        key = effect_key(str(card.get("Set") or ""), str(card.get("Number") or ""))
+        existing = effects.get(key)
+        if existing:
+            if existing.get("status") == "approved":
+                summary["skipped_existing"] += 1
+                continue
+            if existing.get("status") == "draft" and not args.overwrite_drafts:
+                summary["skipped_existing"] += 1
+                continue
+
+        summary["scanned"] += 1
+        try:
+            record = provider.suggest_effect(card)
+            triage = _save_local_draft(card, record, args.approve_safe_drafts)
+            effects[key] = record
+            summary["drafts_created"] += 1
+            summary[triage] += 1
+        except EffectSuggestionError as exc:
+            summary["provider_errors"] += 1
+            errors.append(f"{key}: {exc.title} - {exc.detail}")
+            break
+        except Exception as exc:
+            summary["errors"] += 1
+            errors.append(f"{key}: {exc}")
+
+    print("Simple local drafting summary:")
+    print(f"  filter_max_words: {args.simple_card_max_words}")
+    if args.sets:
+        print(f"  filtered_sets: {', '.join(sorted(set_code.upper() for set_code in args.sets))}")
+    print(f"  candidate_cards: {len(candidates)}")
+    for key in ("scanned", "drafts_created", "safe_draft", "needs_review", "unresolved", "skipped_existing", "provider_errors", "errors"):
+        print(f"  {key}: {summary[key]}")
+    if errors:
+        print("Errors:")
+        for error in errors[:10]:
+            print(f"  - {error}")
+    return 1 if summary["provider_errors"] else 0
 
 
 def _save_local_draft(card: dict, record: dict, approve_safe_drafts: bool) -> str:
@@ -380,6 +583,8 @@ Examples:
                         help="Bulk draft card effects with the configured local LLM provider")
     parser.add_argument("--draft-missing-cards", action="store_true",
                         help="Bulk draft only cards without an existing effect record")
+    parser.add_argument("--draft-simple-llm-cards", action="store_true",
+                        help="Bulk draft only the filtered simple unsupported card queue")
     parser.add_argument("--local-provider", choices=["ollama", "mlx"], default=None,
                         help="Local provider backend for card-effect drafting")
     parser.add_argument("--local-model",
@@ -414,6 +619,14 @@ Examples:
                         help="Dump compact compiled profiles for a deck's unique cards as JSON")
     parser.add_argument("--include-effect-record", action="store_true",
                         help="Include the saved effect record in profile dump commands")
+    parser.add_argument("--list-simple-llm-cards", action="store_true",
+                        help="List short unsupported card texts suitable for local LLM drafting")
+    parser.add_argument("--simple-card-max-words", type=int, default=10,
+                        help="Maximum rules-text word count for --list-simple-llm-cards")
+    parser.add_argument("--simple-card-limit", type=int,
+                        help="Maximum result count for --list-simple-llm-cards")
+    parser.add_argument("--simple-card-format", choices=["text", "json"], default="text",
+                        help="Output format for --list-simple-llm-cards")
     
     args = parser.parse_args()
     
@@ -431,6 +644,9 @@ Examples:
 
     if args.draft_local_effects:
         sys.exit(bulk_draft_local_cards(args))
+
+    if args.draft_simple_llm_cards:
+        sys.exit(draft_simple_llm_cards(args))
 
     if args.validate_effects:
         sys.exit(validate_all_effects())
@@ -452,6 +668,13 @@ Examples:
 
     if args.dump_deck_profiles:
         sys.exit(dump_deck_profiles(args.dump_deck_profiles, include_effect_record=args.include_effect_record))
+
+    if args.list_simple_llm_cards:
+        sys.exit(list_simple_llm_cards(
+            max_words=args.simple_card_max_words,
+            limit=args.simple_card_limit,
+            output_format=args.simple_card_format,
+        ))
     
     # List strategies
     if args.list:

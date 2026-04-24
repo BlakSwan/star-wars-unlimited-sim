@@ -8,6 +8,7 @@ import socket
 import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any
 
 from settings import get_setting
@@ -52,6 +53,7 @@ TARGET_CONTROLLERS = ["enemy", "friendly", "self", "any", "opponent", "active_pl
 TARGET_TYPES = ["unit", "base", "player", "card", "upgrade", "event", "leader", "resource"]
 TARGET_FILTERS = [
     "none",
+    "attached_unit",
     "damaged",
     "undamaged",
     "non_leader",
@@ -264,7 +266,140 @@ def prompt_examples() -> dict[str, Any]:
                 ]
             },
         },
+        "good_example_for_when_played_exhaust_attached_unit": {
+            "raw_text": "When Played: Exhaust attached unit.",
+            "record_fragment": {
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "exhaust_unit",
+                                "amount": 1,
+                                "duration": "instant",
+                                "optional": False,
+                                "target": {
+                                    "controller": "self",
+                                    "type": "unit",
+                                    "filter": "attached_unit",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
+        },
     }
+
+
+def prompt_swu_primer() -> dict[str, Any]:
+    """Return compact SWU-specific rules context for local drafting."""
+    return {
+        "core_terms": [
+            "'When Played' triggers when the card enters play.",
+            "'On Attack' triggers when the unit declares an attack.",
+            "'When Defeated' triggers when the unit is defeated.",
+            "'Action [Exhaust]' is an activated ability and should usually map to trigger event 'action'.",
+            "'This unit' refers to the source unit itself.",
+            "'Your base' or 'a base' should target target.type 'base'.",
+            "Drawing cards affects the acting player, not a card object.",
+            "Creating tokens usually affects the friendly player or board state controlled by that player.",
+        ],
+        "targeting_conventions": [
+            "Use target.controller 'self' only when the text explicitly refers to the source, such as 'this unit'.",
+            "Use target.controller 'friendly' for 'your' or generally friendly targets.",
+            "Use target.controller 'enemy' for opposing units or bases.",
+            "Use target.type 'player' for draw or discard effects that affect a player rather than a card.",
+            "If the card is an upgrade and the text says 'attached unit', use target.filter 'attached_unit'.",
+        ],
+        "timing_conventions": [
+            "Most immediate card effects use duration 'instant'.",
+            "Temporary combat or round modifiers often use 'this_attack' or 'this_phase', but only when the text explicitly gives a temporary duration.",
+            "Do not use 'constant' unless the text is a continuous static ability.",
+        ],
+    }
+
+
+def prompt_effect_mapping_guide() -> dict[str, Any]:
+    """Return a compact phrase-to-schema lexicon for common supported effects."""
+    return {
+        "phrase_to_step_type": {
+            "draw a card": "draw_cards",
+            "draw 2 cards": "draw_cards",
+            "deal damage": "deal_damage",
+            "heal damage": "heal_damage",
+            "exhaust a unit": "exhaust_unit",
+            "ready a unit": "ready_unit",
+            "defeat a unit": "defeat_unit",
+            "give a shield token": "give_shield",
+            "give an experience token": "give_experience",
+            "create a token": "create_token",
+            "gets +X/+Y for this phase": "modify_stats",
+        },
+        "normalization_hints": [
+            "'Draw a card' should usually become amount 1 and target friendly player.",
+            "'Create an X-Wing token' should use type 'create_token' and token_name 'X-Wing token'.",
+            "'Deal 3 damage to this unit' should target self unit with amount 3.",
+            "'Exhaust attached unit' should use type 'exhaust_unit' and target.filter 'attached_unit'.",
+            "If text names a ground or space restriction, prefer a target filter instead of prose notes when possible.",
+        ],
+    }
+
+
+def prompt_engine_review_rules() -> dict[str, Any]:
+    """Return repo-specific guidance for conservative drafts."""
+    return {
+        "review_boundary": [
+            "Output a draft only. Never mark status approved.",
+            "If the text needs unsupported mechanics, keep the structure conservative and note uncertainty.",
+            "If you cannot express the card cleanly in the schema, leave fewer triggers and add notes instead of inventing new fields.",
+        ],
+        "engine_bias": [
+            "Prefer currently executable step types when the card text clearly matches them.",
+            "Do not invent composite steps when a single known step type is enough.",
+            "Never use legacy flat trigger fields like effect_type or target_controller at trigger level.",
+        ],
+        "risky_terms": RISKY_RULE_TEXT_TERMS,
+    }
+
+
+def prompt_repo_approved_examples(limit: int = 6) -> list[dict[str, Any]]:
+    """Return a compact set of approved executable in-repo examples for local prompting."""
+    effects_path = Path(__file__).resolve().parent / "data" / "effects" / "card_effects.json"
+    if not effects_path.exists():
+        return []
+    try:
+        payload = json.loads(effects_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+
+    examples: list[dict[str, Any]] = []
+    for key, record in sorted(payload.items()):
+        if record.get("status") != "approved":
+            continue
+        if record.get("execution_status") != "executable":
+            continue
+        triggers = record.get("triggers") or []
+        if not triggers:
+            continue
+        first_trigger = triggers[0] if isinstance(triggers[0], dict) else {}
+        first_steps = first_trigger.get("steps") or []
+        primary_step = first_steps[0] if first_steps and isinstance(first_steps[0], dict) else {}
+        examples.append(
+            {
+                "card_ref": key,
+                "name": record.get("name"),
+                "raw_text": record.get("raw_text", ""),
+                "primary_event": first_trigger.get("event"),
+                "primary_step_type": primary_step.get("type"),
+                "record_fragment": {
+                    "triggers": triggers,
+                },
+            }
+        )
+    examples.sort(key=lambda entry: (str(entry.get("primary_step_type") or ""), str(entry.get("card_ref") or "")))
+    return examples[:limit]
 
 
 def build_step(
@@ -317,6 +452,7 @@ def execution_status_for_record(record: dict[str, Any]) -> str:
 def execution_analysis_for_record(record: dict[str, Any]) -> dict[str, Any]:
     """Explain why a record is executable, partial, or manual."""
     triggers = record.get("triggers") or []
+    raw_text = str(record.get("raw_text") or "").lower()
     blockers: list[str] = []
     metrics = {
         "trigger_count": len(triggers),
@@ -402,9 +538,16 @@ def execution_analysis_for_record(record: dict[str, Any]) -> dict[str, Any]:
                     f"trigger {trigger_index} step {step_index} has invalid target type {target.get('type')!r}"
                 )
                 status = "manual"
-            if target.get("filter"):
+            target_filter = target.get("filter")
+            if target_filter and target_filter not in {"attached_unit", "ground", "space"}:
                 blockers.append(f"trigger {trigger_index} step {step_index} uses unsupported target filters")
                 metrics["filtered_target_count"] += 1
+                if status != "manual":
+                    status = "partial"
+            if target_filter in {"ground", "space"} and f"all {target_filter} units" in raw_text:
+                blockers.append(
+                    f"trigger {trigger_index} step {step_index} targets only one {target_filter} unit but card text affects all {target_filter} units"
+                )
                 if status != "manual":
                     status = "partial"
             if step.get("optional"):
@@ -783,7 +926,8 @@ def triage_effect_record(record: dict[str, Any], warnings: list[str] | None = No
 
     execution_status = execution_status_for_record(record)
     risky_text = (record.get("raw_text") or "").lower()
-    if any(term in risky_text for term in RISKY_RULE_TEXT_TERMS):
+    attached_unit_only = "attached unit" in risky_text
+    if any(term in risky_text for term in RISKY_RULE_TEXT_TERMS if not (attached_unit_only and term == "attach")):
         return "needs_review"
 
     for trigger in triggers:
@@ -797,7 +941,8 @@ def triage_effect_record(record: dict[str, Any], warnings: list[str] | None = No
                 return "needs_review"
             if step.get("duration") not in (None, "", "instant"):
                 return "needs_review"
-            if (step.get("target") or {}).get("filter"):
+            target_filter = (step.get("target") or {}).get("filter")
+            if target_filter and target_filter != "attached_unit":
                 return "needs_review"
 
     return "safe_draft" if execution_status == "executable" else "needs_review"
@@ -1246,6 +1391,10 @@ class LocalEffectSuggestionProvider(EffectSuggestionProvider):
             "engine_executable_triggers": sorted(ENGINE_EXECUTABLE_TRIGGERS),
             "engine_executable_effects": sorted(ENGINE_EXECUTABLE_EFFECTS),
             "blank_record": blank_effect_record(card),
+            "swu_primer": prompt_swu_primer(),
+            "engine_review_rules": prompt_engine_review_rules(),
+            "effect_mapping_guide": prompt_effect_mapping_guide(),
+            "repo_approved_examples": prompt_repo_approved_examples(),
             "schema_contract": prompt_schema_contract(),
             "examples": prompt_examples(),
             "card": {
@@ -1301,6 +1450,10 @@ class OllamaEffectSuggestionProvider(LocalEffectSuggestionProvider):
             "allowed_target_filters": TARGET_FILTERS,
             "allowed_durations": DURATIONS,
             "blank_record": blank_effect_record(card),
+            "swu_primer": prompt_swu_primer(),
+            "engine_review_rules": prompt_engine_review_rules(),
+            "effect_mapping_guide": prompt_effect_mapping_guide(),
+            "repo_approved_examples": prompt_repo_approved_examples(),
             "schema_contract": prompt_schema_contract(),
             "examples": prompt_examples(),
             "card": {

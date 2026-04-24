@@ -1,4 +1,897 @@
 {
+  "C24-005": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.873757+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "manual",
+          "name": "Asajj Ventress",
+          "number": "005",
+          "raw_text": "Exploit 2 \nOn Attack: If you've attacked with another Separatist unit this phase, this unit gets +3/+0 for this phase.",
+          "review": {
+            "confidence": "low",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Parse warnings: Dropped invalid trigger event: None\nLocal model output could not be converted into a reliable effect draft.",
+            "parse_warnings": [
+              "Dropped invalid trigger event: None"
+            ],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"C24\",\n  \"number\": \"005\",\n  \"name\": \"Asajj Ventress\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"Exploit 2 \\nOn Attack: If you've attacked with another Separatist unit this phase, this unit gets +3/+0 for this phase.\",\n  \"triggers\": [\n    {\n      \"type\": \"on_attack\",\n      \"condition\": \"if_attacked_with_another_separatist_unit_this_phase\"\n    }\n  ],\n  \"steps\": [\n    {\n      \"type\": \"modify_stats\",\n      \"target_controller\": \"self\",\n      \"target_type\": \"unit\",\n      \"stat_modifiers\": [\n        {\n          \"stat\": \"strength\",\n          \"value\": 3,\n          \"duration\": \"this_phase\"\n        },\n        {\n          \"stat\": \"defense\",\n          \"value\": 0,\n          \"duration\": \"this_phase\"\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "unresolved"
+          },
+          "schema_version": 2,
+          "set": "C24",
+          "source": "local:ollama:qwen2.5",
+          "status": "draft",
+          "triggers": [],
+          "updated_at": "2026-04-23T21:29:17.672177+00:00"
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.770272+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "partial",
+          "name": "Asajj Ventress",
+          "number": "005",
+          "raw_text": "Exploit 2 \nOn Attack: If you've attacked with another Separatist unit this phase, this unit gets +3/+0 for this phase.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"C24\",\n  \"number\": \"005\",\n  \"name\": \"Asajj Ventress\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"Exploit 2 \\nOn Attack: If you've attacked with another Separatist unit this phase, this unit gets +3/+0 for this phase.\",\n  \"triggers\": [\n    {\n      \"event\": \"on_attack\",\n      \"conditions\": [\n        {\n          \"type\": \"you_have_initiative\"\n        }\n      ],\n      \"steps\": [\n        {\n          \"type\": \"modify_stats\",\n          \"amount\": 3,\n          \"duration\": \"this_phase\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          },\n          \"stat\": \"power\"\n        },\n        {\n          \"type\": \"modify_stats\",\n          \"amount\": 0,\n          \"duration\": \"this_phase\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          },\n          \"stat\": \"hp\"\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "C24",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [
+                {
+                  "type": "you_have_initiative"
+                }
+              ],
+              "event": "on_attack",
+              "steps": [
+                {
+                  "amount": 3,
+                  "duration": "this_phase",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "modify_stats"
+                },
+                {
+                  "amount": 0,
+                  "duration": "this_phase",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "modify_stats"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:14:28.113856+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [
+                "trigger 1 has conditions that the runtime does not evaluate"
+              ],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 1,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 2,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "partial"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 1,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 2,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'another'"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Asajj Ventress",
+    "number": "005",
+    "set": "C24"
+  },
+  "IBH-1": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.875296+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "manual",
+          "name": "Leia Organa",
+          "number": "1",
+          "raw_text": "Action [C=1, Exhaust]: Heal 1 damage from a friendly unit.\nOn Attack: Heal 1 damage from a friendly unit and 1 damage from another friendly unit.\nEpic Action: If you control 5 or more resources, deploy this leader. (Flip her, ready her, and move her to the ground arena.)",
+          "review": {
+            "confidence": "low",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Parse warnings: Dropped invalid trigger event: None; Dropped invalid trigger event: None\nLocal model output could not be converted into a reliable effect draft.",
+            "parse_warnings": [
+              "Dropped invalid trigger event: None",
+              "Dropped invalid trigger event: None"
+            ],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"IBH\",\n    \"number\": \"1\",\n    \"name\": \"Leia Organa\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n        \"confidence\": \"medium\",\n        \"notes\": \"\",\n        \"llm_suggested\": false,\n        \"human_verified\": false\n    },\n    \"raw_text\": \"Action [C=1, Exhaust]: Heal 1 damage from a friendly unit.\\nOn Attack: Heal 1 damage from a friendly unit and 1 damage from another friendly unit.\\nEpic Action: If you control 5 or more resources, deploy this leader. (Flip her, ready her, and move her to the ground arena.)\",\n    \"triggers\": [\n        {\n            \"type\": \"action\",\n            \"cost\": 1,\n            \"exhaust\": true\n        },\n        {\n            \"type\": \"on_attack\"\n        }\n    ],\n    \"steps\": [\n        {\n            \"type\": \"heal_damage\",\n            \"target_controller\": \"friendly\",\n            \"target_type\": \"unit\",\n            \"amount\": 1\n        },\n        {\n            \"type\": \"heal_damage\",\n            \"target_controller\": \"friendly\",\n            \"target_type\": \"unit\",\n            \"amount\": 1\n        }\n    ]\n}",
+            "triage": "unresolved"
+          },
+          "schema_version": 2,
+          "set": "IBH",
+          "source": "local:ollama:qwen2.5",
+          "status": "draft",
+          "triggers": [],
+          "updated_at": "2026-04-22T20:00:06.091872+00:00"
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.771629+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Leia Organa",
+          "number": "1",
+          "raw_text": "Action [C=1, Exhaust]: Heal 1 damage from a friendly unit.\nOn Attack: Heal 1 damage from a friendly unit and 1 damage from another friendly unit.\nEpic Action: If you control 5 or more resources, deploy this leader. (Flip her, ready her, and move her to the ground arena.)",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"IBH\",\n  \"number\": \"1\",\n  \"name\": \"Leia Organa\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"Action [C=1, Exhaust]: Heal 1 damage from a friendly unit.\\nOn Attack: Heal 1 damage from a friendly unit and 1 damage from another friendly unit.\\nEpic Action: If you control 5 or more resources, deploy this leader. (Flip her, ready her, and move her to the ground arena.)\",\n  \"triggers\": [\n    {\n      \"event\": \"action\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"heal_damage\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    },\n    {\n      \"event\": \"on_attack\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"heal_damage\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"unit\"\n          }\n        },\n        {\n          \"type\": \"heal_damage\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "IBH",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "action",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "unit"
+                  },
+                  "type": "heal_damage"
+                }
+              ]
+            },
+            {
+              "conditions": [],
+              "event": "on_attack",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "unit"
+                  },
+                  "type": "heal_damage"
+                },
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "unit"
+                  },
+                  "type": "heal_damage"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:14:58.037739+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 3,
+                "trigger_count": 2,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 3,
+              "trigger_count": 2,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'another'"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Leia Organa",
+    "number": "1",
+    "set": "IBH"
+  },
+  "IBH-24": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.144746+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Rebellion Y-Wing",
+          "number": "24",
+          "raw_text": "On Attack: Deal 1 damage to a base.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"IBH\",\n  \"number\": \"24\",\n  \"name\": \"Rebellion Y-Wing\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"On Attack: Deal 1 damage to a base.\",\n  \"triggers\": [\n    {\n      \"event\": \"on_attack\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"deal_damage\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"enemy\",\n            \"type\": \"base\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "IBH",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "on_attack",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "enemy",
+                    "type": "base"
+                  },
+                  "type": "deal_damage"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:40:23.138814+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Rebellion Y-Wing",
+    "number": "24",
+    "set": "IBH"
+  },
+  "JTL-048": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.875708+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "partial",
+          "name": "Cassian Andor",
+          "number": "048",
+          "raw_text": "Piloting [C=2 Vigilance Heroism] (You may play this as an upgrade on a friendly vehicle without a pilot.) \nAttached unit gains: \"On Attack: Discard a card from the defending player's deck. If that card costs 3 or less, draw a card.\"",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"JTL\",\n    \"number\": \"048\",\n    \"name\": \"Cassian Andor\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n        \"confidence\": \"medium\",\n        \"notes\": \"\",\n        \"llm_suggested\": false,\n        \"human_verified\": false\n    },\n    \"raw_text\": \"Piloting [C=2 Vigilance Heroism] (You may play this as an upgrade on a friendly vehicle without a pilot.) \\nAttached unit gains: \\\"On Attack: Discard a card from the defending player's deck. If that card costs 3 or less, draw a card.\\\"\",\n    \"triggers\": [\n        {\n            \"event\": \"when_pilot_attached\",\n            \"conditions\": [],\n            \"steps\": [\n                {\n                    \"type\": \"modify_stats\",\n                    \"amount\": 0,\n                    \"duration\": \"constant\",\n                    \"optional\": false,\n                    \"target\": {\n                        \"controller\": \"friendly\",\n                        \"type\": \"unit\"\n                    }\n                }\n            ]\n        },\n        {\n            \"event\": \"on_attack\",\n            \"conditions\": [],\n            \"steps\": [\n                {\n                    \"type\": \"discard_cards\",\n                    \"amount\": 1,\n                    \"duration\": \"this_attack\",\n                    \"optional\": false,\n                    \"target\": {\n                        \"controller\": \"opponent\",\n                        \"type\": \"card\"\n                    }\n                },\n                {\n                    \"type\": \"draw_cards\",\n                    \"amount\": 1,\n                    \"duration\": \"instant\",\n                    \"optional\": true,\n                    \"target\": {\n                        \"controller\": \"self\",\n                        \"type\": \"player\"\n                    },\n                    \"conditions\": [\n                        {\n                            \"type\": \"you_control_aspect\",\n                            \"value\": \"Vigilance Heroism\"\n                        }\n                    ]\n                }\n            ]\n        }\n    ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_pilot_attached",
+              "steps": [
+                {
+                  "amount": 0,
+                  "duration": "constant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "unit"
+                  },
+                  "type": "modify_stats"
+                }
+              ]
+            },
+            {
+              "conditions": [],
+              "event": "on_attack",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "this_attack",
+                  "optional": false,
+                  "target": {
+                    "controller": "opponent",
+                    "type": "card"
+                  },
+                  "type": "discard_cards"
+                },
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": true,
+                  "target": {
+                    "controller": "self",
+                    "type": "player"
+                  },
+                  "type": "draw_cards"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-23T22:44:19.194035+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [
+                "trigger 1 step 1 uses unsupported duration 'constant'",
+                "trigger 2 step 1 uses unsupported duration 'this_attack'",
+                "trigger 2 step 2 requires an optional choice"
+              ],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 2,
+                "optional_step_count": 1,
+                "step_count": 3,
+                "trigger_count": 2,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "partial"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 2,
+              "optional_step_count": 1,
+              "step_count": 3,
+              "trigger_count": 2,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'may'",
+              "rules text contains ambiguity term 'attach'",
+              "rules text contains ambiguity term 'upgrade'"
+            ]
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.772665+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "partial",
+          "name": "Cassian Andor",
+          "number": "048",
+          "raw_text": "Piloting [C=2 Vigilance Heroism] (You may play this as an upgrade on a friendly vehicle without a pilot.) \nAttached unit gains: \"On Attack: Discard a card from the defending player's deck. If that card costs 3 or less, draw a card.\"",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Parse warnings: Replaced invalid target type: 'deck'\nLocal model draft needs human review before simulator use.",
+            "parse_warnings": [
+              "Replaced invalid target type: 'deck'"
+            ],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"JTL\",\n  \"number\": \"048\",\n  \"name\": \"Cassian Andor\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"Piloting [C=2 Vigilance Heroism] (You may play this as an upgrade on a friendly vehicle without a pilot.) \\nAttached unit gains: \\\"On Attack: Discard a card from the defending player's deck. If that card costs 3 or less, draw a card.\\\"\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Piloting [C=2 Vigilance Heroism]\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"card\"\n          }\n        }\n      ]\n    },\n    {\n      \"event\": \"on_attack\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"deal_damage\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"enemy\",\n            \"type\": \"unit\"\n          }\n        },\n        {\n          \"type\": \"discard_cards\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"opponent\",\n            \"type\": \"deck\"\n          }\n        },\n        {\n          \"type\": \"draw_cards\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": true,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          },\n          \"conditions\": [\n            {\n              \"type\": \"base_damage_at_least\",\n              \"value\": \"3\"\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "card"
+                  },
+                  "token_name": "Piloting [C=2 Vigilance Heroism]",
+                  "type": "create_token"
+                }
+              ]
+            },
+            {
+              "conditions": [],
+              "event": "on_attack",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "enemy",
+                    "type": "unit"
+                  },
+                  "type": "deal_damage"
+                },
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "opponent",
+                    "type": "unit"
+                  },
+                  "type": "discard_cards"
+                },
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": true,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "type": "draw_cards"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:15:30.687605+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [
+                "trigger 2 step 3 requires an optional choice"
+              ],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 1,
+                "step_count": 4,
+                "trigger_count": 2,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "partial"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 1,
+              "step_count": 4,
+              "trigger_count": 2,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'may'",
+              "rules text contains ambiguity term 'attach'",
+              "rules text contains ambiguity term 'upgrade'"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Cassian Andor",
+    "number": "048",
+    "set": "JTL"
+  },
+  "JTL-067": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:43:04.230548+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Cloaked StarViper",
+          "number": "067",
+          "raw_text": "When Played: Give 2 Shield tokens to this unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"JTL\",\n  \"number\": \"067\",\n  \"name\": \"Cloaked StarViper\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Give 2 Shield tokens to this unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"give_shield\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "give_shield"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:39:20.161990+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Cloaked StarViper",
+    "number": "067",
+    "set": "JTL"
+  },
+  "JTL-082": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.876108+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Kijimi Patrollers",
+          "number": "082",
+          "raw_text": "When Played: Create a TIE Fighter token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"JTL\",\n    \"number\": \"082\",\n    \"name\": \"Kijimi Patrollers\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create a TIE Fighter token.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"TIE Fighter token\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "TIE Fighter token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:58:12.584678+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.773882+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Kijimi Patrollers",
+          "number": "082",
+          "raw_text": "When Played: Create a TIE Fighter token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"JTL\",\n  \"number\": \"082\",\n  \"name\": \"Kijimi Patrollers\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a TIE Fighter token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"TIE Fighter token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "TIE Fighter token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:15:54.635173+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.078046+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Kijimi Patrollers",
+          "number": "082",
+          "raw_text": "When Played: Create a TIE Fighter token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"JTL\",\n  \"number\": \"082\",\n  \"name\": \"Kijimi Patrollers\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a TIE Fighter token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"TIE Fighter token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "TIE Fighter token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:31:36.129462+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Kijimi Patrollers",
+    "number": "082",
+    "set": "JTL"
+  },
   "JTL-099": {
     "artifacts": [
       {
@@ -81,6 +974,2645 @@
     "name": "Veteran Fleet Officer",
     "number": "099",
     "set": "JTL"
+  },
+  "JTL-243": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.092870+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Quasar TIE Carrier",
+          "number": "243",
+          "raw_text": "On Attack: Create a TIE Fighter token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"JTL\",\n  \"number\": \"243\",\n  \"name\": \"Quasar TIE Carrier\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"On Attack: Create a TIE Fighter token.\",\n  \"triggers\": [\n    {\n      \"event\": \"on_attack\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"TIE Fighter token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "JTL",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "on_attack",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "TIE Fighter token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:40:10.977948+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Quasar TIE Carrier",
+    "number": "243",
+    "set": "JTL"
+  },
+  "LAW-127": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.876553+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Kill Switch",
+          "number": "127",
+          "raw_text": "When Played: Exhaust attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"LAW\",\n    \"number\": \"127\",\n    \"name\": \"Kill Switch\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Exhaust attached unit.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"exhaust_unit\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"self\",\n              \"type\": \"unit\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:53:01.762207+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.775222+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Kill Switch",
+          "number": "127",
+          "raw_text": "When Played: Exhaust attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.\nUpdated to use attached_unit target filter after upgrade-target runtime support.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"LAW\",\n  \"number\": \"127\",\n  \"name\": \"Kill Switch\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Exhaust attached unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"exhaust_unit\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "filter": "attached_unit",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:27:05.165951+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.161851+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Kill Switch",
+          "number": "127",
+          "raw_text": "When Played: Exhaust attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"LAW\",\n  \"number\": \"127\",\n  \"name\": \"Kill Switch\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Exhaust attached unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"exhaust_unit\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\",\n            \"filter\": \"attached_unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "filter": "attached_unit",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:37:52.770749+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Kill Switch",
+    "number": "127",
+    "set": "LAW"
+  },
+  "LAW-232": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.877036+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Champion's KT9 Podracer",
+          "number": "232",
+          "raw_text": "When Played: Create a Credit token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"LAW\",\n    \"number\": \"232\",\n    \"name\": \"Champion's KT9 Podracer\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create a Credit token.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"Credit token\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Credit token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:57:25.342195+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.776364+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Champion's KT9 Podracer",
+          "number": "232",
+          "raw_text": "When Played: Create a Credit token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"LAW\",\n  \"number\": \"232\",\n  \"name\": \"Champion's KT9 Podracer\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Credit token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Credit token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Credit token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:16:40.193060+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.103684+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Champion's KT9 Podracer",
+          "number": "232",
+          "raw_text": "When Played: Create a Credit token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"LAW\",\n  \"number\": \"232\",\n  \"name\": \"Champion's KT9 Podracer\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Credit token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Credit token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Credit token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:32:00.464706+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Champion's KT9 Podracer",
+    "number": "232",
+    "set": "LAW"
+  },
+  "LAW-262": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.877550+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Bank Job Fugitives",
+          "number": "262",
+          "raw_text": "When Played: Create a Credit token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"LAW\",\n    \"number\": \"262\",\n    \"name\": \"Bank Job Fugitives\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create a Credit token.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"Credit token\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Credit token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:57:32.964000+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.777500+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Bank Job Fugitives",
+          "number": "262",
+          "raw_text": "When Played: Create a Credit token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"LAW\",\n  \"number\": \"262\",\n  \"name\": \"Bank Job Fugitives\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Credit token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Credit token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Credit token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:17:03.576909+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.111892+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Bank Job Fugitives",
+          "number": "262",
+          "raw_text": "When Played: Create a Credit token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"LAW\",\n  \"number\": \"262\",\n  \"name\": \"Bank Job Fugitives\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Credit token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Credit token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "LAW",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Credit token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:32:12.753971+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Bank Job Fugitives",
+    "number": "262",
+    "set": "LAW"
+  },
+  "SEC-097": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.878107+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Beloved Orator",
+          "number": "097",
+          "raw_text": "When Played: Create a Spy token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SEC\",\n    \"number\": \"097\",\n    \"name\": \"Beloved Orator\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create a Spy token.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"Spy token\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:57:40.750906+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.778659+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Beloved Orator",
+          "number": "097",
+          "raw_text": "When Played: Create a Spy token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"097\",\n  \"name\": \"Beloved Orator\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Spy token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Spy token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:17:15.327526+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.119141+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Beloved Orator",
+          "number": "097",
+          "raw_text": "When Played: Create a Spy token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"097\",\n  \"name\": \"Beloved Orator\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Spy token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Spy token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:32:24.862374+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Beloved Orator",
+    "number": "097",
+    "set": "SEC"
+  },
+  "SEC-175": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.878704+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Ambition's Reward",
+          "number": "175",
+          "raw_text": "When Played: Create a Spy token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SEC\",\n    \"number\": \"175\",\n    \"name\": \"Ambition's Reward\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create a Spy token.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"Spy token\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:57:48.547023+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.780018+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Ambition's Reward",
+          "number": "175",
+          "raw_text": "When Played: Create a Spy token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"175\",\n  \"name\": \"Ambition's Reward\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Spy token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Spy token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:17:27.015326+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.125088+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Ambition's Reward",
+          "number": "175",
+          "raw_text": "When Played: Create a Spy token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"175\",\n  \"name\": \"Ambition's Reward\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Spy token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Spy token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:32:36.967459+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Ambition's Reward",
+    "number": "175",
+    "set": "SEC"
+  },
+  "SEC-176": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.879407+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "manual",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "raw_text": "Plot (When you deploy a leader, you may play this card from your resources, paying its cost. Replace it with the top card of your deck.)",
+          "review": {
+            "confidence": "low",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Parse warnings: Dropped invalid trigger event: None\nLocal model output could not be converted into a reliable effect draft.",
+            "parse_warnings": [
+              "Dropped invalid trigger event: None"
+            ],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"176\",\n  \"name\": \"Sudden Ferocity\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"Plot (When you deploy a leader, you may play this card from your resources, paying its cost. Replace it with the top card of your deck.)\",\n  \"triggers\": [\n    {\n      \"type\": \"when_played\",\n      \"target_controller\": \"self\",\n      \"target_type\": \"card\",\n      \"target_filter\": \"none\"\n    }\n  ],\n  \"steps\": [\n    {\n      \"type\": \"draw_cards\",\n      \"quantity\": 1,\n      \"target_controller\": \"self\",\n      \"target_type\": \"deck\",\n      \"target_filter\": \"none\"\n    },\n    {\n      \"type\": \"discard_cards\",\n      \"quantity\": 1,\n      \"target_controller\": \"self\",\n      \"target_type\": \"hand\",\n      \"target_filter\": \"none\"\n    }\n  ]\n}",
+            "triage": "unresolved"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5",
+          "status": "draft",
+          "triggers": [],
+          "updated_at": "2026-04-22T19:58:17.470147+00:00"
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.781584+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Sudden Ferocity",
+          "number": "176",
+          "raw_text": "Plot (When you deploy a leader, you may play this card from your resources, paying its cost. Replace it with the top card of your deck.)",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Parse warnings: Dropped invalid effect step type: 'replace_card'\nLocal model draft needs human review before simulator use.",
+            "parse_warnings": [
+              "Dropped invalid effect step type: 'replace_card'"
+            ],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"176\",\n  \"name\": \"Sudden Ferocity\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"Plot (When you deploy a leader, you may play this card from your resources, paying its cost. Replace it with the top card of your deck.)\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"replace_card\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"card\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": []
+            }
+          ],
+          "updated_at": "2026-04-24T19:17:39.230841+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 0,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 0,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'may'",
+              "trigger 1 has no effect steps"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Sudden Ferocity",
+    "number": "176",
+    "set": "SEC"
+  },
+  "SEC-191": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.880138+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Trade Federation Delegates",
+          "number": "191",
+          "raw_text": "When Played: Create 2 Spy tokens.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SEC\",\n    \"number\": \"191\",\n    \"name\": \"Trade Federation Delegates\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create 2 Spy tokens.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"Spy token\",\n            \"amount\": 2,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:57:56.734735+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.783257+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Trade Federation Delegates",
+          "number": "191",
+          "raw_text": "When Played: Create 2 Spy tokens.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"191\",\n  \"name\": \"Trade Federation Delegates\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create 2 Spy tokens.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Spy token\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:17:50.911861+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.130231+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Trade Federation Delegates",
+          "number": "191",
+          "raw_text": "When Played: Create 2 Spy tokens.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"191\",\n  \"name\": \"Trade Federation Delegates\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create 2 Spy tokens.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Spy token\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Spy token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:33:02.237056+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Trade Federation Delegates",
+    "number": "191",
+    "set": "SEC"
+  },
+  "SEC-240": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.149046+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Hutt Cartel Starfighter",
+          "number": "240",
+          "raw_text": "When Played: Deal 2 damage to this unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SEC\",\n  \"number\": \"240\",\n  \"name\": \"Hutt Cartel Starfighter\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Deal 2 damage to this unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"deal_damage\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SEC",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "deal_damage"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:38:43.520563+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Hutt Cartel Starfighter",
+    "number": "240",
+    "set": "SEC"
+  },
+  "SHD-040": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.172926+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Clan Wren Rescuer",
+          "number": "040",
+          "raw_text": "When Played: Give an Experience token to a unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SHD\",\n  \"number\": \"040\",\n  \"name\": \"Clan Wren Rescuer\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Give an Experience token to a unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"give_experience\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SHD",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "unit"
+                  },
+                  "type": "give_experience"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:39:44.610988+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Clan Wren Rescuer",
+    "number": "040",
+    "set": "SHD"
+  },
+  "SOR-039": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.881048+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "partial",
+          "name": "AT-AT Suppressor",
+          "number": "039",
+          "raw_text": "When Played: Exhaust all ground units.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SOR\",\n    \"number\": \"039\",\n    \"name\": \"AT-AT Suppressor\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Exhaust all ground units.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"exhaust_unit\",\n            \"amount\": 0,\n            \"duration\": \"constant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"any\",\n              \"type\": \"unit\",\n              \"filter\": \"ground\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "SOR",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 0,
+                  "duration": "constant",
+                  "optional": false,
+                  "target": {
+                    "controller": "any",
+                    "filter": "ground",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:58:04.539170+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [
+                "trigger 1 step 1 uses unsupported duration 'constant'",
+                "trigger 1 step 1 uses unsupported target filters"
+              ],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 1,
+                "non_instant_duration_count": 1,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "partial"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 1,
+              "non_instant_duration_count": 1,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.784799+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "partial",
+          "name": "AT-AT Suppressor",
+          "number": "039",
+          "raw_text": "When Played: Exhaust all ground units.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SOR\",\n    \"number\": \"039\",\n    \"name\": \"AT-AT Suppressor\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n        \"confidence\": \"medium\",\n        \"notes\": \"\",\n        \"llm_suggested\": false,\n        \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Exhaust all ground units.\",\n    \"triggers\": [\n        {\n            \"event\": \"when_played\",\n            \"conditions\": [],\n            \"steps\": [\n                {\n                    \"type\": \"exhaust_unit\",\n                    \"amount\": 0,\n                    \"duration\": \"instant\",\n                    \"optional\": false,\n                    \"target\": {\n                        \"controller\": \"any\",\n                        \"type\": \"unit\",\n                        \"filter\": \"ground\"\n                    }\n                }\n            ]\n        }\n    ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "SOR",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 0,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "any",
+                    "filter": "ground",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:18:02.711832+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [
+                "trigger 1 step 1 uses unsupported target filters"
+              ],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 1,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "partial"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 1,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "AT-AT Suppressor",
+    "number": "039",
+    "set": "SOR"
+  },
+  "SOR-128": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.882047+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "manual",
+          "name": "Death Star Stormtrooper",
+          "number": "128",
+          "raw_text": "",
+          "review": {
+            "confidence": "low",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Parse warnings: Dropped invalid trigger event: None\nLocal model output could not be converted into a reliable effect draft.",
+            "parse_warnings": [
+              "Dropped invalid trigger event: None"
+            ],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SOR\",\n    \"number\": \"128\",\n    \"name\": \"Death Star Stormtrooper\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"\",\n    \"triggers\": [\n        {\n            \"trigger\": \"when_played\",\n            \"effect_type\": \"deal_damage\",\n            \"target_controller\": \"opponent\",\n            \"target_types\": [\"unit\"],\n            \"target_filters\": [\"damaged\", \"ground\"],\n            \"amount\": 1,\n            \"duration\": \"this_phase\"\n        }\n    ]\n}",
+            "triage": "unresolved"
+          },
+          "schema_version": 2,
+          "set": "SOR",
+          "source": "local:ollama:qwen2.5",
+          "status": "draft",
+          "triggers": [],
+          "updated_at": "2026-04-22T19:55:03.077886+00:00"
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.786461+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Death Star Stormtrooper",
+          "number": "128",
+          "raw_text": "",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"SOR\",\n    \"number\": \"128\",\n    \"name\": \"Death Star Stormtrooper\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n        \"confidence\": \"medium\",\n        \"notes\": \"\",\n        \"llm_suggested\": false,\n        \"human_verified\": false\n    },\n    \"raw_text\": \"\",\n    \"triggers\": [\n        {\n            \"event\": \"when_played\",\n            \"conditions\": [],\n            \"steps\": [\n                {\n                    \"type\": \"modify_stats\",\n                    \"amount\": 1,\n                    \"duration\": \"this_attack\",\n                    \"optional\": false,\n                    \"target\": {\n                        \"controller\": \"self\",\n                        \"type\": \"unit\"\n                    }\n                }\n            ]\n        }\n    ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "SOR",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "this_attack",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "modify_stats"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:18:13.892662+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.165690+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Death Star Stormtrooper",
+          "number": "128",
+          "raw_text": "",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"SOR\",\n  \"number\": \"128\",\n  \"name\": \"Death Star Stormtrooper\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"exhaust_unit\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "SOR",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:33:26.075996+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Death Star Stormtrooper",
+    "number": "128",
+    "set": "SOR"
+  },
+  "TWI-059": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.153226+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Royal Guard Attach\u00e9",
+          "number": "059",
+          "raw_text": "When Played: Deal 2 damage to this unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"059\",\n  \"name\": \"Royal Guard Attach\\u00e9\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Deal 2 damage to this unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"deal_damage\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "deal_damage"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:38:55.711121+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Royal Guard Attach\u00e9",
+    "number": "059",
+    "set": "TWI"
+  },
+  "TWI-070": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.882932+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Perilous Position",
+          "number": "070",
+          "raw_text": "When Played: Exhaust attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"TWI\",\n    \"number\": \"070\",\n    \"name\": \"Perilous Position\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Exhaust attached unit.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"exhaust_unit\",\n            \"amount\": 1,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"self\",\n              \"type\": \"unit\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:57:17.562184+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.788083+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Perilous Position",
+          "number": "070",
+          "raw_text": "When Played: Exhaust attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft needs human review before simulator use.\nUpdated to use attached_unit target filter after upgrade-target runtime support.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"070\",\n  \"name\": \"Perilous Position\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Exhaust attached unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"exhaust_unit\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "needs_review"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "filter": "attached_unit",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:27:05.167538+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.169410+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Perilous Position",
+          "number": "070",
+          "raw_text": "When Played: Exhaust attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"070\",\n  \"name\": \"Perilous Position\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Exhaust attached unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"exhaust_unit\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\",\n            \"filter\": \"attached_unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "filter": "attached_unit",
+                    "type": "unit"
+                  },
+                  "type": "exhaust_unit"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:38:04.895281+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Perilous Position",
+    "number": "070",
+    "set": "TWI"
+  },
+  "TWI-097": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:11:51.883763+00:00",
+        "artifact_type": "pre_prompt_enrichment_snapshot",
+        "reason": "Pre prompt enrichment rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Captain Rex",
+          "number": "097",
+          "raw_text": "When Played: Create 2 Clone Trooper tokens.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n    \"schema_version\": 2,\n    \"set\": \"TWI\",\n    \"number\": \"097\",\n    \"name\": \"Captain Rex\",\n    \"status\": \"draft\",\n    \"execution_status\": \"manual\",\n    \"source\": \"human_review\",\n    \"review\": {\n      \"confidence\": \"medium\",\n      \"notes\": \"\",\n      \"llm_suggested\": false,\n      \"human_verified\": false\n    },\n    \"raw_text\": \"When Played: Create 2 Clone Trooper tokens.\",\n    \"triggers\": [\n      {\n        \"event\": \"when_played\",\n        \"conditions\": [],\n        \"steps\": [\n          {\n            \"type\": \"create_token\",\n            \"token_name\": \"Clone Trooper token\",\n            \"amount\": 2,\n            \"duration\": \"instant\",\n            \"optional\": false,\n            \"target\": {\n              \"controller\": \"friendly\",\n              \"type\": \"player\"\n            }\n          }\n        ]\n      }\n    ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Clone Trooper token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T17:58:20.540949+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:30:13.789754+00:00",
+        "artifact_type": "pre_attached_unit_snapshot",
+        "reason": "Pre attached_unit rerun snapshot (2026-04-24)",
+        "record": {
+          "execution_status": "executable",
+          "name": "Captain Rex",
+          "number": "097",
+          "raw_text": "When Played: Create 2 Clone Trooper tokens.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"097\",\n  \"name\": \"Captain Rex\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create 2 Clone Trooper tokens.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Clone Trooper token\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Clone Trooper token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:18:37.169522+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      },
+      {
+        "archived_at": "2026-04-24T19:42:53.135328+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Captain Rex",
+          "number": "097",
+          "raw_text": "When Played: Create 2 Clone Trooper tokens.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"097\",\n  \"name\": \"Captain Rex\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create 2 Clone Trooper tokens.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Clone Trooper token\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Clone Trooper token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:33:50.566828+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Captain Rex",
+    "number": "097",
+    "set": "TWI"
   },
   "TWI-107": {
     "artifacts": [
@@ -283,6 +3815,172 @@
     ],
     "name": "Patrolling V-Wing",
     "number": "107",
+    "set": "TWI"
+  },
+  "TWI-144": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.140062+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Batch Brothers",
+          "number": "144",
+          "raw_text": "When Played: Create a Clone Trooper token.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"144\",\n  \"name\": \"Batch Brothers\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Create a Clone Trooper token.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"create_token\",\n          \"token_name\": \"Clone Trooper token\",\n          \"amount\": 1,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"friendly\",\n            \"type\": \"player\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 1,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "friendly",
+                    "type": "player"
+                  },
+                  "token_name": "Clone Trooper token",
+                  "type": "create_token"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:38:31.370746+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": []
+          }
+        }
+      }
+    ],
+    "name": "Batch Brothers",
+    "number": "144",
+    "set": "TWI"
+  },
+  "TWI-155": {
+    "artifacts": [
+      {
+        "archived_at": "2026-04-24T19:42:53.157544+00:00",
+        "artifact_type": "effect_record_snapshot",
+        "reason": "Approved via batch review UI",
+        "record": {
+          "execution_status": "executable",
+          "name": "Twice the Pride",
+          "number": "155",
+          "raw_text": "When Played: Deal 2 damage to attached unit.",
+          "review": {
+            "confidence": "medium",
+            "human_verified": false,
+            "llm_suggested": true,
+            "notes": "Local model draft looks structurally simple, but still requires human approval.",
+            "parse_warnings": [],
+            "raw_model_output": "{\n  \"schema_version\": 2,\n  \"set\": \"TWI\",\n  \"number\": \"155\",\n  \"name\": \"Twice the Pride\",\n  \"status\": \"draft\",\n  \"execution_status\": \"manual\",\n  \"source\": \"human_review\",\n  \"review\": {\n    \"confidence\": \"medium\",\n    \"notes\": \"\",\n    \"llm_suggested\": false,\n    \"human_verified\": false\n  },\n  \"raw_text\": \"When Played: Deal 2 damage to attached unit.\",\n  \"triggers\": [\n    {\n      \"event\": \"when_played\",\n      \"conditions\": [],\n      \"steps\": [\n        {\n          \"type\": \"deal_damage\",\n          \"amount\": 2,\n          \"duration\": \"instant\",\n          \"optional\": false,\n          \"target\": {\n            \"controller\": \"self\",\n            \"type\": \"unit\",\n            \"filter\": \"attached_unit\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+            "triage": "safe_draft"
+          },
+          "schema_version": 2,
+          "set": "TWI",
+          "source": "local:ollama:qwen2.5:latest",
+          "status": "draft",
+          "triggers": [
+            {
+              "conditions": [],
+              "event": "when_played",
+              "steps": [
+                {
+                  "amount": 2,
+                  "duration": "instant",
+                  "optional": false,
+                  "target": {
+                    "controller": "self",
+                    "filter": "attached_unit",
+                    "type": "unit"
+                  },
+                  "type": "deal_damage"
+                }
+              ]
+            }
+          ],
+          "updated_at": "2026-04-24T19:39:08.044694+00:00",
+          "validation": {
+            "errors": [],
+            "execution_analysis": {
+              "blockers": [],
+              "metrics": {
+                "choice_step_count": 0,
+                "condition_count": 0,
+                "filtered_target_count": 0,
+                "non_instant_duration_count": 0,
+                "optional_step_count": 0,
+                "step_count": 1,
+                "trigger_count": 1,
+                "unsupported_step_count": 0,
+                "unsupported_trigger_count": 0
+              },
+              "status": "executable"
+            },
+            "metrics": {
+              "choice_step_count": 0,
+              "condition_count": 0,
+              "filtered_target_count": 0,
+              "non_instant_duration_count": 0,
+              "optional_step_count": 0,
+              "step_count": 1,
+              "trigger_count": 1,
+              "unsupported_step_count": 0,
+              "unsupported_trigger_count": 0
+            },
+            "valid": true,
+            "warnings": [
+              "rules text contains ambiguity term 'attach'"
+            ]
+          }
+        }
+      }
+    ],
+    "name": "Twice the Pride",
+    "number": "155",
     "set": "TWI"
   }
 }

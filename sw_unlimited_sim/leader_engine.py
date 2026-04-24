@@ -404,10 +404,13 @@ def deploy_leader(game: Any, player: Player) -> bool:
     leader.hp = hp
     leader.current_hp = hp
     leader.damage = 0
-    leader.arena = Arena.GROUND
+    leader.arena = getattr(leader, "deployed_arena", Arena.GROUND)
 
     player.units.append(leader)
-    player.ground_arena.append(leader)
+    if leader.arena == Arena.SPACE:
+        player.space_arena.append(leader)
+    else:
+        player.ground_arena.append(leader)
     if game._has_keyword(leader, "shielded"):
         leader.shield_tokens += 1
         game.log(f"Turn {game.turn_count}: {leader.name} gains a Shield token")

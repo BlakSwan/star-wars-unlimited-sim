@@ -200,6 +200,7 @@ def leader_from_data(card_data: dict[str, Any], effect_record: dict[str, Any] | 
     leader.traits = _traits(card_data)
     leader.abilities = _abilities(card_data)
     leader.aspects = _aspects(card_data)
+    leader.deployed_arena = _arena_from_card(card_data)
     leader.profile = compile_card_profile(card_data, effect_record)
     return leader
 

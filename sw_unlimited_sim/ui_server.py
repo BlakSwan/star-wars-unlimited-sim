@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import json
 import re
+from copy import deepcopy
 from collections import Counter
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,7 +16,7 @@ from card_analysis import analyze_card_database
 from competitive_decks import competitive_usage_counters, load_competitive_decks
 from deck_loader import _load_card_cache, available_decks, resolve_deck_path
 from effect_audit import _audit_card, audit_deck, format_deck_audit
-from effect_store import effect_key, get_effect, load_effects, save_effect
+from effect_store import effect_key, get_effect, load_effects, save_draft_artifact, save_effect
 from effect_training import (
     CONDITION_TYPES,
     DURATIONS,
@@ -33,6 +34,7 @@ from effect_training import (
     get_effect_suggestion_provider,
     rules_text,
     should_execute_record,
+    validate_effect_record,
 )
 from simulator import SimulationResult, run_single_game
 from strategies import get_strategy, list_strategies
@@ -210,6 +212,7 @@ def page(title: str, body: str) -> bytes:
       <a href="/simulate">Simulate</a>
       <a href="/cards">Cards</a>
       <a href="/queue">Training Queue</a>
+      <a href="/batch">Batch Review</a>
       <a href="/train">Train Effects</a>
     </nav>
   </header>
@@ -377,6 +380,96 @@ def build_effect_record(
     if notes.strip():
         record["notes"] = notes.strip()
     return record
+
+
+def _semantic_review_blockers(record: dict) -> list[str]:
+    blockers: list[str] = []
+    raw_text = str(record.get("raw_text") or "").lower()
+    triggers = record.get("triggers") or []
+    steps = [step for trigger in triggers if isinstance(trigger, dict) for step in (trigger.get("steps") or []) if isinstance(step, dict)]
+
+    draw_steps = [step for step in steps if step.get("type") == "draw_cards"]
+    if "draw a card" in raw_text:
+        if not draw_steps:
+            blockers.append("rules text says 'draw a card' but no draw_cards step is present")
+        for step in draw_steps:
+            if int(step.get("amount") or 0) != 1:
+                blockers.append("rules text says 'draw a card' but draw amount is not 1")
+            target = step.get("target") or {}
+            if target.get("type") != "player" or target.get("controller") not in {"self", "friendly"}:
+                blockers.append("draw_cards step should target the acting player")
+
+    self_damage_match = re.search(r"deal\s+(\d+)\s+damage\s+to\s+this unit\b", raw_text)
+    if self_damage_match:
+        expected = int(self_damage_match.group(1))
+        matching_steps = [step for step in steps if step.get("type") == "deal_damage"]
+        if not matching_steps:
+            blockers.append("rules text says this unit takes damage but no deal_damage step is present")
+        for step in matching_steps:
+            if int(step.get("amount") or 0) != expected:
+                blockers.append(f"rules text says deal {expected} damage to this unit, but saved amount differs")
+            target = step.get("target") or {}
+            if target.get("controller") != "self" or target.get("type") != "unit":
+                blockers.append("rules text says 'this unit' but saved target is not self unit")
+
+    if "attached unit" in raw_text:
+        attached_steps = [step for step in steps if (step.get("target") or {}).get("type") == "unit"]
+        if not attached_steps:
+            blockers.append("rules text says 'attached unit' but no unit-targeting step is present")
+        for step in attached_steps:
+            target = step.get("target") or {}
+            if target.get("filter") != "attached_unit":
+                blockers.append("rules text says 'attached unit' but saved target is not using attached_unit")
+
+    if "all ground units" in raw_text or "all space units" in raw_text:
+        for step in steps:
+            target = step.get("target") or {}
+            if target.get("filter") in {"ground", "space"}:
+                blockers.append("rules text affects all units in an arena, but the saved record still targets only one unit")
+                break
+
+    token_match = re.search(r"create\s+(?:an?|one|two|\d+)?\s*([a-z0-9' -]+?)\s+token\b", raw_text)
+    if token_match:
+        expected = " ".join(token_match.group(1).split()).strip()
+        create_steps = [step for step in steps if step.get("type") == "create_token"]
+        if not create_steps:
+            blockers.append("rules text creates a token but no create_token step is present")
+        for step in create_steps:
+            token_name = str(step.get("token_name") or "").lower()
+            if expected and expected not in token_name:
+                blockers.append(f"rules text creates a {expected} token, but token_name does not match")
+
+    return blockers
+
+
+def approval_blockers(record: dict) -> list[str]:
+    report = validate_effect_record(record)
+    blockers: list[str] = []
+    if not report.get("valid", False):
+        blockers.extend(report.get("errors") or [])
+    if report.get("execution_analysis", {}).get("status") != "executable":
+        blockers.extend(report.get("execution_analysis", {}).get("blockers") or [])
+    blockers.extend(_semantic_review_blockers(record))
+    return blockers
+
+
+def validation_summary_html(record: dict) -> str:
+    report = validate_effect_record(record)
+    runtime = report.get("execution_analysis", {})
+    parts = [
+        f"<p><strong>Schema valid:</strong> {'yes' if report.get('valid') else 'no'}</p>",
+        f"<p><strong>Runtime status:</strong> {esc(runtime.get('status', 'manual'))}</p>",
+    ]
+    errors = report.get("errors") or []
+    blockers = runtime.get("blockers") or []
+    warnings = report.get("warnings") or []
+    if errors:
+        parts.append("<p><strong>Schema errors:</strong></p><ul>" + "".join(f"<li>{esc(error)}</li>" for error in errors) + "</ul>")
+    if blockers:
+        parts.append("<p><strong>Runtime blockers:</strong></p><ul>" + "".join(f"<li>{esc(blocker)}</li>" for blocker in blockers) + "</ul>")
+    if warnings:
+        parts.append("<p><strong>Warnings:</strong></p><ul>" + "".join(f"<li>{esc(warning)}</li>" for warning in warnings) + "</ul>")
+    return "".join(parts)
 
 
 def dashboard() -> bytes:
@@ -797,6 +890,132 @@ def card_training_status(card: dict, effects: dict) -> str:
     return status
 
 
+def draft_review_bucket(record: dict) -> str:
+    triggers = record.get("triggers") or []
+    if triggers and isinstance(triggers[0], dict):
+        steps = triggers[0].get("steps") or []
+        if steps and isinstance(steps[0], dict) and steps[0].get("type"):
+            return str(steps[0]["type"])
+        if triggers[0].get("event"):
+            return str(triggers[0]["event"])
+    return "unclassified"
+
+
+def batch_review_records(
+    triage_filter: str,
+    runtime_filter: str,
+    bucket_filter: str,
+    approval_filter: str,
+    limit: int,
+    card_filters: dict[str, str],
+) -> tuple[list[dict], dict[str, int], list[tuple[str, int, int]]]:
+    effects = load_effects()
+    card_index = _load_card_index()
+    items: list[dict] = []
+    summary: Counter = Counter()
+
+    for key, record in sorted(effects.items()):
+        if str(record.get("status") or "draft") != "draft":
+            continue
+        set_code = str(record.get("set") or "").upper()
+        number = str(record.get("number") or "")
+        card = card_index.get((set_code, number))
+        if card and card_filters and not card_matches_official_filters(card, card_filters):
+            continue
+
+        triage = str(record.get("review", {}).get("triage") or "unclassified")
+        runtime = str(record.get("execution_status") or execution_status_for_record(record) or "manual")
+        bucket = draft_review_bucket(record)
+        blockers = approval_blockers(record)
+        approval_state = "approvable" if not blockers else "blocked"
+        parse_warnings = record.get("review", {}).get("parse_warnings") or []
+        display_name = str(record.get("name") or (card.get("Name") if card else key))
+        display_type = str(record.get("type") or (card.get("Type") if card else "Unknown"))
+
+        if triage_filter != "all" and triage != triage_filter:
+            continue
+        if runtime_filter != "all" and runtime != runtime_filter:
+            continue
+        if bucket_filter != "all" and bucket != bucket_filter:
+            continue
+        if approval_filter != "all" and approval_state != approval_filter:
+            continue
+
+        item = {
+            "key": key,
+            "name": display_name,
+            "type": display_type,
+            "card": card,
+            "record": record,
+            "triage": triage,
+            "runtime": runtime,
+            "bucket": bucket,
+            "blockers": blockers,
+            "approval_state": approval_state,
+            "parse_warning_count": len(parse_warnings),
+            "updated_at": str(record.get("updated_at") or ""),
+        }
+        items.append(item)
+        summary["total"] += 1
+        summary[approval_state] += 1
+        summary[f"triage:{triage}"] += 1
+        summary[f"runtime:{runtime}"] += 1
+        summary[f"bucket:{bucket}"] += 1
+
+    items.sort(
+        key=lambda item: (
+            0 if item["approval_state"] == "approvable" else 1,
+            0 if item["triage"] == "safe_draft" else 1,
+            item["bucket"],
+            item["key"],
+        )
+    )
+    items = items[:limit]
+
+    bucket_rows = []
+    bucket_names = sorted({item["bucket"] for item in items})
+    for bucket in bucket_names:
+        bucket_items = [item for item in items if item["bucket"] == bucket]
+        approvable = sum(1 for item in bucket_items if item["approval_state"] == "approvable")
+        bucket_rows.append((bucket, len(bucket_items), approvable))
+
+    return items, dict(summary), bucket_rows
+
+
+def approve_batch_records(selected_keys: list[str]) -> dict[str, object]:
+    effects = load_effects()
+    results: dict[str, object] = {
+        "approved": [],
+        "blocked": {},
+        "missing": [],
+    }
+
+    for key in selected_keys:
+        record = effects.get(key)
+        if not record:
+            results["missing"].append(key)
+            continue
+
+        blockers = approval_blockers(record)
+        if blockers:
+            results["blocked"][key] = blockers
+            continue
+
+        save_draft_artifact(record, reason="Approved via batch review UI")
+        updated = deepcopy(record)
+        updated["status"] = "approved"
+        updated.setdefault("review", {})
+        updated["review"]["human_verified"] = True
+        notes = str(updated["review"].get("notes") or "").strip()
+        approval_note = "Approved via batch review UI."
+        if approval_note not in notes:
+            updated["review"]["notes"] = f"{notes}\n{approval_note}".strip()
+        save_effect(updated)
+        results["approved"].append(key)
+
+    return results
+
+
 def card_patterns(card: dict) -> list[str]:
     text = rules_text(card).lower()
     return [pattern for pattern in QUEUE_PATTERNS if pattern in text]
@@ -931,7 +1150,7 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
             f"<td>{esc(item['training_status'])}</td>"
             f"<td>{esc(', '.join(item['patterns']) or 'none')}</td>"
             f"<td>{esc('; '.join(item['audit'].reasons))}</td>"
-            f"<td><a class='button secondary' href='{train_href}'>Train</a> <a class='button' href='{draft_href}'>Draft</a> <a class='button' href='{ollama_draft_href}'>Ollama Draft</a> <a class='button' href='{local_draft_href}'>Local Draft</a></td>"
+            f"<td><a class='button secondary' href='{train_href}'>Review</a> <a class='button' href='{draft_href}'>Heuristic Draft</a> <a class='button' href='{ollama_draft_href}'>Ollama Draft</a> <a class='button' href='{local_draft_href}'>Configured Local Draft</a></td>"
             "</tr>"
         )
     queue_rows = "\n".join(rows) or "<tr><td colspan='10'>No cards match this queue filter.</td></tr>"
@@ -972,6 +1191,127 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
 
 def _load_card_index():
     return _load_card_cache(DEFAULT_GAMEPLAY_OUTPUT_PATH)
+
+
+def batch_review_page(query: dict[str, list[str]]) -> bytes:
+    triage_filter = query.get("triage", ["all"])[0]
+    runtime_filter = query.get("runtime", ["executable"])[0]
+    approval_filter = query.get("approval", ["approvable"])[0]
+    bucket_filter = query.get("bucket", ["all"])[0]
+    limit = parse_positive_int(query.get("limit", ["100"])[0], 100, 500)
+    card_filters = official_filters_from_query(query)
+    cards = list(_load_card_index().values())
+    filter_values = official_filter_values(cards)
+    items, summary, bucket_rows = batch_review_records(
+        triage_filter=triage_filter,
+        runtime_filter=runtime_filter,
+        bucket_filter=bucket_filter,
+        approval_filter=approval_filter,
+        limit=limit,
+        card_filters=card_filters,
+    )
+    bucket_options = sorted({row[0] for row in bucket_rows})
+    summary_rows = "".join(
+        f"<tr><td>{esc(bucket)}</td><td>{count}</td><td>{approvable}</td><td>{pct(approvable, count)}</td></tr>"
+        for bucket, count, approvable in bucket_rows
+    ) or "<tr><td colspan='4'>No draft buckets match the current filter.</td></tr>"
+
+    item_rows = []
+    for item in items:
+        card = item["card"] or {}
+        card_ref = f"{card.get('Set') or item['record'].get('set')} {card.get('Number') or item['record'].get('number')}"
+        train_href = f"/train?card={esc(item['key'])}"
+        blocker_html = (
+            "<ul>" + "".join(f"<li>{esc(blocker)}</li>" for blocker in item["blockers"][:3]) + "</ul>"
+            if item["blockers"]
+            else "<span class='status-supported'>ready</span>"
+        )
+        item_rows.append(
+            "<tr>"
+            f"<td><input type='checkbox' name='cards' value='{esc(item['key'])}' {'disabled' if item['approval_state'] != 'approvable' else ''} style='width:auto'></td>"
+            f"<td>{esc(card_ref)}</td>"
+            f"<td>{esc(item['name'])}<br><span class='muted'>{esc(item['type'])}</span></td>"
+            f"<td>{esc(item['bucket'])}</td>"
+            f"<td>{esc(item['triage'])}</td>"
+            f"<td>{esc(item['runtime'])}</td>"
+            f"<td>{esc(item['approval_state'])}</td>"
+            f"<td>{item['parse_warning_count']}</td>"
+            f"<td>{blocker_html}</td>"
+            f"<td><a class='button secondary' href='{train_href}'>Review</a></td>"
+            "</tr>"
+        )
+    review_rows = "\n".join(item_rows) or "<tr><td colspan='10'>No drafts match this batch review filter.</td></tr>"
+
+    hidden_filter_fields = "".join(
+        f"<input type='hidden' name='{esc(name)}' value='{esc(value)}'>"
+        for name, value in {
+            "triage": triage_filter,
+            "runtime": runtime_filter,
+            "approval": approval_filter,
+            "bucket": bucket_filter,
+            "limit": str(limit),
+            **card_filters,
+        }.items()
+    )
+
+    body = f"""
+<section><h2>Batch Review And Approval</h2><p>Review local-model drafts in grouped batches, then approve only the drafts that clear the same validation and semantic blockers used by the single-card workflow.</p></section>
+<section class="card">
+  <form method="get" action="/batch">
+    <div class="inline-field">
+      <div>
+        <label>Triage</label>
+        <select name="triage">{option_with_all(["safe_draft", "needs_review", "unresolved", "unclassified"], triage_filter)}</select>
+      </div>
+      <div>
+        <label>Runtime</label>
+        <select name="runtime">{option_with_all(["executable", "partial", "manual"], runtime_filter)}</select>
+      </div>
+      <div>
+        <label>Approval</label>
+        <select name="approval">{option_with_all(["approvable", "blocked"], approval_filter)}</select>
+      </div>
+      <div>
+        <label>Bucket</label>
+        <select name="bucket">{option_with_all(bucket_options, bucket_filter)}</select>
+      </div>
+      <div>
+        <label>Limit</label>
+        <input name="limit" type="number" min="1" max="500" value="{esc(limit)}">
+      </div>
+      {official_filter_controls(filter_values, card_filters)}
+    </div>
+    <button type="submit">Refresh Batch View</button>
+    <a class="button secondary" href="/batch">Clear</a>
+  </form>
+</section>
+<section class="grid">
+  <div class="card"><h3>Filtered Drafts</h3><div class="metric">{summary.get('total', 0)}</div></div>
+  <div class="card"><h3>Approvable</h3><div class="metric">{summary.get('approvable', 0)}</div></div>
+  <div class="card"><h3>Blocked</h3><div class="metric">{summary.get('blocked', 0)}</div></div>
+  <div class="card"><h3>Safe Draft</h3><div class="metric">{summary.get('triage:safe_draft', 0)}</div></div>
+  <div class="card"><h3>Executable</h3><div class="metric">{summary.get('runtime:executable', 0)}</div></div>
+</section>
+<section class="card">
+  <h3>Bucket Summary</h3>
+  <table>
+    <thead><tr><th>Bucket</th><th>Drafts</th><th>Approvable</th><th>Approvable %</th></tr></thead>
+    <tbody>{summary_rows}</tbody>
+  </table>
+</section>
+<section class="card">
+  <form method="post" action="/batch/approve">
+    {hidden_filter_fields}
+    <button type="submit">Approve Selected Drafts</button>
+    <p class="muted">Only rows without blockers can be selected. Each approved card archives the prior draft snapshot before promotion.</p>
+    <table>
+      <thead><tr><th>Select</th><th>Card</th><th>Name</th><th>Bucket</th><th>Triage</th><th>Runtime</th><th>Approval</th><th>Warnings</th><th>Blockers</th><th>Action</th></tr></thead>
+      <tbody>{review_rows}</tbody>
+    </table>
+  </form>
+</section>
+"""
+    return page("Batch Review", body)
 
 
 def effect_step_fields(index: int) -> str:
@@ -1048,11 +1388,16 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     text = rules_text(selected_card) if selected_card else ""
     default_effect = blank_effect_record(selected_card) if selected_card else {"status": "draft", "triggers": []}
     effect_json = json.dumps(current_effect or default_effect, indent=2)
-    execution_status = (current_effect or default_effect).get("execution_status", "manual")
-    review = (current_effect or default_effect).get("review", {})
+    current_record = current_effect or default_effect
+    execution_status = current_record.get("execution_status", "manual")
+    review = current_record.get("review", {})
     triage = review.get("triage", "")
     parse_warnings = review.get("parse_warnings") or []
     source = (current_effect or default_effect).get("source", "")
+    validation_html = validation_summary_html(current_record) if selected_card else ""
+    current_status = current_record.get("status", "draft")
+    current_confidence = review.get("confidence", "medium")
+    current_trigger = ((current_record.get("triggers") or [{}])[0]).get("event", "when_played")
     triage_html = f"<p><strong>Triage:</strong> {esc(triage)}</p>" if triage else ""
     source_html = f"<p><strong>Source:</strong> {esc(source)}</p>" if source else ""
     warnings_html = ""
@@ -1077,15 +1422,18 @@ def train_page(query: dict[str, list[str]]) -> bytes:
   <div class="card">
     <h3>{esc(selected_card.get('Name') if selected_card else '')}</h3>
     <p class="muted">{esc(selected)}</p>
+    <p><strong>Saved status:</strong> {esc(current_status)}</p>
     <p><strong>Execution status:</strong> {esc(execution_status)}</p>
     {source_html}
     {triage_html}
     {warnings_html}
+    {validation_html}
     <pre>{esc(text or 'No rules text')}</pre>
-    <a class="button secondary" href="{draft_href}">Draft From Card Text</a>
-    <a class="button" href="{llm_href}">Draft With LLM</a>
-    <a class="button" href="{ollama_llm_href}">Draft With Ollama</a>
-    <a class="button" href="{local_llm_href}">Draft With Local Model</a>
+    <p class="muted">Draft sources: heuristic rules-text parser, OpenAI, forced Ollama, or the provider configured in your local settings.</p>
+    <a class="button secondary" href="{draft_href}">Heuristic Draft</a>
+    <a class="button" href="{llm_href}">OpenAI Draft</a>
+    <a class="button" href="{ollama_llm_href}">Ollama Draft</a>
+    <a class="button" href="{local_llm_href}">Configured Local Draft</a>
   </div>
 </section>
 <section>
@@ -1095,19 +1443,19 @@ def train_page(query: dict[str, list[str]]) -> bytes:
     <div class="inline-field">
       <div>
         <label>Status</label>
-        <select name="status">{options(["draft", "approved"], "draft")}</select>
+        <select name="status">{options(["draft", "approved"], current_status)}</select>
       </div>
       <div>
         <label>Engine Execution</label>
-        <select name="execution_status">{options(EXECUTION_STATUSES, "manual")}</select>
+        <select name="execution_status">{options(EXECUTION_STATUSES, execution_status)}</select>
       </div>
       <div>
         <label>Reviewer Confidence</label>
-        <select name="confidence">{options(["low", "medium", "high"], "medium")}</select>
+        <select name="confidence">{options(["low", "medium", "high"], current_confidence)}</select>
       </div>
       <div>
         <label>Trigger</label>
-        <select name="trigger">{options(TRIGGERS, "when_played")}</select>
+        <select name="trigger">{options(TRIGGERS, current_trigger)}</select>
       </div>
     </div>
     <div class="inline-field">
@@ -1142,11 +1490,11 @@ def train_page(query: dict[str, list[str]]) -> bytes:
       <div class="inline-field">
         <div>
           <label>Status</label>
-          <select name="status">{options(["draft", "approved"], "draft")}</select>
+          <select name="status">{options(["draft", "approved"], current_status)}</select>
         </div>
         <div>
           <label>Trigger</label>
-          <select name="trigger">{options(["when_played", "on_attack", "when_defeated", "action"], "when_played")}</select>
+          <select name="trigger">{options(["when_played", "on_attack", "when_defeated", "action"], current_trigger if current_trigger in {"when_played", "on_attack", "when_defeated", "action"} else "when_played")}</select>
         </div>
       </div>
       <label>Effect</label>
@@ -1188,6 +1536,10 @@ def save_train(post_body: str) -> bytes:
     raw = fields.get("effect_json", ["{}"])[0]
     try:
         data = json.loads(raw)
+        if data.get("status") == "approved":
+            blockers = approval_blockers(data)
+            if blockers:
+                raise ValueError("Cannot approve this effect until blockers are fixed:\n- " + "\n- ".join(blockers))
         save_effect(data)
         message = f"<section class='card'><h2>Effect Saved</h2><pre>{esc(json.dumps(data, indent=2))}</pre><a class='button secondary' href='/train'>Back</a></section>"
     except Exception as exc:
@@ -1229,6 +1581,10 @@ def save_guided_train(post_body: str) -> bytes:
             condition_value=fields.get("condition_value", [""])[0],
             execution_status=fields.get("execution_status", [""])[0],
         )
+        if data.get("status") == "approved":
+            blockers = approval_blockers(data)
+            if blockers:
+                raise ValueError("Cannot approve this effect until blockers are fixed:\n- " + "\n- ".join(blockers))
         save_effect(data)
         message = (
             "<section class='card'><h2>Guided Effect Saved</h2>"
@@ -1238,6 +1594,40 @@ def save_guided_train(post_body: str) -> bytes:
     except Exception as exc:
         message = f"<section class='card'><h2>Could Not Save</h2><p>{esc(exc)}</p><a class='button secondary' href='/train'>Back</a></section>"
     return page("Save Guided Effect", message)
+
+
+def batch_approve(post_body: str) -> bytes:
+    fields = parse_qs(post_body)
+    selected_keys = fields.get("cards", [])
+    try:
+        if not selected_keys:
+            raise ValueError("Select at least one approvable draft to batch approve.")
+        results = approve_batch_records(selected_keys)
+        approved = results["approved"]
+        blocked = results["blocked"]
+        missing = results["missing"]
+        blocked_html = ""
+        if blocked:
+            blocked_html = "<h3>Blocked</h3><ul>" + "".join(
+                f"<li>{esc(key)}: {esc('; '.join(reasons))}</li>"
+                for key, reasons in blocked.items()
+            ) + "</ul>"
+        missing_html = ""
+        if missing:
+            missing_html = "<h3>Missing</h3><ul>" + "".join(f"<li>{esc(key)}</li>" for key in missing) + "</ul>"
+        message = (
+            "<section class='card'><h2>Batch Approval Complete</h2>"
+            f"<p><strong>Approved:</strong> {len(approved)}</p>"
+            f"<p><strong>Blocked:</strong> {len(blocked)}</p>"
+            f"<p><strong>Missing:</strong> {len(missing)}</p>"
+            + ("<h3>Approved Keys</h3><ul>" + "".join(f"<li>{esc(key)}</li>" for key in approved) + "</ul>" if approved else "")
+            + blocked_html
+            + missing_html
+            + "<a class='button secondary' href='/batch'>Back To Batch Review</a></section>"
+        )
+    except Exception as exc:
+        message = f"<section class='card'><h2>Could Not Batch Approve</h2><p>{esc(exc)}</p><a class='button secondary' href='/batch'>Back</a></section>"
+    return page("Batch Approval", message)
 
 
 def suggest_train_effect(query: dict[str, list[str]]) -> bytes:
@@ -1289,6 +1679,7 @@ class UIHandler(BaseHTTPRequestHandler):
             "/simulate": lambda: simulate_page(query),
             "/cards": lambda: cards_page(query),
             "/queue": lambda: training_queue_page(query),
+            "/batch": lambda: batch_review_page(query),
             "/train": lambda: train_page(query),
             "/train/suggest": lambda: suggest_train_effect(query),
         }
@@ -1306,6 +1697,9 @@ class UIHandler(BaseHTTPRequestHandler):
             return
         if self.path == "/train/guided-save":
             self._send(save_guided_train(body))
+            return
+        if self.path == "/batch/approve":
+            self._send(batch_approve(body))
             return
         self.send_error(404)
 

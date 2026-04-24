@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from effect_audit import _audit_card
+from effect_store import load_effects
 from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
 
 
@@ -45,10 +46,14 @@ def _card_text(card: dict[str, Any]) -> str:
     return "\n".join(str(card.get(field) or "") for field in ("FrontText", "BackText", "EpicAction"))
 
 
-def analyze_card_database(card_data_path: str | Path = DEFAULT_GAMEPLAY_OUTPUT_PATH) -> dict[str, Any]:
+def analyze_card_database(
+    card_data_path: str | Path = DEFAULT_GAMEPLAY_OUTPUT_PATH,
+    trained_effects: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Return aggregate mechanic and support data for the card database."""
     data = json.loads(Path(card_data_path).read_text(encoding="utf-8"))
     cards = data.get("cards", [])
+    trained_effects = trained_effects if trained_effects is not None else load_effects()
     keyword_counts: Counter = Counter()
     pattern_counts: Counter = Counter()
     type_counts: Counter = Counter()
@@ -68,7 +73,7 @@ def analyze_card_database(card_data_path: str | Path = DEFAULT_GAMEPLAY_OUTPUT_P
             if pattern in lowered:
                 pattern_counts[pattern] += 1
 
-        audit = _audit_card(card, count=1)
+        audit = _audit_card(card, count=1, trained_effects=trained_effects)
         support_counts[audit.status] += 1
 
         if audit.status != "supported":

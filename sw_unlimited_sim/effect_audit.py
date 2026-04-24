@@ -101,6 +101,10 @@ SUPPORTED_CARD_KEYS = {
     "LOF-046",  # Ezra Bridger
     "SEC-094",  # Mina Bonteri
     "SEC-233",  # Beguile
+    "SOR-019",  # Security Complex
+    "SOR-022",  # Energy Conversion Lab
+    "SOR-025",  # Tarkintown
+    "SOR-028",  # Jedha City
 }
 
 PARTIAL_CARD_KEYS = set()

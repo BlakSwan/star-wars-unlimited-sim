@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "sw_unlimited_sim"))
 from effect_store import effect_key  # noqa: E402
 from effect_training import execution_status_for_record  # noqa: E402
 from engine import GameState  # noqa: E402
-from models import Arena, EventCard, LeaderCard, Resource, UnitCard, UpgradeCard  # noqa: E402
+from models import Arena, Base, EventCard, LeaderCard, Resource, UnitCard, UpgradeCard  # noqa: E402
 
 
 def game_state() -> GameState:
@@ -29,6 +29,257 @@ def unit(name: str = "Test Unit") -> UnitCard:
 
 
 class EngineUpgradeTests(unittest.TestCase):
+    def test_patrolling_v_wing_structured_effect_draws_a_card_when_played(self):
+        game = game_state()
+        unit_card = UnitCard("TWI_107_1", "Patrolling V-Wing", 2, 2, 2, Arena.SPACE)
+        draw_card = EventCard("DRAW_1", "Test Draw", 1, effect="")
+        game.player1.deck = [draw_card]
+        game.card_effects = {
+            effect_key("TWI", "107"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "draw_cards",
+                                "amount": 1,
+                                "duration": "instant",
+                                "target": {"controller": "friendly", "type": "player"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._play_unit(game.player1, unit_card))
+        self.assertIn(draw_card, game.player1.hand)
+
+    def test_veteran_fleet_officer_structured_effect_creates_x_wing_token(self):
+        game = game_state()
+        unit_card = UnitCard("JTL_099_1", "Veteran Fleet Officer", 3, 2, 2, Arena.GROUND)
+        game.card_effects = {
+            effect_key("JTL", "099"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "create_token",
+                                "token_name": "X-Wing token",
+                                "amount": 1,
+                                "duration": "instant",
+                                "target": {"controller": "friendly", "type": "player"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._play_unit(game.player1, unit_card))
+        self.assertTrue(any(token.name == "X-Wing" for token in game.player1.space_arena))
+
+    def test_dilapidated_ski_speeder_structured_effect_damages_itself_when_played(self):
+        game = game_state()
+        unit_card = UnitCard("JTL_248_1", "Dilapidated Ski Speeder", 3, 3, 7, Arena.GROUND)
+        game.card_effects = {
+            effect_key("JTL", "248"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "deal_damage",
+                                "amount": 3,
+                                "duration": "instant",
+                                "target": {"controller": "self", "type": "unit"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._play_unit(game.player1, unit_card))
+        self.assertEqual(unit_card.current_hp, 4)
+
+    def test_swoop_bike_marauder_structured_effect_draws_on_attack(self):
+        game = game_state()
+        attacker = UnitCard("LAW_107_1", "Swoop Bike Marauder", 2, 2, 2, Arena.GROUND)
+        attacker.is_exhausted = False
+        draw_card = EventCard("DRAW_2", "Test Draw", 1, effect="")
+        game.player1.deck = [draw_card]
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.card_effects = {
+            effect_key("LAW", "107"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "on_attack",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "draw_cards",
+                                "amount": 1,
+                                "duration": "instant",
+                                "target": {"controller": "friendly", "type": "player"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._attack(game.player1, attacker.id, "base"))
+        self.assertIn(draw_card, game.player1.hand)
+
+    def test_cloud_rider_veteran_structured_effect_damages_base_on_attack(self):
+        game = game_state()
+        attacker = UnitCard("LAW_181_1", "Cloud-Rider Veteran", 4, 3, 3, Arena.GROUND)
+        attacker.is_exhausted = False
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.card_effects = {
+            effect_key("LAW", "181"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "on_attack",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "deal_damage",
+                                "amount": 2,
+                                "duration": "instant",
+                                "target": {"controller": "enemy", "type": "base"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        before = game.player2.base.current_hp
+        self.assertTrue(game._attack(game.player1, attacker.id, "base"))
+        self.assertEqual(game.player2.base.current_hp, before - 2 - attacker.power)
+
+    def test_kintan_intimidator_structured_effect_exhausts_defender_on_attack(self):
+        game = game_state()
+        attacker = UnitCard("SHD_183_1", "Kintan Intimidator", 3, 3, 4, Arena.GROUND)
+        defender = UnitCard("DEFENDER_1", "Target Unit", 2, 2, 4, Arena.GROUND)
+        attacker.is_exhausted = False
+        defender.is_exhausted = False
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+        game.card_effects = {
+            effect_key("SHD", "183"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "on_attack",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "exhaust_unit",
+                                "amount": 1,
+                                "duration": "instant",
+                                "target": {"controller": "enemy", "type": "unit"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._attack(game.player1, attacker.id, defender.id))
+        self.assertTrue(defender.is_exhausted)
+
+    def test_security_complex_epic_action_gives_shield_to_friendly_non_leader(self):
+        game = game_state()
+        game.player1.base = Base(name="Security Complex", hp=25, set_code="SOR", number="019")
+        target = unit("Friendly Trooper")
+        game.player1.units.append(target)
+        game.player1.ground_arena.append(target)
+
+        self.assertIn("base_epic", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "base_epic"))
+        self.assertEqual(target.shield_tokens, 1)
+        self.assertTrue(game.player1.base.epic_action_used)
+
+    def test_tarkintown_epic_action_damages_damaged_enemy_non_leader(self):
+        game = game_state()
+        game.player1.base = Base(name="Tarkintown", hp=25, set_code="SOR", number="025")
+        enemy = UnitCard("ENEMY_1", "Enemy Trooper", 3, 4, 5, Arena.GROUND)
+        enemy.damage = 1
+        enemy.current_hp = 4
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        self.assertIn("base_epic", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "base_epic"))
+        self.assertEqual(enemy.current_hp, 1)
+        self.assertTrue(game.player1.base.epic_action_used)
+
+    def test_jedha_city_epic_action_applies_negative_power_for_phase(self):
+        game = game_state()
+        game.player1.base = Base(name="Jedha City", hp=25, set_code="SOR", number="028")
+        enemy = UnitCard("ENEMY_2", "Enemy Trooper", 3, 5, 5, Arena.GROUND)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        self.assertTrue(game.execute_action(game.player1, "base_epic"))
+        self.assertEqual(enemy.power, 1)
+        game._clear_phase_modifiers(game.player2)
+        self.assertEqual(enemy.power, 5)
+
+    def test_energy_conversion_lab_epic_action_plays_unit_with_ambush(self):
+        game = game_state()
+        game.player1.base = Base(name="Energy Conversion Lab", hp=25, set_code="SOR", number="022")
+        card = UnitCard("HAND_1", "Test Fighter", 5, 4, 4, Arena.SPACE)
+        game.player1.hand.append(card)
+
+        self.assertIn("base_epic", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "base_epic"))
+        self.assertIn(card, game.player1.units)
+        self.assertTrue(card.is_exhausted is False)
+        self.assertTrue(game.player1.base.epic_action_used)
+
+    def test_deployed_space_leader_uses_space_arena_and_resets_when_defeated(self):
+        leader = LeaderCard("LDR_SPACE", "Space Leader", 0, epic_action_cost=0, epic_action_effect="Deploy as 3/4 unit")
+        leader.deployed_arena = Arena.SPACE
+        game = GameState(
+            player1_deck=[],
+            player2_deck=[],
+            player1_leader=leader,
+            player2_leader=LeaderCard("LDR_002", "Leader Two", 6, epic_action_effect="Deploy as 4/4 unit"),
+            verbose=False,
+        )
+
+        self.assertTrue(game._deploy_leader(game.player1))
+        self.assertIn(leader, game.player1.space_arena)
+        self.assertNotIn(leader, game.player1.ground_arena)
+        self.assertEqual(leader.arena, Arena.SPACE)
+
+        game._remove_unit(game.player1, leader)
+        self.assertFalse(leader.is_deployed)
+        self.assertEqual(leader.arena, Arena.NONE)
+
     def test_basic_piloting_cards_are_now_supported_by_generic_pilot_flow(self):
         game = game_state()
         vehicle = unit("Alliance Shuttle")
@@ -58,6 +309,71 @@ class EngineUpgradeTests(unittest.TestCase):
         self.assertEqual(target.power, 3)
         self.assertEqual(target.hp, 4)
         self.assertEqual(target.current_hp, 4)
+
+    def test_structured_upgrade_can_target_attached_unit_when_played(self):
+        game = game_state()
+        target = unit("Host Vehicle")
+        target.is_exhausted = False
+        upgrade = UpgradeCard("LAW_127_1", "Kill Switch", 2)
+        game.player1.units.append(target)
+        game.player1.ground_arena.append(target)
+        game.card_effects = {
+            effect_key("LAW", "127"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "exhaust_unit",
+                                "amount": 1,
+                                "duration": "instant",
+                                "target": {"controller": "self", "type": "unit", "filter": "attached_unit"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._play_upgrade(game.player1, upgrade))
+        self.assertIs(upgrade.attached_to, target)
+        self.assertTrue(target.is_exhausted)
+
+    def test_structured_ground_filter_targets_ground_unit_not_space_unit(self):
+        game = game_state()
+        source = UnitCard("LOF_259_1", "Ravening Gundark", 5, 5, 4, Arena.GROUND)
+        ground_enemy = UnitCard("ENEMY_G_1", "Ground Target", 2, 2, 3, Arena.GROUND)
+        space_enemy = UnitCard("ENEMY_S_1", "Space Target", 2, 2, 3, Arena.SPACE)
+        game.player2.units.extend([ground_enemy, space_enemy])
+        game.player2.ground_arena.append(ground_enemy)
+        game.player2.space_arena.append(space_enemy)
+        game.card_effects = {
+            effect_key("LOF", "259"): {
+                "status": "approved",
+                "execution_status": "executable",
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "deal_damage",
+                                "amount": 1,
+                                "duration": "instant",
+                                "target": {"controller": "enemy", "type": "unit", "filter": "ground"},
+                            }
+                        ],
+                    }
+                ],
+            }
+        }
+
+        self.assertTrue(game._play_unit(game.player1, source))
+        self.assertEqual(ground_enemy.current_hp, 2)
+        self.assertEqual(space_enemy.current_hp, 3)
 
     def test_attached_upgrades_are_discarded_when_unit_leaves_play(self):
         game = game_state()

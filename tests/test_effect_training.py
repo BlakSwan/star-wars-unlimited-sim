@@ -77,6 +77,19 @@ class EffectTrainingTests(unittest.TestCase):
         self.assertEqual(provider.backend.model, "test-model")
         self.assertEqual(provider.backend.host, "http://localhost:11434")
 
+    def test_local_prompt_includes_swu_primer_and_mapping_guide(self):
+        provider = LocalEffectSuggestionProvider(backend=FakeBackend("{}"))
+
+        prompt = provider._build_prompt(CARD)
+
+        self.assertIn("swu_primer", prompt)
+        self.assertIn("engine_review_rules", prompt)
+        self.assertIn("effect_mapping_guide", prompt)
+        self.assertIn("repo_approved_examples", prompt)
+        self.assertIn("'This unit' refers to the source unit itself.", prompt["swu_primer"]["core_terms"])
+        self.assertEqual(prompt["effect_mapping_guide"]["phrase_to_step_type"]["draw a card"], "draw_cards")
+        self.assertTrue(prompt["repo_approved_examples"])
+
     def test_simple_local_draft_is_safe_but_still_draft(self):
         candidate = {
             "triggers": [
@@ -210,6 +223,54 @@ class EffectTrainingTests(unittest.TestCase):
         self.assertEqual(execution_status_for_record(record), "executable")
         self.assertEqual(record["status"], "draft")
         self.assertFalse(record["review"]["human_verified"])
+
+    def test_attached_unit_target_filter_is_executable(self):
+        candidate = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "exhaust_unit",
+                            "amount": 1,
+                            "duration": "instant",
+                            "target": {"controller": "self", "type": "unit", "filter": "attached_unit"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        card = dict(CARD, Type="Upgrade", FrontText="When Played: Exhaust attached unit.")
+        record = normalize_effect_record(card, candidate, "local:test")
+
+        self.assertEqual(record["validation"]["execution_analysis"]["status"], "executable")
+        self.assertEqual(record["review"]["triage"], "safe_draft")
+
+    def test_ground_target_filter_is_executable_for_single_target_effect(self):
+        candidate = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "deal_damage",
+                            "amount": 1,
+                            "duration": "instant",
+                            "target": {"controller": "enemy", "type": "unit", "filter": "ground"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        card = dict(CARD, FrontText="When Played: Deal 1 damage to a ground unit.")
+        record = normalize_effect_record(card, candidate, "local:test")
+
+        self.assertEqual(record["validation"]["execution_analysis"]["status"], "executable")
+        self.assertEqual(record["review"]["triage"], "needs_review")
 
     def test_draw_cards_without_explicit_target_defaults_to_friendly_player(self):
         candidate = {

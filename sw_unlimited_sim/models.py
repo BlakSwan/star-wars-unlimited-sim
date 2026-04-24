@@ -160,6 +160,7 @@ class LeaderCard(Card):
     action_effect: str = ""
     epic_action_cost: int = 0
     epic_action_effect: str = ""
+    deployed_arena: Arena = Arena.GROUND
     is_deployed: bool = False
     epic_action_used: bool = False
     
@@ -170,6 +171,7 @@ class LeaderCard(Card):
         self.action_effect = action_effect
         self.epic_action_cost = epic_action_cost
         self.epic_action_effect = epic_action_effect
+        self.deployed_arena = Arena.GROUND
         self.aspects = []
         self.traits = []
         self.abilities = []
@@ -235,6 +237,7 @@ class Base:
     aspects: List[str] = field(default_factory=list)
     abilities: List[str] = field(default_factory=list)
     profile: CardProfile = field(default_factory=CardProfile)
+    epic_action_used: bool = False
 
     def __post_init__(self):
         if self.current_hp is None:
