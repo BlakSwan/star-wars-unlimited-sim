@@ -7,7 +7,9 @@ import re
 from pathlib import Path
 from typing import Any
 
-from models import Arena, Card, EventCard, LeaderCard, UnitCard, UpgradeCard
+from card_profiles import compile_card_profile
+from effect_store import effect_key, load_effects
+from models import Arena, Base, Card, EventCard, LeaderCard, UnitCard, UpgradeCard
 from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
 
 
@@ -124,7 +126,11 @@ def _card_id(card_data: dict[str, Any], copy_index: int) -> str:
     return f"{card_data.get('Set')}_{card_data.get('Number')}_{copy_index}"
 
 
-def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
+def card_from_data(
+    card_data: dict[str, Any],
+    copy_index: int = 1,
+    effect_record: dict[str, Any] | None = None,
+) -> Card:
     """Convert one SWU DB card record into a simulator card object."""
     card_type = str(card_data.get("Type") or "").lower()
     card_id = _card_id(card_data, copy_index)
@@ -144,6 +150,7 @@ def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
             has_ambush=_has_ambush(card_data),
         )
         card.aspects = _aspects(card_data)
+        card.profile = compile_card_profile(card_data, effect_record)
         return card
 
     if card_type == "upgrade":
@@ -156,6 +163,7 @@ def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
             abilities=_abilities(card_data),
         )
         card.aspects = _aspects(card_data)
+        card.profile = compile_card_profile(card_data, effect_record)
         return card
 
     if card_type == "event":
@@ -166,12 +174,13 @@ def card_from_data(card_data: dict[str, Any], copy_index: int = 1) -> Card:
             effect=str(card_data.get("FrontText") or ""),
         )
         card.aspects = _aspects(card_data)
+        card.profile = compile_card_profile(card_data, effect_record)
         return card
 
     raise DeckLoadError(f"Unsupported maindeck card type '{card_data.get('Type')}' for {name}")
 
 
-def leader_from_data(card_data: dict[str, Any]) -> LeaderCard:
+def leader_from_data(card_data: dict[str, Any], effect_record: dict[str, Any] | None = None) -> LeaderCard:
     """Convert one SWU DB leader record into a simulator leader."""
     if str(card_data.get("Type") or "").lower() != "leader":
         raise DeckLoadError(f"{card_data.get('Set')} {card_data.get('Number')} is not a leader")
@@ -191,28 +200,55 @@ def leader_from_data(card_data: dict[str, Any]) -> LeaderCard:
     leader.traits = _traits(card_data)
     leader.abilities = _abilities(card_data)
     leader.aspects = _aspects(card_data)
+    leader.profile = compile_card_profile(card_data, effect_record)
     return leader
+
+
+def base_from_data(card_data: dict[str, Any], effect_record: dict[str, Any] | None = None) -> Base:
+    """Convert one SWU DB base record into a simulator base."""
+    if str(card_data.get("Type") or "").lower() != "base":
+        raise DeckLoadError(f"{card_data.get('Set')} {card_data.get('Number')} is not a base")
+
+    return Base(
+        name=str(card_data.get("Name") or "Unknown Base"),
+        hp=_to_int(card_data.get("HP"), default=25),
+        set_code=str(card_data.get("Set") or ""),
+        number=str(card_data.get("Number") or ""),
+        subtitle=str(card_data.get("Subtitle") or ""),
+        aspects=_aspects(card_data),
+        abilities=_abilities(card_data),
+        profile=compile_card_profile(card_data, effect_record),
+    )
 
 
 def load_deck(
     deck_ref: str | Path,
     card_data_path: str | Path = DEFAULT_GAMEPLAY_OUTPUT_PATH,
-) -> tuple[list[Card], LeaderCard, dict[str, Any]]:
-    """Load a decklist and return simulator deck cards, leader, and metadata."""
+) -> tuple[list[Card], LeaderCard, Base, dict[str, Any]]:
+    """Load a decklist and return simulator deck cards, leader, base, and metadata."""
     deck_path = resolve_deck_path(deck_ref)
     decklist = json.loads(deck_path.read_text(encoding="utf-8"))
     card_index = _load_card_cache(card_data_path)
+    effect_records = load_effects()
 
     leader_data = _lookup_card(card_index, decklist["leader"])
-    leader = leader_from_data(leader_data)
+    leader_effect = effect_records.get(effect_key(str(leader_data.get("Set") or ""), str(leader_data.get("Number") or "")))
+    leader = leader_from_data(leader_data, effect_record=leader_effect)
+    if decklist.get("base"):
+        base_data = _lookup_card(card_index, decklist["base"])
+        base_effect = effect_records.get(effect_key(str(base_data.get("Set") or ""), str(base_data.get("Number") or "")))
+        base = base_from_data(base_data, effect_record=base_effect)
+    else:
+        base = Base()
     deck_cards: list[Card] = []
     copy_index = 1
 
     for entry in decklist.get("cards", []):
         card_data = _lookup_card(card_index, entry)
+        record = effect_records.get(effect_key(str(card_data.get("Set") or ""), str(card_data.get("Number") or "")))
         count = _to_int(entry.get("count"), default=1)
         for _ in range(count):
-            deck_cards.append(card_from_data(card_data, copy_index=copy_index))
+            deck_cards.append(card_from_data(card_data, copy_index=copy_index, effect_record=record))
             copy_index += 1
 
     metadata = {
@@ -220,5 +256,7 @@ def load_deck(
         "path": str(deck_path),
         "card_count": len(deck_cards),
         "leader": leader.name,
+        "base": base.name,
+        "base_hp": base.hp,
     }
-    return deck_cards, leader, metadata
+    return deck_cards, leader, base, metadata

@@ -10,17 +10,21 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "sw_unlimited_sim"))
+GOLDEN_CASES_PATH = ROOT / "tests" / "golden_effect_cases.json"
 
 from effect_training import (  # noqa: E402
     EffectSuggestionError,
+    format_validation_report,
     LocalEffectSuggestionProvider,
     LocalModelBackend,
     MLXBackend,
     OllamaBackend,
     OllamaEffectSuggestionProvider,
+    execution_analysis_for_record,
     execution_status_for_record,
     get_effect_suggestion_provider,
     normalize_effect_record,
+    validate_effect_record,
 )
 
 
@@ -134,6 +138,29 @@ class EffectTrainingTests(unittest.TestCase):
         self.assertEqual(record["execution_status"], "manual")
         self.assertTrue(record["review"]["parse_warnings"])
 
+    def test_legacy_flat_trigger_output_is_coerced_for_review(self):
+        candidate = {
+            "triggers": [
+                {
+                    "type": "when_played",
+                    "effect_type": "draw_cards",
+                    "amount": 1,
+                    "duration": "this_phase",
+                    "target_controller": "self",
+                    "target_type": "card",
+                }
+            ]
+        }
+
+        record = normalize_effect_record(CARD, candidate, "local:test")
+
+        self.assertEqual(record["triggers"][0]["event"], "when_played")
+        self.assertEqual(record["triggers"][0]["steps"][0]["type"], "draw_cards")
+        self.assertEqual(record["review"]["triage"], "needs_review")
+        self.assertTrue(
+            any("legacy flat trigger format" in warning for warning in record["review"]["parse_warnings"])
+        )
+
     def test_invalid_steps_are_dropped_and_downgraded(self):
         candidate = {
             "triggers": [
@@ -183,6 +210,57 @@ class EffectTrainingTests(unittest.TestCase):
         self.assertEqual(execution_status_for_record(record), "executable")
         self.assertEqual(record["status"], "draft")
         self.assertFalse(record["review"]["human_verified"])
+
+    def test_draw_cards_without_explicit_target_defaults_to_friendly_player(self):
+        candidate = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "draw_cards",
+                            "amount": 1,
+                            "duration": "instant",
+                        }
+                    ],
+                }
+            ]
+        }
+
+        record = normalize_effect_record(CARD, candidate, "local:test")
+
+        self.assertEqual(
+            record["triggers"][0]["steps"][0]["target"],
+            {"controller": "friendly", "type": "player"},
+        )
+
+    def test_create_token_without_token_name_infers_from_rules_text(self):
+        candidate = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "create_token",
+                            "amount": 1,
+                            "duration": "instant",
+                        }
+                    ],
+                }
+            ]
+        }
+        card = dict(CARD, Name="Veteran Fleet Officer", FrontText="When Played: Create an X-Wing token.")
+
+        record = normalize_effect_record(card, candidate, "local:test")
+
+        step = record["triggers"][0]["steps"][0]
+        self.assertEqual(step["token_name"], "X-Wing token")
+        self.assertEqual(step["target"], {"controller": "friendly", "type": "player"})
+        self.assertEqual(record["execution_status"], "partial")
+        self.assertEqual(record["review"]["triage"], "needs_review")
+        self.assertTrue(any("Inferred token_name" in warning for warning in record["review"]["parse_warnings"]))
 
     def test_ollama_generate_parses_response_field(self):
         backend = OllamaBackend(model="test-model", host="http://127.0.0.1:11434", timeout=1)
@@ -277,6 +355,119 @@ class EffectTrainingTests(unittest.TestCase):
             with self.assertRaises(EffectSuggestionError) as raised:
                 backend.test()
         self.assertEqual(raised.exception.title, "MLX runtime is not installed")
+
+    def test_validation_report_flags_runtime_choice_and_schema_problems(self):
+        record = {
+            "set": "TST",
+            "number": "002",
+            "name": "Ambiguous Card",
+            "status": "draft",
+            "raw_text": "When Played: You may choose a unit.",
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "deal_damage",
+                            "duration": "instant",
+                            "optional": True,
+                            "target": {"controller": "enemy", "type": "unit", "filter": "damaged"},
+                        }
+                    ],
+                }
+            ],
+        }
+
+        report = validate_effect_record(record)
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["execution_analysis"]["status"], "partial")
+        self.assertTrue(any("optional choice" in blocker for blocker in report["execution_analysis"]["blockers"]))
+        self.assertTrue(any("ambiguity term" in warning for warning in report["warnings"]))
+
+    def test_execution_analysis_marks_unsupported_trigger_manual(self):
+        record = {
+            "set": "TST",
+            "number": "003",
+            "name": "Regroup Card",
+            "status": "draft",
+            "triggers": [
+                {
+                    "event": "regroup_start",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "draw_cards",
+                            "amount": 1,
+                            "duration": "instant",
+                            "target": {"controller": "friendly", "type": "player"},
+                        }
+                    ],
+                }
+            ],
+        }
+
+        analysis = execution_analysis_for_record(record)
+
+        self.assertEqual(analysis["status"], "manual")
+        self.assertTrue(any("unsupported runtime event regroup_start" in blocker for blocker in analysis["blockers"]))
+
+    def test_normalized_record_includes_validation_snapshot(self):
+        candidate = {
+            "triggers": [
+                {
+                    "event": "when_played",
+                    "conditions": [],
+                    "steps": [
+                        {
+                            "type": "deal_damage",
+                            "amount": 2,
+                            "duration": "instant",
+                            "target": {"controller": "enemy", "type": "unit"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        record = normalize_effect_record(CARD, candidate, "local:test")
+
+        self.assertIn("validation", record)
+        self.assertTrue(record["validation"]["valid"])
+        self.assertEqual(record["validation"]["execution_analysis"]["status"], "executable")
+
+    def test_format_validation_report_includes_schema_and_runtime_sections(self):
+        report = {
+            "valid": False,
+            "errors": ["missing required top-level field 'name'"],
+            "warnings": ["rules text contains ambiguity term 'choose'"],
+            "execution_analysis": {"status": "manual", "blockers": ["record has no triggers"], "metrics": {"trigger_count": 0}},
+            "metrics": {"trigger_count": 0},
+        }
+
+        formatted = format_validation_report(report)
+
+        self.assertIn("Valid: no", formatted)
+        self.assertIn("Runtime blockers:", formatted)
+        self.assertIn("Schema errors:", formatted)
+        self.assertIn("Warnings:", formatted)
+
+    def test_golden_effect_cases_stay_stable(self):
+        cases = json.loads(GOLDEN_CASES_PATH.read_text(encoding="utf-8"))
+
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                card = dict(CARD)
+                if case.get("front_text"):
+                    card["FrontText"] = case["front_text"]
+                record = normalize_effect_record(card, case["candidate"], "local:test")
+                validation = validate_effect_record(record)
+
+                self.assertEqual(record["execution_status"], case["expected_execution_status"])
+                self.assertEqual(record["review"]["triage"], case["expected_triage"])
+                self.assertEqual(validation["execution_analysis"]["status"], case["expected_runtime_status"])
+                self.assertEqual(validation["valid"], case["expected_valid"])
 
 
 if __name__ == "__main__":

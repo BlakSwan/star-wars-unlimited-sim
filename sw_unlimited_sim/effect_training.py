@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import socket
 import urllib.error
 import urllib.request
@@ -106,6 +107,24 @@ ENGINE_EXECUTABLE_TRIGGERS = {
     "when_pilot_attached",
 }
 
+STRICT_REQUIRED_TOP_LEVEL_FIELDS = ["set", "number", "name", "status", "triggers"]
+RISKY_RULE_TEXT_TERMS = [
+    "another",
+    "up to",
+    "may",
+    "choose",
+    "instead",
+    "if you do",
+    "for each",
+    "attach",
+    "upgrade",
+    "capture",
+    "search",
+    "look at",
+    "until",
+    "divided as you choose",
+]
+
 
 class EffectSuggestionError(RuntimeError):
     """User-facing error raised when a draft provider cannot create a draft."""
@@ -153,6 +172,101 @@ def blank_effect_record(card: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def prompt_schema_contract() -> dict[str, Any]:
+    """Return the exact trigger/step shape local models should emit."""
+    return {
+        "trigger_object": {
+            "event": "one of allowed_triggers",
+            "conditions": [{"type": "one of allowed_condition_types", "value": "optional string"}],
+            "steps": [
+                {
+                    "type": "one of allowed_effect_types",
+                    "amount": "optional integer",
+                    "duration": "one of allowed_durations",
+                    "optional": False,
+                    "target": {
+                        "controller": "one of allowed_target_controllers",
+                        "type": "one of allowed_target_types",
+                        "filter": "optional allowed_target_filter",
+                        "filter_value": "optional string",
+                    },
+                }
+            ],
+        },
+        "important_rules": [
+            "The trigger event field is named event, not type.",
+            "Put effect steps inside trigger.steps.",
+            "Do not put effect_type, target_controller, or target_type at trigger level.",
+            "Use integers for amount, power, and hp when present.",
+        ],
+    }
+
+
+def prompt_examples() -> dict[str, Any]:
+    """Return small good/bad examples to keep local-model output aligned."""
+    return {
+        "good_example_for_when_played_draw_a_card": {
+            "raw_text": "When Played: Draw a card.",
+            "record_fragment": {
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "draw_cards",
+                                "amount": 1,
+                                "duration": "instant",
+                                "optional": False,
+                                "target": {
+                                    "controller": "friendly",
+                                    "type": "player",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
+        },
+        "legacy_shape_to_avoid": {
+            "not_allowed": {
+                "triggers": [
+                    {
+                        "type": "when_played",
+                        "effect_type": "draw_cards",
+                        "target_controller": "self",
+                        "target_type": "card",
+                    }
+                ]
+            }
+        },
+        "good_example_for_when_played_create_token": {
+            "raw_text": "When Played: Create an X-Wing token.",
+            "record_fragment": {
+                "triggers": [
+                    {
+                        "event": "when_played",
+                        "conditions": [],
+                        "steps": [
+                            {
+                                "type": "create_token",
+                                "token_name": "X-Wing token",
+                                "amount": 1,
+                                "duration": "instant",
+                                "optional": False,
+                                "target": {
+                                    "controller": "friendly",
+                                    "type": "player",
+                                },
+                            }
+                        ],
+                    }
+                ]
+            },
+        },
+    }
+
+
 def build_step(
     effect_type: str,
     amount: str,
@@ -197,29 +311,248 @@ def build_condition(condition_type: str, value: str = "") -> dict[str, Any] | No
 
 def execution_status_for_record(record: dict[str, Any]) -> str:
     """Return whether the current engine should execute this record."""
-    triggers = record.get("triggers") or []
-    if not triggers:
-        return "manual"
+    return execution_analysis_for_record(record)["status"]
 
-    for trigger in triggers:
-        if trigger.get("event") not in ENGINE_EXECUTABLE_TRIGGERS:
-            return "manual"
-        if trigger.get("conditions"):
-            return "partial"
-        for step in trigger.get("steps") or []:
-            if step.get("type") not in ENGINE_EXECUTABLE_EFFECTS:
-                return "partial"
+
+def execution_analysis_for_record(record: dict[str, Any]) -> dict[str, Any]:
+    """Explain why a record is executable, partial, or manual."""
+    triggers = record.get("triggers") or []
+    blockers: list[str] = []
+    metrics = {
+        "trigger_count": len(triggers),
+        "condition_count": 0,
+        "step_count": 0,
+        "unsupported_trigger_count": 0,
+        "unsupported_step_count": 0,
+        "filtered_target_count": 0,
+        "optional_step_count": 0,
+        "choice_step_count": 0,
+        "non_instant_duration_count": 0,
+    }
+    status = "executable"
+
+    if not isinstance(triggers, list) or not triggers:
+        return {
+            "status": "manual",
+            "blockers": ["record has no triggers"],
+            "metrics": metrics,
+        }
+
+    for trigger_index, trigger in enumerate(triggers, start=1):
+        if not isinstance(trigger, dict):
+            blockers.append(f"trigger {trigger_index} is not an object")
+            status = "manual"
+            continue
+        event = trigger.get("event")
+        if event not in TRIGGERS:
+            blockers.append(f"trigger {trigger_index} has invalid event {event!r}")
+            status = "manual"
+            continue
+        if event not in ENGINE_EXECUTABLE_TRIGGERS:
+            blockers.append(f"trigger {trigger_index} uses unsupported runtime event {event}")
+            metrics["unsupported_trigger_count"] += 1
+            status = "manual"
+        conditions = trigger.get("conditions") or []
+        metrics["condition_count"] += len(conditions)
+        if conditions:
+            blockers.append(f"trigger {trigger_index} has conditions that the runtime does not evaluate")
+            if status != "manual":
+                status = "partial"
+        steps = trigger.get("steps") or []
+        metrics["step_count"] += len(steps)
+        if not isinstance(steps, list):
+            blockers.append(f"trigger {trigger_index} steps are not a list")
+            status = "manual"
+            continue
+        for step_index, step in enumerate(steps, start=1):
+            if not isinstance(step, dict):
+                blockers.append(f"trigger {trigger_index} step {step_index} is not an object")
+                status = "manual"
+                continue
+            effect_type = step.get("type")
+            if effect_type not in EFFECT_TYPES:
+                blockers.append(f"trigger {trigger_index} step {step_index} has invalid type {effect_type!r}")
+                status = "manual"
+                continue
+            if effect_type not in ENGINE_EXECUTABLE_EFFECTS:
+                blockers.append(f"trigger {trigger_index} step {step_index} uses unsupported runtime effect {effect_type}")
+                metrics["unsupported_step_count"] += 1
+                if status != "manual":
+                    status = "partial"
             duration = step.get("duration")
-            if step.get("type") == "modify_stats" and duration == "while_attached":
+            if effect_type == "modify_stats" and duration in ("while_attached", "this_attack", "this_phase"):
                 pass
             elif duration not in (None, "", "instant"):
-                return "partial"
+                blockers.append(f"trigger {trigger_index} step {step_index} uses unsupported duration {duration!r}")
+                metrics["non_instant_duration_count"] += 1
+                if status != "manual":
+                    status = "partial"
             target = step.get("target") or {}
+            if not isinstance(target, dict):
+                blockers.append(f"trigger {trigger_index} step {step_index} target is not an object")
+                status = "manual"
+                continue
+            if target.get("controller") not in (None, *TARGET_CONTROLLERS):
+                blockers.append(
+                    f"trigger {trigger_index} step {step_index} has invalid target controller {target.get('controller')!r}"
+                )
+                status = "manual"
+            if target.get("type") not in (None, *TARGET_TYPES):
+                blockers.append(
+                    f"trigger {trigger_index} step {step_index} has invalid target type {target.get('type')!r}"
+                )
+                status = "manual"
             if target.get("filter"):
-                return "partial"
-            if step.get("optional") or step.get("choice_group"):
-                return "partial"
-    return "executable"
+                blockers.append(f"trigger {trigger_index} step {step_index} uses unsupported target filters")
+                metrics["filtered_target_count"] += 1
+                if status != "manual":
+                    status = "partial"
+            if step.get("optional"):
+                blockers.append(f"trigger {trigger_index} step {step_index} requires an optional choice")
+                metrics["optional_step_count"] += 1
+                if status != "manual":
+                    status = "partial"
+            if step.get("choice_group"):
+                blockers.append(f"trigger {trigger_index} step {step_index} belongs to a choice group")
+                metrics["choice_step_count"] += 1
+                if status != "manual":
+                    status = "partial"
+    return {"status": status, "blockers": blockers, "metrics": metrics}
+
+
+def validate_effect_record(record: dict[str, Any]) -> dict[str, Any]:
+    """Validate a structured effect record and explain runtime gaps."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if not isinstance(record, dict):
+        return {
+            "valid": False,
+            "errors": ["record is not a JSON object"],
+            "warnings": [],
+            "execution_analysis": {"status": "manual", "blockers": ["record is not a JSON object"], "metrics": {}},
+            "metrics": {},
+        }
+
+    for field in STRICT_REQUIRED_TOP_LEVEL_FIELDS:
+        if field not in record:
+            errors.append(f"missing required top-level field {field!r}")
+
+    status = record.get("status")
+    if status not in (None, "draft", "approved"):
+        errors.append(f"invalid record status {status!r}")
+
+    review = record.get("review")
+    if review is not None and not isinstance(review, dict):
+        errors.append("review must be an object when present")
+
+    raw_text = str(record.get("raw_text") or "").lower()
+    for term in RISKY_RULE_TEXT_TERMS:
+        if term in raw_text:
+            warnings.append(f"rules text contains ambiguity term {term!r}")
+
+    triggers = record.get("triggers") or []
+    if not isinstance(triggers, list):
+        errors.append("triggers must be a list")
+        triggers = []
+
+    for trigger_index, trigger in enumerate(triggers, start=1):
+        if not isinstance(trigger, dict):
+            errors.append(f"trigger {trigger_index} is not an object")
+            continue
+        event = trigger.get("event")
+        if event not in TRIGGERS:
+            errors.append(f"trigger {trigger_index} has invalid event {event!r}")
+        conditions = trigger.get("conditions") or []
+        if not isinstance(conditions, list):
+            errors.append(f"trigger {trigger_index} conditions must be a list")
+            conditions = []
+        for condition_index, condition in enumerate(conditions, start=1):
+            if not isinstance(condition, dict):
+                errors.append(f"trigger {trigger_index} condition {condition_index} is not an object")
+                continue
+            condition_type = condition.get("type")
+            if condition_type not in CONDITION_TYPES:
+                errors.append(
+                    f"trigger {trigger_index} condition {condition_index} has invalid type {condition_type!r}"
+                )
+        steps = trigger.get("steps") or []
+        if not isinstance(steps, list):
+            errors.append(f"trigger {trigger_index} steps must be a list")
+            steps = []
+        if not steps:
+            warnings.append(f"trigger {trigger_index} has no effect steps")
+        for step_index, step in enumerate(steps, start=1):
+            if not isinstance(step, dict):
+                errors.append(f"trigger {trigger_index} step {step_index} is not an object")
+                continue
+            effect_type = step.get("type")
+            if effect_type not in EFFECT_TYPES:
+                errors.append(f"trigger {trigger_index} step {step_index} has invalid type {effect_type!r}")
+                continue
+            duration = step.get("duration")
+            if duration not in (None, *DURATIONS):
+                errors.append(f"trigger {trigger_index} step {step_index} has invalid duration {duration!r}")
+            target = step.get("target")
+            if not isinstance(target, dict):
+                errors.append(f"trigger {trigger_index} step {step_index} target must be an object")
+                continue
+            controller = target.get("controller")
+            if controller not in (None, *TARGET_CONTROLLERS):
+                errors.append(
+                    f"trigger {trigger_index} step {step_index} has invalid target controller {controller!r}"
+                )
+            target_type = target.get("type")
+            if target_type not in (None, *TARGET_TYPES):
+                errors.append(
+                    f"trigger {trigger_index} step {step_index} has invalid target type {target_type!r}"
+                )
+            target_filter = target.get("filter")
+            if target_filter not in (None, "", *TARGET_FILTERS):
+                errors.append(
+                    f"trigger {trigger_index} step {step_index} has invalid target filter {target_filter!r}"
+                )
+            if effect_type == "create_token" and not step.get("token_name"):
+                errors.append(f"trigger {trigger_index} step {step_index} create_token is missing token_name")
+            if effect_type == "modify_stats" and not any(field in step for field in ("power", "hp", "power_bonus", "hp_bonus", "amount")):
+                errors.append(f"trigger {trigger_index} step {step_index} modify_stats is missing stat deltas")
+
+    execution_analysis = execution_analysis_for_record(record)
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "warnings": warnings,
+        "execution_analysis": execution_analysis,
+        "metrics": execution_analysis.get("metrics", {}),
+    }
+
+
+def format_validation_report(report: dict[str, Any]) -> str:
+    lines = [
+        f"Valid: {'yes' if report.get('valid') else 'no'}",
+        f"Runtime status: {report.get('execution_analysis', {}).get('status', 'manual')}",
+    ]
+    metrics = report.get("metrics") or {}
+    if metrics:
+        lines.append(
+            "Metrics: "
+            + ", ".join(
+                f"{key}={value}" for key, value in metrics.items()
+            )
+        )
+    blockers = report.get("execution_analysis", {}).get("blockers") or []
+    if blockers:
+        lines.append("Runtime blockers:")
+        lines.extend(f"  - {blocker}" for blocker in blockers)
+    errors = report.get("errors") or []
+    if errors:
+        lines.append("Schema errors:")
+        lines.extend(f"  - {error}" for error in errors)
+    warnings = report.get("warnings") or []
+    if warnings:
+        lines.append("Warnings:")
+        lines.extend(f"  - {warning}" for warning in warnings)
+    return "\n".join(lines)
 
 
 def should_execute_record(record: dict[str, Any]) -> bool:
@@ -298,7 +631,17 @@ def _normalize_target(target: Any, warnings: list[str]) -> dict[str, Any]:
     return normalized
 
 
-def _normalize_step(step: Any, warnings: list[str]) -> dict[str, Any] | None:
+def _infer_token_name_from_text(raw_text: str) -> str | None:
+    match = re.search(r"\bcreate\s+(?:an?|one|two|\d+)?\s*([A-Za-z0-9' -]+?)\s+token\b", raw_text, re.IGNORECASE)
+    if not match:
+        return None
+    token_name = " ".join(match.group(1).split()).strip()
+    if not token_name:
+        return None
+    return f"{token_name} token"
+
+
+def _normalize_step(step: Any, warnings: list[str], raw_text: str = "") -> dict[str, Any] | None:
     if not isinstance(step, dict):
         warnings.append("Dropped non-object effect step")
         return None
@@ -312,11 +655,19 @@ def _normalize_step(step: Any, warnings: list[str]) -> dict[str, Any] | None:
         warnings.append(f"Replaced invalid duration: {duration!r}")
         duration = "instant"
 
+    target = step.get("target")
+    if effect_type == "draw_cards" and not isinstance(target, dict):
+        target = {"controller": "friendly", "type": "player"}
+        warnings.append("Inferred friendly player target for draw_cards step without an explicit target")
+    if effect_type == "create_token" and not isinstance(target, dict):
+        target = {"controller": "friendly", "type": "player"}
+        warnings.append("Inferred friendly player target for create_token step without an explicit target")
+
     normalized: dict[str, Any] = {
         "type": effect_type,
         "duration": duration,
         "optional": _coerce_bool(step.get("optional", False)),
-        "target": _normalize_target(step.get("target"), warnings),
+        "target": _normalize_target(target, warnings),
     }
     amount = _coerce_int(step.get("amount"), warnings, "amount")
     if amount is not None:
@@ -334,6 +685,10 @@ def _normalize_step(step: Any, warnings: list[str]) -> dict[str, Any] | None:
         normalized["choice_group"] = str(step.get("choice_group"))
     if effect_type == "create_token":
         token_name = step.get("token_name") or step.get("token") or step.get("name")
+        if token_name in (None, ""):
+            token_name = _infer_token_name_from_text(raw_text)
+            if token_name:
+                warnings.append(f"Inferred token_name {token_name!r} from card rules text")
         if token_name not in (None, ""):
             normalized["token_name"] = str(token_name)
         if step.get("ready") not in (None, ""):
@@ -357,11 +712,51 @@ def _normalize_condition(condition: Any, warnings: list[str]) -> dict[str, Any] 
     return normalized
 
 
-def _normalize_trigger(trigger: Any, warnings: list[str]) -> dict[str, Any] | None:
+def _coerce_legacy_trigger(trigger: dict[str, Any], warnings: list[str]) -> dict[str, Any] | None:
+    """Translate the older flat trigger schema into the canonical steps schema."""
+    legacy_event = trigger.get("type")
+    step_type = trigger.get("effect_type") or trigger.get("step_type")
+    if legacy_event not in TRIGGERS or step_type in (None, ""):
+        return None
+
+    coerced_step: dict[str, Any] = {
+        "type": step_type,
+        "duration": trigger.get("duration") or "instant",
+        "optional": trigger.get("optional", False),
+        "target": {
+            "controller": trigger.get("target_controller") or trigger.get("controller") or "enemy",
+            "type": trigger.get("target_type") or "unit",
+        },
+    }
+    for source_key in ("amount", "power", "hp", "power_bonus", "hp_bonus", "choice_group", "token_name", "token", "name"):
+        if trigger.get(source_key) not in (None, ""):
+            coerced_step[source_key] = trigger.get(source_key)
+    target_filter = trigger.get("target_filter") or trigger.get("filter")
+    if target_filter not in (None, ""):
+        coerced_step["target"]["filter"] = target_filter
+    if trigger.get("filter_value") not in (None, ""):
+        coerced_step["target"]["filter_value"] = trigger.get("filter_value")
+    if trigger.get("ready") not in (None, ""):
+        coerced_step["ready"] = trigger.get("ready")
+
+    warnings.append("Coerced legacy flat trigger format into trigger.event plus trigger.steps")
+    return {
+        "event": legacy_event,
+        "conditions": trigger.get("conditions") or [],
+        "steps": [coerced_step],
+    }
+
+
+def _normalize_trigger(trigger: Any, warnings: list[str], raw_text: str = "") -> dict[str, Any] | None:
     if not isinstance(trigger, dict):
         warnings.append("Dropped non-object trigger")
         return None
     event = trigger.get("event")
+    if event not in TRIGGERS:
+        coerced = _coerce_legacy_trigger(trigger, warnings)
+        if coerced:
+            trigger = coerced
+            event = trigger.get("event")
     if event not in TRIGGERS:
         warnings.append(f"Dropped invalid trigger event: {event!r}")
         return None
@@ -373,7 +768,7 @@ def _normalize_trigger(trigger: Any, warnings: list[str]) -> dict[str, Any] | No
     ]
     steps = [
         step
-        for step in (_normalize_step(step, warnings) for step in trigger.get("steps") or [])
+        for step in (_normalize_step(step, warnings, raw_text=raw_text) for step in trigger.get("steps") or [])
         if step
     ]
     return {"event": event, "conditions": conditions, "steps": steps}
@@ -388,22 +783,7 @@ def triage_effect_record(record: dict[str, Any], warnings: list[str] | None = No
 
     execution_status = execution_status_for_record(record)
     risky_text = (record.get("raw_text") or "").lower()
-    risky_terms = [
-        "another",
-        "up to",
-        "may",
-        "choose",
-        "instead",
-        "if you do",
-        "for each",
-        "attach",
-        "upgrade",
-        "capture",
-        "search",
-        "look at",
-        "until",
-    ]
-    if any(term in risky_text for term in risky_terms):
+    if any(term in risky_text for term in RISKY_RULE_TEXT_TERMS):
         return "needs_review"
 
     for trigger in triggers:
@@ -450,7 +830,7 @@ def normalize_effect_record(
     triggers = candidate.get("triggers") if isinstance(candidate.get("triggers"), list) else []
     record["triggers"] = [
         trigger
-        for trigger in (_normalize_trigger(trigger, warnings) for trigger in triggers)
+        for trigger in (_normalize_trigger(trigger, warnings, raw_text=record["raw_text"]) for trigger in triggers)
         if trigger
     ]
 
@@ -478,6 +858,7 @@ def normalize_effect_record(
     record["review"]["parse_warnings"] = warnings
     if raw_output:
         record["review"]["raw_model_output"] = raw_output[:4000]
+    record["validation"] = validate_effect_record(record)
     return record
 
 
@@ -847,9 +1228,12 @@ class LocalEffectSuggestionProvider(EffectSuggestionProvider):
             "constraints": [
                 "Return only one valid JSON object.",
                 "Use the schema shown in blank_record.",
+                "Follow schema_contract exactly.",
                 "Do not approve the card. Set status to draft.",
                 "Do not invent card text or effects.",
                 "Use only allowed enum values.",
+                "Each trigger must use the field event and a steps array.",
+                "Never use the legacy flat trigger shape shown in examples.legacy_shape_to_avoid.",
                 "If the card is ambiguous, include conservative structure and notes rather than guessing.",
             ],
             "allowed_triggers": TRIGGERS,
@@ -862,6 +1246,8 @@ class LocalEffectSuggestionProvider(EffectSuggestionProvider):
             "engine_executable_triggers": sorted(ENGINE_EXECUTABLE_TRIGGERS),
             "engine_executable_effects": sorted(ENGINE_EXECUTABLE_EFFECTS),
             "blank_record": blank_effect_record(card),
+            "schema_contract": prompt_schema_contract(),
+            "examples": prompt_examples(),
             "card": {
                 "set": card.get("Set"),
                 "number": card.get("Number"),
@@ -898,9 +1284,13 @@ class OllamaEffectSuggestionProvider(LocalEffectSuggestionProvider):
             "instructions": [
                 "Return ONLY valid JSON.",
                 "Use the blank_record schema.",
+                "Follow schema_contract exactly.",
                 "Set status to draft.",
                 "Do not approve the record.",
                 "Use only the allowed trigger and step values.",
+                "Each trigger must use event, conditions, and steps.",
+                "Never use trigger.type for the event name.",
+                "Never use effect_type, target_controller, or target_type at trigger level.",
                 "If uncertain, leave triggers empty or add notes instead of guessing.",
             ],
             "allowed_triggers": TRIGGERS,
@@ -911,6 +1301,8 @@ class OllamaEffectSuggestionProvider(LocalEffectSuggestionProvider):
             "allowed_target_filters": TARGET_FILTERS,
             "allowed_durations": DURATIONS,
             "blank_record": blank_effect_record(card),
+            "schema_contract": prompt_schema_contract(),
+            "examples": prompt_examples(),
             "card": {
                 "set": card.get("Set"),
                 "number": card.get("Number"),

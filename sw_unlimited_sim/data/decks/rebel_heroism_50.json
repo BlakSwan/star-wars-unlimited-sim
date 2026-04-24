@@ -5,6 +5,10 @@
     "set": "SOR",
     "number": "014"
   },
+  "base": {
+    "set": "SOR",
+    "number": "025"
+  },
   "cards": [
     {"set": "SOR", "number": "140", "count": 3},
     {"set": "SOR", "number": "141", "count": 3},

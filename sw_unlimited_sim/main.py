@@ -2,15 +2,32 @@
 """Star Wars Unlimited Simulator - Main Entry Point"""
 
 import argparse
+import json
 import sys
 from collections import Counter
 
 from card_analysis import analyze_card_database, format_card_analysis
+from card_profiles import compact_profile_payload, compile_card_profile
 from competitive_decks import COMPETITIVE_DECKS_PATH, write_hot_competitive_decks
-from deck_loader import _load_card_cache, available_decks
+from deck_loader import _load_card_cache, _lookup_card, available_decks, resolve_deck_path
 from effect_audit import audit_deck, format_deck_audit
-from effect_store import effect_key, load_effects, save_effect, save_unresolved_card
-from effect_training import EffectSuggestionError, LocalEffectSuggestionProvider, get_effect_suggestion_provider
+from effect_store import (
+    delete_draft_artifact,
+    effect_key,
+    get_draft_artifact,
+    get_effect,
+    load_effects,
+    save_draft_artifact,
+    save_effect,
+    save_unresolved_card,
+)
+from effect_training import (
+    EffectSuggestionError,
+    LocalEffectSuggestionProvider,
+    format_validation_report,
+    get_effect_suggestion_provider,
+    validate_effect_record,
+)
 from simulator import (
     run_simulation, 
     compare_strategies, 
@@ -50,6 +67,12 @@ def _find_card(set_code: str, number: str) -> dict:
 
 
 def _save_local_draft(card: dict, record: dict, approve_safe_drafts: bool) -> str:
+    existing = get_effect(card.get("Set"), card.get("Number"))
+    if existing and existing.get("status") == "draft":
+        existing_json = json.dumps(existing, sort_keys=True)
+        new_json = json.dumps(record, sort_keys=True)
+        if existing_json != new_json:
+            save_draft_artifact(existing, reason="Superseded by a newer local draft")
     triage = record.get("review", {}).get("triage", "needs_review")
     if approve_safe_drafts and triage == "safe_draft" and record.get("execution_status") == "executable":
         record["status"] = "approved"
@@ -158,6 +181,140 @@ def bulk_draft_local_cards(args) -> int:
     return 1 if summary["provider_errors"] else 0
 
 
+def validate_all_effects() -> int:
+    effects = load_effects()
+    if not effects:
+        print("No effect records found.")
+        return 0
+
+    summary: Counter = Counter()
+    blocker_counts: Counter = Counter()
+    invalid_keys: list[str] = []
+
+    for key, record in sorted(effects.items()):
+        report = validate_effect_record(record)
+        summary["records"] += 1
+        summary[f"runtime_{report['execution_analysis']['status']}"] += 1
+        summary["valid" if report["valid"] else "invalid"] += 1
+        summary[f"stored_status_{record.get('status', 'unknown')}"] += 1
+        for blocker in report.get("execution_analysis", {}).get("blockers", []):
+            blocker_counts[blocker] += 1
+        if not report["valid"]:
+            invalid_keys.append(key)
+
+    print("Effect validation summary:")
+    for key in (
+        "records",
+        "valid",
+        "invalid",
+        "runtime_executable",
+        "runtime_partial",
+        "runtime_manual",
+        "stored_status_draft",
+        "stored_status_approved",
+    ):
+        print(f"  {key}: {summary[key]}")
+
+    if blocker_counts:
+        print("Top runtime blockers:")
+        for blocker, count in blocker_counts.most_common(10):
+            print(f"  - {count}x {blocker}")
+
+    if invalid_keys:
+        print("Invalid records:")
+        for key in invalid_keys[:20]:
+            print(f"  - {key}")
+    return 1 if invalid_keys else 0
+
+
+def validate_single_effect(set_code: str, number: str) -> int:
+    effects = load_effects()
+    key = effect_key(set_code, number)
+    record = effects.get(key)
+    if not record:
+        print(f"No effect record found for {key}")
+        return 1
+
+    print(f"Effect record: {key} {record.get('name', '')}".strip())
+    print(f"  source: {record.get('source')}")
+    print(f"  status: {record.get('status')}")
+    print(f"  execution_status: {record.get('execution_status')}")
+    print(format_validation_report(validate_effect_record(record)))
+    return 0
+
+
+def archive_effect_draft(set_code: str, number: str, reason: str) -> int:
+    record = get_effect(set_code, number)
+    if not record:
+        print(f"No effect record found for {effect_key(set_code, number)}")
+        return 1
+    save_draft_artifact(record, reason=reason)
+    print(f"Archived draft artifact for {effect_key(set_code, number)}")
+    return 0
+
+
+def show_draft_artifact(set_code: str, number: str) -> int:
+    artifact = get_draft_artifact(set_code, number)
+    if not artifact:
+        print(f"No draft artifact found for {effect_key(set_code, number)}")
+        return 1
+    print(json.dumps(artifact, indent=2))
+    return 0
+
+
+def delete_saved_draft_artifact(set_code: str, number: str) -> int:
+    if not delete_draft_artifact(set_code, number):
+        print(f"No draft artifact found for {effect_key(set_code, number)}")
+        return 1
+    print(f"Deleted draft artifact for {effect_key(set_code, number)}")
+    return 0
+
+
+def dump_card_profile(set_code: str, number: str, include_effect_record: bool = False) -> int:
+    card = _find_card(set_code, number)
+    effects = load_effects()
+    record = effects.get(effect_key(str(card.get("Set") or ""), str(card.get("Number") or "")))
+    profile = compile_card_profile(card, record)
+    print(json.dumps(compact_profile_payload(card, profile, include_effect_record=include_effect_record), indent=2))
+    return 0
+
+
+def dump_deck_profiles(deck_ref: str, include_effect_record: bool = False) -> int:
+    deck_path = resolve_deck_path(deck_ref)
+    decklist = json.loads(deck_path.read_text(encoding="utf-8"))
+    card_index = _load_card_cache(DEFAULT_GAMEPLAY_OUTPUT_PATH)
+    effect_records = load_effects()
+
+    leader_data = _lookup_card(card_index, decklist["leader"])
+    leader_record = effect_records.get(effect_key(str(leader_data.get("Set") or ""), str(leader_data.get("Number") or "")))
+    leader_profile = compile_card_profile(leader_data, leader_record)
+    base_entry = decklist.get("base")
+    base_payload = None
+    if base_entry:
+        base_data = _lookup_card(card_index, base_entry)
+        base_record = effect_records.get(effect_key(str(base_data.get("Set") or ""), str(base_data.get("Number") or "")))
+        base_profile = compile_card_profile(base_data, base_record)
+        base_payload = compact_profile_payload(base_data, base_profile, copy_count=1, include_effect_record=include_effect_record)
+
+    entries = []
+    for entry in decklist.get("cards", []):
+        card_data = _lookup_card(card_index, entry)
+        count = int(entry.get("count") or 1)
+        record = effect_records.get(effect_key(str(card_data.get("Set") or ""), str(card_data.get("Number") or "")))
+        profile = compile_card_profile(card_data, record)
+        entries.append(compact_profile_payload(card_data, profile, copy_count=count, include_effect_record=include_effect_record))
+
+    payload = {
+        "deck_name": decklist.get("name") or deck_path.stem,
+        "deck_path": str(deck_path),
+        "leader": compact_profile_payload(leader_data, leader_profile, copy_count=1, include_effect_record=include_effect_record),
+        "base": base_payload,
+        "cards": entries,
+    }
+    print(json.dumps(payload, indent=2))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Star Wars Unlimited Card Game Simulator",
@@ -239,6 +396,24 @@ Examples:
                         help="Replace existing draft records during bulk local drafting")
     parser.add_argument("--approve-safe-drafts", action="store_true",
                         help="Conservatively approve structurally simple local drafts; off by default")
+    parser.add_argument("--validate-effects", action="store_true",
+                        help="Validate stored effect records and summarize runtime blockers")
+    parser.add_argument("--validate-effect", nargs=2, metavar=("SET", "NUMBER"),
+                        help="Validate one stored effect record")
+    parser.add_argument("--archive-effect-draft", nargs=2, metavar=("SET", "NUMBER"),
+                        help="Archive the current stored effect draft before replacing it")
+    parser.add_argument("--archive-reason", default="Manually archived for later review",
+                        help="Reason used with --archive-effect-draft")
+    parser.add_argument("--show-draft-artifact", nargs=2, metavar=("SET", "NUMBER"),
+                        help="Show archived draft artifacts for one card")
+    parser.add_argument("--delete-draft-artifact", nargs=2, metavar=("SET", "NUMBER"),
+                        help="Delete archived draft artifacts for one card")
+    parser.add_argument("--dump-card-profile", nargs=2, metavar=("SET", "NUMBER"),
+                        help="Dump one compact compiled card profile as JSON for local LLM workflows")
+    parser.add_argument("--dump-deck-profiles", metavar="DECK",
+                        help="Dump compact compiled profiles for a deck's unique cards as JSON")
+    parser.add_argument("--include-effect-record", action="store_true",
+                        help="Include the saved effect record in profile dump commands")
     
     args = parser.parse_args()
     
@@ -256,6 +431,27 @@ Examples:
 
     if args.draft_local_effects:
         sys.exit(bulk_draft_local_cards(args))
+
+    if args.validate_effects:
+        sys.exit(validate_all_effects())
+
+    if args.validate_effect:
+        sys.exit(validate_single_effect(*args.validate_effect))
+
+    if args.archive_effect_draft:
+        sys.exit(archive_effect_draft(*args.archive_effect_draft, reason=args.archive_reason))
+
+    if args.show_draft_artifact:
+        sys.exit(show_draft_artifact(*args.show_draft_artifact))
+
+    if args.delete_draft_artifact:
+        sys.exit(delete_saved_draft_artifact(*args.delete_draft_artifact))
+
+    if args.dump_card_profile:
+        sys.exit(dump_card_profile(*args.dump_card_profile, include_effect_record=args.include_effect_record))
+
+    if args.dump_deck_profiles:
+        sys.exit(dump_deck_profiles(args.dump_deck_profiles, include_effect_record=args.include_effect_record))
     
     # List strategies
     if args.list:

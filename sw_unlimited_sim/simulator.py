@@ -72,16 +72,26 @@ def run_single_game(strategy1: Strategy, strategy2: Strategy,
     """Run a single game and return winner, turns, and log"""
     try:
         if deck1_ref and deck2_ref:
-            rebel_deck, rebel_leader, _ = load_deck(deck1_ref)
-            imperial_deck, imperial_leader, _ = load_deck(deck2_ref)
+            rebel_deck, rebel_leader, rebel_base, _ = load_deck(deck1_ref)
+            imperial_deck, imperial_leader, imperial_base, _ = load_deck(deck2_ref)
         else:
             # Create fresh sample decks for each game.
             rebel_deck, imperial_deck = create_sample_decks()
             rebel_leader = get_rebel_leader()
             imperial_leader = get_imperial_leader()
+            rebel_base = None
+            imperial_base = None
         
         # Create game
-        game = GameState(rebel_deck, imperial_deck, rebel_leader, imperial_leader, verbose=verbose)
+        game = GameState(
+            rebel_deck,
+            imperial_deck,
+            rebel_leader,
+            imperial_leader,
+            verbose=verbose,
+            player1_base=rebel_base,
+            player2_base=imperial_base,
+        )
         
         # Run game
         winner = game.run_to_completion(strategy1, strategy2)

@@ -5,6 +5,10 @@
     "set": "SOR",
     "number": "014"
   },
+  "base": {
+    "set": "JTL",
+    "number": "022"
+  },
   "cards": [
     {"set": "JTL", "number": "095", "count": 3},
     {"set": "JTL", "number": "101", "count": 3},

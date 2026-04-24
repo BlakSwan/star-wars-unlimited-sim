@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List
+from typing import Any, Optional, List
 import random
 
 
@@ -24,6 +24,31 @@ class Phase(Enum):
 
 
 @dataclass
+class CardProfile:
+    """Compiled metadata attached to a card object.
+
+    This is the augmentation boundary where deterministic loading and any
+    offline LLM-produced effect draft can be attached to the runtime card
+    without asking a model during gameplay.
+    """
+
+    set_code: str = ""
+    number: str = ""
+    card_type: str = ""
+    rules_text: str = ""
+    ability_lines: List[str] = field(default_factory=list)
+    keywords: List[str] = field(default_factory=list)
+    traits: List[str] = field(default_factory=list)
+    aspects: List[str] = field(default_factory=list)
+    mechanic_tags: List[str] = field(default_factory=list)
+    source_fields: dict[str, str] = field(default_factory=dict)
+    llm_augmented: bool = False
+    effect_record: Optional[dict[str, Any]] = None
+    effect_execution_status: str = "manual"
+    effect_validation: Optional[dict[str, Any]] = None
+
+
+@dataclass
 class Card:
     """Base card class"""
     id: str
@@ -31,6 +56,7 @@ class Card:
     cost: int
     card_type: CardType
     aspects: List[str] = field(default_factory=list, init=False)
+    profile: CardProfile = field(default_factory=CardProfile, init=False)
     
     def __repr__(self):
         return f"{self.name} ({self.cost})"
@@ -63,6 +89,19 @@ class UnitCard(Card):
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
         self.attached_upgrades = []
+        self.temporary_phase_power_bonus = 0
+        self.temporary_phase_hp_bonus = 0
+        self.temporary_attack_power_bonus = 0
+        self.temporary_attack_hp_bonus = 0
+        self.temporary_phase_keywords = set()
+        self.temporary_attack_keywords = set()
+        self.temporary_phase_cannot_attack_base = False
+        self.temporary_attack_cannot_attack_base = False
+        self.temporary_attack_strip_defender_abilities = False
+        self.temporary_attack_defeat_self_after_attack = False
+        self.temporary_attack_defeat_self_if_damaged_base = False
+        self.temporary_attack_damaged_base = False
+        self.temporary_attack_abilities_suppressed = False
     
     def take_damage(self, amount: int) -> int:
         """Apply damage, return actual damage taken"""
@@ -147,6 +186,19 @@ class LeaderCard(Card):
         self.attacked_this_phase = False
         self.abilities_lost_until_ready = False
         self.attached_upgrades = []
+        self.temporary_phase_power_bonus = 0
+        self.temporary_phase_hp_bonus = 0
+        self.temporary_attack_power_bonus = 0
+        self.temporary_attack_hp_bonus = 0
+        self.temporary_phase_keywords = set()
+        self.temporary_attack_keywords = set()
+        self.temporary_phase_cannot_attack_base = False
+        self.temporary_attack_cannot_attack_base = False
+        self.temporary_attack_strip_defender_abilities = False
+        self.temporary_attack_defeat_self_after_attack = False
+        self.temporary_attack_defeat_self_if_damaged_base = False
+        self.temporary_attack_damaged_base = False
+        self.temporary_attack_abilities_suppressed = False
 
     def take_damage(self, amount: int) -> int:
         """Apply damage while deployed as a unit."""
@@ -173,9 +225,20 @@ class LeaderCard(Card):
 
 @dataclass
 class Base:
-    """Player's base"""
+    """Player's base card and current HP state."""
+    name: str = "Base"
     hp: int = 25
-    current_hp: int = 25
+    current_hp: Optional[int] = None
+    set_code: str = ""
+    number: str = ""
+    subtitle: str = ""
+    aspects: List[str] = field(default_factory=list)
+    abilities: List[str] = field(default_factory=list)
+    profile: CardProfile = field(default_factory=CardProfile)
+
+    def __post_init__(self):
+        if self.current_hp is None:
+            self.current_hp = self.hp
     
     def take_damage(self, amount: int):
         self.current_hp = max(0, self.current_hp - amount)
@@ -211,6 +274,7 @@ class Player:
     space_arena: List[UnitCard] = field(default_factory=list)
     discard_pile: List[Card] = field(default_factory=list)
     has_initiative: bool = False
+    has_force_token: bool = False
     
     def draw_cards(self, count: int) -> List[Card]:
         """Draw cards from deck and return the cards drawn."""

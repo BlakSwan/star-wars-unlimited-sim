@@ -9,6 +9,11 @@ from models import Card, Player, UnitCard, UpgradeCard
 
 
 def card_effect_record(game: Any, card: Card) -> Optional[dict[str, Any]]:
+    profile = getattr(card, "profile", None)
+    profile_record = getattr(profile, "effect_record", None)
+    if profile_record and should_execute_record(profile_record):
+        return profile_record
+
     key = game._card_effect_key(card)
     if not key:
         return None
@@ -55,6 +60,8 @@ def can_execute_structured_step(game: Any, source: Card, step: dict[str, Any]) -
         return False
     duration = step.get("duration")
     if step.get("type") == "modify_stats" and duration == "while_attached" and isinstance(source, UpgradeCard):
+        pass
+    elif step.get("type") == "modify_stats" and duration in ("this_attack", "this_phase"):
         pass
     elif duration not in (None, "", "instant"):
         game.log(f"Turn {game.turn_count}: {source.name} skipped trained effect with unsupported duration")
@@ -149,6 +156,27 @@ def apply_structured_step(
         )
         return
 
+    if effect_type == "attack_with_unit":
+        owner, unit = target_unit(game, player, target_spec, defender)
+        if not owner or not unit:
+            game.log(f"Turn {game.turn_count}: {source_name} found no target for attack_with_unit")
+            return
+        power_delta, _ = structured_stat_deltas(step)
+        keywords = step.get("keywords") or []
+        combat_damage_first = game._step_bool(step.get("combat_damage_before_defender", False))
+        allow_exhausted = game._step_bool(step.get("allow_exhausted", False))
+        can_attack_base = not game._step_bool(step.get("cannot_attack_bases", False))
+        game._attack_with_unit_tuning(
+            owner,
+            unit,
+            power_bonus=power_delta,
+            combat_damage_before_defender=combat_damage_first,
+            keywords=keywords,
+            allow_exhausted=allow_exhausted,
+            can_attack_base=can_attack_base,
+        )
+        return
+
     if target_type in {"base", "player"}:
         step_target_player = target_player(game, player, target_spec)
         if effect_type == "deal_damage":
@@ -194,11 +222,19 @@ def apply_structured_step(
         if not power_delta and not hp_delta:
             game.log(f"Turn {game.turn_count}: {source_name} skipped empty stat modifier")
             return
-        game._modify_unit_stats(unit, power_delta, hp_delta)
-        if isinstance(source, UpgradeCard) and step.get("duration") == "while_attached":
+        duration = step.get("duration")
+        if duration == "while_attached":
+            game._modify_unit_stats(unit, power_delta, hp_delta)
             source.structured_power_bonus = int(getattr(source, "structured_power_bonus", 0) or 0) + power_delta
             source.structured_hp_bonus = int(getattr(source, "structured_hp_bonus", 0) or 0) + hp_delta
-        game.log(f"Turn {game.turn_count}: {source_name} modifies {unit.name} by {power_delta:+}/{hp_delta:+}")
+        elif duration in ("this_attack", "this_phase"):
+            game._apply_temporary_modifier(unit, power_delta=power_delta, hp_delta=hp_delta, duration=duration)
+        else:
+            game._modify_unit_stats(unit, power_delta, hp_delta)
+        game.log(
+            f"Turn {game.turn_count}: {source_name} modifies {unit.name} by {power_delta:+}/{hp_delta:+}"
+            + (f" ({duration})" if duration else "")
+        )
     elif effect_type == "capture_unit":
         game.log(f"Turn {game.turn_count}: {source_name} skipped capture effect; capture zones are not modeled yet")
     else:

@@ -1,0 +1,112 @@
+[
+  {
+    "name": "simple_damage_is_executable",
+    "front_text": "When Played: Deal 2 damage to an enemy unit.",
+    "candidate": {
+      "triggers": [
+        {
+          "event": "when_played",
+          "conditions": [],
+          "steps": [
+            {
+              "type": "deal_damage",
+              "amount": 2,
+              "duration": "instant",
+              "target": {
+                "controller": "enemy",
+                "type": "unit"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected_execution_status": "executable",
+    "expected_triage": "safe_draft",
+    "expected_runtime_status": "executable",
+    "expected_valid": true
+  },
+  {
+    "name": "optional_damage_stays_partial",
+    "front_text": "When Played: You may deal 2 damage to a unit.",
+    "candidate": {
+      "triggers": [
+        {
+          "event": "when_played",
+          "conditions": [],
+          "steps": [
+            {
+              "type": "deal_damage",
+              "amount": 2,
+              "duration": "instant",
+              "optional": true,
+              "target": {
+                "controller": "enemy",
+                "type": "unit"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected_execution_status": "partial",
+    "expected_triage": "needs_review",
+    "expected_runtime_status": "partial",
+    "expected_valid": true
+  },
+  {
+    "name": "filtered_damage_stays_partial",
+    "front_text": "When Played: Deal 2 damage to a damaged unit.",
+    "candidate": {
+      "triggers": [
+        {
+          "event": "when_played",
+          "conditions": [],
+          "steps": [
+            {
+              "type": "deal_damage",
+              "amount": 2,
+              "duration": "instant",
+              "target": {
+                "controller": "enemy",
+                "type": "unit",
+                "filter": "damaged"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected_execution_status": "partial",
+    "expected_triage": "needs_review",
+    "expected_runtime_status": "partial",
+    "expected_valid": true
+  },
+  {
+    "name": "unsupported_trigger_stays_manual",
+    "front_text": "When the regroup phase starts: Draw a card.",
+    "candidate": {
+      "triggers": [
+        {
+          "event": "regroup_start",
+          "conditions": [],
+          "steps": [
+            {
+              "type": "draw_cards",
+              "amount": 1,
+              "duration": "instant",
+              "target": {
+                "controller": "friendly",
+                "type": "player"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "expected_execution_status": "manual",
+    "expected_triage": "needs_review",
+    "expected_runtime_status": "manual",
+    "expected_valid": true
+  }
+]

@@ -26,6 +26,7 @@ SUPPORTED_KEYWORDS = {
 }
 
 SUPPORTED_CARD_NAMES = {
+    "General Rieekan",
     "Darth Vader",
     "Admiral Ozzel",
     "Cantina Braggart",
@@ -37,6 +38,8 @@ SUPPORTED_CARD_NAMES = {
     "First Legion Snowtrooper",
     "Green Squadron A-Wing",
     "Heroic Sacrifice",
+    "Hoth Lieutenant",
+    "Improvised Detonation",
     "Imperial Interceptor",
     "K-2SO",
     "Karabast",
@@ -53,6 +56,27 @@ SUPPORTED_CARD_NAMES = {
 }
 
 SUPPORTED_CARD_KEYS = {
+    "IBH-10",  # Han Solo
+    "JTL-017",  # Han Solo leader
+    "JTL-123",  # Dogfight
+    "JTL-088",  # Captain Phasma
+    "JTL-060",  # Desperate Commando
+    "LAW-202",  # Commence the Festivities
+    "LAW-205",  # Flash the Vents
+    "LAW-004",  # Aurra Sing leader
+    "LAW-067",  # Jyn Erso
+    "LAW-089",  # Kanan Jarrus
+    "LAW-133",  # Lost and Forgotten
+    "LOF-004",  # Kanan Jarrus leader
+    "LOF-008",  # Obi-Wan Kenobi leader
+    "LOF-221",  # Trust Your Instincts
+    "LOF-031",  # Karis
+    "LOF-041",  # Drain Essence
+    "LOF-059",  # Nightsister Warrior
+    "SOR-168",  # Precision Fire
+    "SEC-157",  # One Way Out
+    "TWI-014",  # Asajj Ventress leader
+    "TWI-224",  # Breaking In
     "JTL-008",  # Wedge Antilles
     "JTL-050",  # Phantom II
     "JTL-051",  # Red Squadron X-Wing
@@ -67,9 +91,12 @@ SUPPORTED_CARD_KEYS = {
     "JTL-093",  # Nien Nunb
     "JTL-108",  # Clone Pilot
     "JTL-150",  # Biggs Darklighter
+    "JTL-144",  # No Disintegrations
+    "JTL-151",  # Red Five
     "JTL-196",  # Dagger Squadron Pilot
     "JTL-197",  # Anakin Skywalker
     "JTL-203",  # Han Solo
+    "JTL-229",  # Diversion
     "JTL-143",  # Devastator
     "LOF-046",  # Ezra Bridger
     "SEC-094",  # Mina Bonteri
@@ -119,12 +146,13 @@ class DeckAudit:
     deck_name: str
     deck_path: str
     leader: CardAudit
+    base: CardAudit
     cards: list[CardAudit]
     validation_errors: list[str] = field(default_factory=list)
 
     @property
     def all_cards(self) -> list[CardAudit]:
-        return [self.leader] + self.cards
+        return [self.leader, self.base] + self.cards
 
     @property
     def counts_by_status(self) -> Counter:
@@ -299,6 +327,21 @@ def audit_deck(
 
     leader_data = _lookup_card(card_index, decklist["leader"])
     leader = _audit_card(leader_data, count=1, trained_effects=trained_effects)
+    if decklist.get("base"):
+        base_data = _lookup_card(card_index, decklist["base"])
+        base = _audit_card(base_data, count=1, trained_effects=trained_effects)
+    else:
+        base = CardAudit(
+            set_code="",
+            number="",
+            name="Generic Base",
+            card_type="Base",
+            count=1,
+            status="supported",
+            reasons=["using default 25 HP base"],
+            text="",
+            keywords=[],
+        )
 
     card_audits = []
     validation_errors: list[str] = []
@@ -322,6 +365,7 @@ def audit_deck(
         deck_name=decklist.get("name") or deck_path.stem,
         deck_path=str(deck_path),
         leader=leader,
+        base=base,
         cards=card_audits,
         validation_errors=validation_errors,
     )
@@ -339,6 +383,7 @@ def format_deck_audit(audit: DeckAudit, show_supported: bool = False) -> str:
         f"Deck: {audit.deck_name}",
         f"Path: {audit.deck_path}",
         f"Leader: {audit.leader.set_code} {audit.leader.number} {audit.leader.name} [{audit.leader.status}]",
+        f"Base: {audit.base.set_code} {audit.base.number} {audit.base.name} [{audit.base.status}]".strip(),
         f"Main deck cards: {total_cards}",
         f"Tournament shape: {'valid' if audit.is_valid_tournament_shape else 'invalid'}",
         (

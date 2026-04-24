@@ -22,6 +22,13 @@ def unit_action_has_target(game: Any, player: Player, unit: UnitCard) -> bool:
         return player.can_afford(1) and any(
             candidate.name == "The Ghost" for candidate in player.units if candidate is not unit
         )
+    if unit.name == "General Rieekan":
+        return any(
+            candidate is not unit
+            and game._has_aspect(candidate, "Heroism")
+            and not getattr(candidate, "is_exhausted", False)
+            for candidate in player.units
+        )
     return False
 
 
@@ -37,6 +44,9 @@ def use_unit_action(game: Any, player: Player, unit_id: str) -> bool:
 
     if game._is_card(unit, "JTL", "050"):
         return use_phantom_two_action(game, player, unit)
+
+    if unit.name == "General Rieekan":
+        return use_general_rieekan_action(game, player, unit)
 
     if game._card_effect_record(unit):
         unit.is_exhausted = True
@@ -103,6 +113,20 @@ def use_phantom_two_action(game: Any, player: Player, unit: UnitCard) -> bool:
     return True
 
 
+def use_general_rieekan_action(game: Any, player: Player, unit: UnitCard) -> bool:
+    targets = [
+        candidate for candidate in player.units
+        if candidate is not unit and game._has_aspect(candidate, "Heroism") and not getattr(candidate, "is_exhausted", False)
+    ]
+    if not targets:
+        return False
+    target = max(targets, key=lambda candidate: (candidate.power, candidate.current_hp))
+    unit.is_exhausted = True
+    game._attack_with_unit_tuning(player, target, power_bonus=2)
+    game.log(f"Turn {game.turn_count}: Player {player.id} uses General Rieekan's action")
+    return True
+
+
 def use_leader_action(game: Any, player: Player) -> bool:
     if not player.leader or player.leader.is_deployed or player.leader.is_exhausted:
         return False
@@ -127,8 +151,39 @@ def leader_action_has_target(game: Any, player: Player) -> bool:
     if record and any(trigger.get("event") == "action" for trigger in record.get("triggers", [])):
         return True
 
+    if game._is_card(player.leader, "LOF", "008"):
+        if not getattr(player, "has_force_token", False):
+            return False
+        return any(
+            candidate.experience_tokens == 0
+            for candidate in player.units + game._get_enemy(player).units
+            if candidate is not player.leader
+        )
+    if game._is_card(player.leader, "LOF", "004"):
+        return player.can_afford(1) and any(
+            game._has_trait(unit, "CREATURE") or game._has_trait(unit, "SPECTRE")
+            for unit in player.units
+        )
+    if game._is_card(player.leader, "LAW", "004"):
+        return any(
+            not isinstance(unit, LeaderCard) and unit.current_hp <= 1
+            for unit in game._get_enemy(player).units
+        )
     if game._is_card(player.leader, "JTL", "008"):
         return any(game._can_play_as_pilot_with_discount(player, card, 1) for card in player.hand)
+    if game._is_card(player.leader, "JTL", "015"):
+        return player.can_afford(1) and any(
+            unit.arena == Arena.SPACE and not getattr(unit, "is_exhausted", False)
+            for unit in player.units
+        )
+    if game._is_card(player.leader, "JTL", "017"):
+        return any(not getattr(unit, "is_exhausted", False) for unit in player.units)
+    if game._is_card(player.leader, "LAW", "001"):
+        return any(not getattr(unit, "is_exhausted", False) for unit in player.units)
+    if game._is_card(player.leader, "TWI", "009"):
+        return any(not getattr(unit, "is_exhausted", False) for unit in player.units)
+    if game._is_card(player.leader, "TWI", "014"):
+        return any(not getattr(unit, "is_exhausted", False) for unit in player.units)
 
     effect = player.leader.action_effect.lower()
     enemy = game._get_enemy(player)
@@ -155,6 +210,42 @@ def resolve_leader_action(game: Any, player: Player) -> None:
 
     game._resolve_structured_effects(player, player.leader, "action")
 
+    if game._is_card(player.leader, "LOF", "008"):
+        if not game._use_force(player):
+            return
+        friendly_targets = [unit for unit in player.units if unit is not player.leader and unit.experience_tokens == 0]
+        enemy_targets = [unit for unit in enemy.units if unit.experience_tokens == 0]
+        targets = friendly_targets or enemy_targets
+        if targets:
+            target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+            target.experience_tokens += 1
+            target.power += 1
+            target.hp += 1
+            target.current_hp += 1
+            game.log(f"Turn {game.turn_count}: Obi-Wan Kenobi gives an Experience token to {target.name}")
+        return
+
+    if game._is_card(player.leader, "LOF", "004"):
+        targets = [
+            unit for unit in player.units
+            if game._has_trait(unit, "CREATURE") or game._has_trait(unit, "SPECTRE")
+        ]
+        if targets:
+            target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+            target.shield_tokens += 1
+            game.log(f"Turn {game.turn_count}: Kanan Jarrus gives a Shield token to {target.name}")
+        return
+
+    if game._is_card(player.leader, "LAW", "004"):
+        targets = [
+            unit for unit in enemy.units
+            if not isinstance(unit, LeaderCard) and unit.current_hp <= 1
+        ]
+        if targets:
+            target = max(targets, key=lambda unit: (unit.cost, unit.power, unit.current_hp))
+            game._remove_unit(enemy, target)
+        return
+
     if game._is_card(player.leader, "JTL", "008"):
         candidates = [card for card in player.hand if game._can_play_as_pilot_with_discount(player, card, 1)]
         if not candidates:
@@ -167,6 +258,64 @@ def resolve_leader_action(game: Any, player: Player) -> None:
             ),
         )
         game._play_specific_card_as_pilot(player, card, cost_discount=1)
+        return
+
+    if game._is_card(player.leader, "JTL", "015"):
+        targets = [unit for unit in player.units if unit.arena == Arena.SPACE and not getattr(unit, "is_exhausted", False)]
+        if not targets:
+            return
+        target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+        game._attack_with_unit_tuning(
+            player,
+            target,
+            power_bonus=1,
+            keywords={"saboteur"},
+        )
+        return
+
+    if game._is_card(player.leader, "JTL", "017"):
+        targets = [unit for unit in player.units if not getattr(unit, "is_exhausted", False)]
+        if not targets:
+            return
+        target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+        revealed = player.deck[0] if player.deck else None
+        power_bonus = 0
+        if revealed is not None:
+            if (revealed.cost % 2 == 1) != (target.cost % 2 == 1):
+                power_bonus = 1
+            game.log(f"Turn {game.turn_count}: {player.leader.name} reveals {revealed.name}")
+        game._attack_with_unit_tuning(player, target, power_bonus=power_bonus)
+        return
+
+    if game._is_card(player.leader, "LAW", "001"):
+        targets = [unit for unit in player.units if not getattr(unit, "is_exhausted", False)]
+        if not targets:
+            return
+        target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+        game._attack_with_unit_tuning(
+            player,
+            target,
+            power_bonus=2,
+            keywords={"overwhelm"},
+            defeat_self_after_attack=True,
+        )
+        return
+
+    if game._is_card(player.leader, "TWI", "009"):
+        targets = [unit for unit in player.units if not getattr(unit, "is_exhausted", False)]
+        if not targets:
+            return
+        target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+        game._attack_with_unit_tuning(player, target, keywords={"overwhelm"})
+        return
+
+    if game._is_card(player.leader, "TWI", "014"):
+        targets = [unit for unit in player.units if not getattr(unit, "is_exhausted", False)]
+        if not targets:
+            return
+        target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+        power_bonus = 1 if getattr(player, "played_event_this_phase", False) else 0
+        game._attack_with_unit_tuning(player, target, power_bonus=power_bonus)
         return
 
     if "heal" in effect:
@@ -226,6 +375,27 @@ def deploy_leader(game: Any, player: Player) -> bool:
             game._emit(f"  Player {player.id} deploys {leader.name} as a Pilot on {target.name}")
             return True
 
+    if game._is_card(leader, "JTL", "017"):
+        target = game._choose_pilot_target(player)
+        if target:
+            leader.played_as_pilot = True
+            leader.is_exhausted = False
+            leader.damage = 0
+            leader.current_hp = leader.hp
+            game._attach_upgrade(leader, target)
+            odd_cost_count = 0
+            for unit in player.units:
+                if getattr(unit, "cost", 0) % 2 == 1:
+                    odd_cost_count += 1
+                for upgrade in getattr(unit, "attached_upgrades", []) or []:
+                    if getattr(upgrade, "cost", 0) % 2 == 1:
+                        odd_cost_count += 1
+            exhausted_resources = [resource for resource in player.resources if resource.is_exhausted]
+            for resource in exhausted_resources[:odd_cost_count]:
+                resource.ready()
+            game.log(f"Turn {game.turn_count}: Player {player.id} deploys {leader.name} as a Pilot on {target.name}")
+            return True
+
     leader.is_deployed = True
     leader.is_exhausted = False
 
@@ -238,6 +408,22 @@ def deploy_leader(game: Any, player: Player) -> bool:
 
     player.units.append(leader)
     player.ground_arena.append(leader)
+    if game._has_keyword(leader, "shielded"):
+        leader.shield_tokens += 1
+        game.log(f"Turn {game.turn_count}: {leader.name} gains a Shield token")
+
+    if game._is_card(leader, "LAW", "004"):
+        enemy = game._get_enemy(player)
+        targets = [
+            unit for unit in enemy.units
+            if not isinstance(unit, LeaderCard) and unit.current_hp <= 5
+        ]
+        if targets:
+            target = max(targets, key=lambda unit: (unit.cost, unit.power, unit.current_hp))
+            game._remove_unit(enemy, target)
+
+    game._refresh_player_continuous_effects(player)
+    game._refresh_player_continuous_effects(game._get_enemy(player))
     game.log(f"Turn {game.turn_count}: Player {player.id} deploys {leader.name}")
     game._emit(f"  Player {player.id} deploys {leader.name} ready")
     return True

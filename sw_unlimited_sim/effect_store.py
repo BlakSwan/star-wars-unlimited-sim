@@ -7,12 +7,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from effect_training import execution_status_for_record
+from effect_training import execution_status_for_record, validate_effect_record
 
 
 EFFECT_DIR = Path(__file__).resolve().parent / "data" / "effects"
 CARD_EFFECTS_PATH = EFFECT_DIR / "card_effects.json"
 UNRESOLVED_EFFECTS_PATH = EFFECT_DIR / "unresolved_effects.json"
+DRAFT_ARTIFACTS_PATH = EFFECT_DIR / "draft_artifacts.json"
 
 
 def _read_json(path: Path, default: Any) -> Any:
@@ -39,8 +40,8 @@ def save_effect(card_effect: dict[str, Any]):
     key = effect_key(card_effect["set"], str(card_effect["number"]))
     if "schema_version" not in card_effect:
         card_effect["schema_version"] = 1
-    if "execution_status" not in card_effect:
-        card_effect["execution_status"] = execution_status_for_record(card_effect)
+    card_effect["execution_status"] = execution_status_for_record(card_effect)
+    card_effect["validation"] = validate_effect_record(card_effect)
     card_effect["updated_at"] = datetime.now(timezone.utc).isoformat()
     effects[key] = card_effect
     _write_json(CARD_EFFECTS_PATH, effects)
@@ -71,3 +72,47 @@ def save_unresolved_card(card: dict[str, Any], reason: str):
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     _write_json(UNRESOLVED_EFFECTS_PATH, unresolved)
+
+
+def load_draft_artifacts() -> dict[str, Any]:
+    return _read_json(DRAFT_ARTIFACTS_PATH, {})
+
+
+def get_draft_artifact(set_code: str, number: str) -> dict[str, Any] | None:
+    return load_draft_artifacts().get(effect_key(set_code, str(number)))
+
+
+def save_draft_artifact(effect_record: dict[str, Any], reason: str, artifact_type: str = "effect_record_snapshot"):
+    artifacts = load_draft_artifacts()
+    key = effect_key(effect_record["set"], str(effect_record["number"]))
+    entry = artifacts.setdefault(
+        key,
+        {
+            "set": effect_record.get("set"),
+            "number": effect_record.get("number"),
+            "name": effect_record.get("name"),
+            "artifacts": [],
+        },
+    )
+    entry["set"] = effect_record.get("set")
+    entry["number"] = effect_record.get("number")
+    entry["name"] = effect_record.get("name")
+    entry.setdefault("artifacts", []).append(
+        {
+            "artifact_type": artifact_type,
+            "reason": reason,
+            "archived_at": datetime.now(timezone.utc).isoformat(),
+            "record": effect_record,
+        }
+    )
+    _write_json(DRAFT_ARTIFACTS_PATH, artifacts)
+
+
+def delete_draft_artifact(set_code: str, number: str) -> bool:
+    artifacts = load_draft_artifacts()
+    key = effect_key(set_code, str(number))
+    if key not in artifacts:
+        return False
+    del artifacts[key]
+    _write_json(DRAFT_ARTIFACTS_PATH, artifacts)
+    return True

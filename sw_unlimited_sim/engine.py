@@ -57,9 +57,11 @@ class GameState:
     
     def __init__(self, player1_deck: List[Card], player2_deck: List[Card],
                  player1_leader: LeaderCard, player2_leader: LeaderCard,
-                 verbose: bool = True):
-        self.player1 = Player(id=1, deck=player1_deck, leader=player1_leader)
-        self.player2 = Player(id=2, deck=player2_deck, leader=player2_leader)
+                 verbose: bool = True,
+                 player1_base: Optional[Base] = None,
+                 player2_base: Optional[Base] = None):
+        self.player1 = Player(id=1, deck=player1_deck, leader=player1_leader, base=player1_base or Base())
+        self.player2 = Player(id=2, deck=player2_deck, leader=player2_leader, base=player2_base or Base())
         self.current_player: Player = self.player1
         self.initiative_holder: Optional[Player] = None
         self.initiative_taken_this_round = False
@@ -288,7 +290,11 @@ class GameState:
     
     def _play_unit(self, player: Player, unit: UnitCard):
         """Play a unit card"""
-        return play_engine.play_unit(self, player, unit)
+        played = play_engine.play_unit(self, player, unit)
+        if played:
+            self._refresh_player_continuous_effects(player)
+            self._refresh_player_continuous_effects(self._get_enemy(player))
+        return played
     
     def _play_upgrade(self, player: Player, upgrade: UpgradeCard):
         """Play an upgrade card"""
@@ -317,6 +323,68 @@ class GameState:
             if unit.current_hp <= 0:
                 unit.current_hp = 0
             unit.damage = max(0, unit.hp - unit.current_hp)
+
+    def _apply_temporary_modifier(
+        self,
+        unit: UnitCard,
+        *,
+        power_delta: int = 0,
+        hp_delta: int = 0,
+        keywords: Optional[set[str] | list[str]] = None,
+        duration: str = "this_phase",
+        can_attack_base: Optional[bool] = None,
+        strip_defender_abilities: bool = False,
+        defeat_self_after_attack: bool = False,
+        defeat_self_if_damaged_base: bool = False,
+    ):
+        keyword_values = {str(keyword).lower() for keyword in (keywords or []) if keyword}
+        if duration == "this_attack":
+            unit.temporary_attack_power_bonus = int(getattr(unit, "temporary_attack_power_bonus", 0) or 0) + power_delta
+            unit.temporary_attack_hp_bonus = int(getattr(unit, "temporary_attack_hp_bonus", 0) or 0) + hp_delta
+            unit.temporary_attack_keywords = set(getattr(unit, "temporary_attack_keywords", set()) or set()) | keyword_values
+            if can_attack_base is False:
+                unit.temporary_attack_cannot_attack_base = True
+            if strip_defender_abilities:
+                unit.temporary_attack_strip_defender_abilities = True
+            if defeat_self_after_attack:
+                unit.temporary_attack_defeat_self_after_attack = True
+            if defeat_self_if_damaged_base:
+                unit.temporary_attack_defeat_self_if_damaged_base = True
+            if hp_delta:
+                self._modify_unit_stats(unit, 0, hp_delta)
+        else:
+            unit.temporary_phase_power_bonus = int(getattr(unit, "temporary_phase_power_bonus", 0) or 0) + power_delta
+            unit.temporary_phase_hp_bonus = int(getattr(unit, "temporary_phase_hp_bonus", 0) or 0) + hp_delta
+            unit.temporary_phase_keywords = set(getattr(unit, "temporary_phase_keywords", set()) or set()) | keyword_values
+            if can_attack_base is False:
+                unit.temporary_phase_cannot_attack_base = True
+            self._modify_unit_stats(unit, power_delta, hp_delta)
+
+    def _clear_attack_modifiers(self, unit: UnitCard):
+        hp_delta = int(getattr(unit, "temporary_attack_hp_bonus", 0) or 0)
+        if hp_delta:
+            self._modify_unit_stats(unit, 0, -hp_delta)
+        unit.temporary_attack_power_bonus = 0
+        unit.temporary_attack_hp_bonus = 0
+        unit.temporary_attack_keywords = set()
+        unit.temporary_attack_cannot_attack_base = False
+        unit.temporary_attack_strip_defender_abilities = False
+        unit.temporary_attack_defeat_self_after_attack = False
+        unit.temporary_attack_defeat_self_if_damaged_base = False
+        unit.temporary_attack_damaged_base = False
+        unit.temporary_attack_abilities_suppressed = False
+
+    def _clear_phase_modifiers(self, player: Player):
+        for unit in list(player.units):
+            power_delta = int(getattr(unit, "temporary_phase_power_bonus", 0) or 0)
+            hp_delta = int(getattr(unit, "temporary_phase_hp_bonus", 0) or 0)
+            if power_delta or hp_delta:
+                self._modify_unit_stats(unit, -power_delta, -hp_delta)
+            unit.temporary_phase_power_bonus = 0
+            unit.temporary_phase_hp_bonus = 0
+            unit.temporary_phase_keywords = set()
+            unit.temporary_phase_cannot_attack_base = False
+            self._clear_attack_modifiers(unit)
 
     def _upgrade_total_power_bonus(self, upgrade: UpgradeCard) -> int:
         return game_rules.upgrade_total_power_bonus(self, upgrade)
@@ -368,9 +436,13 @@ class GameState:
     def _remove_unit(self, player: Player, unit: UnitCard):
         """Remove defeated unit"""
         combat_engine.remove_unit(self, player, unit)
+        self._refresh_player_continuous_effects(player)
+        self._refresh_player_continuous_effects(self._get_enemy(player))
 
     def _return_unit_to_hand(self, owner: Player, unit: UnitCard, source_name: str):
         combat_engine.return_unit_to_hand(self, owner, unit, source_name)
+        self._refresh_player_continuous_effects(owner)
+        self._refresh_player_continuous_effects(self._get_enemy(owner))
 
     # ==================== CARD TEXT / KEYWORDS ====================
 
@@ -445,6 +517,8 @@ class GameState:
             player.played_aspects_this_phase = set()
         for aspect in getattr(card, "aspects", []) or []:
             player.played_aspects_this_phase.add(str(aspect).upper())
+        if isinstance(card, EventCard):
+            player.played_event_this_phase = True
 
         self._resolve_on_played_card(player, card)
 
@@ -509,6 +583,62 @@ class GameState:
             self._damage_unit(player, unit, 2)
             if unit in player.units:
                 self._draw_cards(player, 1, "Red Squadron X-Wing")
+
+        if unit.name == "Hoth Lieutenant":
+            targets = [candidate for candidate in player.units if candidate is not unit and not getattr(candidate, "is_exhausted", False)]
+            if targets:
+                target = max(targets, key=lambda candidate: (candidate.power, candidate.current_hp))
+                self._attack_with_unit_tuning(player, target, power_bonus=2)
+
+        if self._is_card(unit, "LAW", "067"):
+            ready_enemy_units = [candidate for candidate in enemy.units if not getattr(candidate, "is_exhausted", False)]
+            if ready_enemy_units:
+                target = max(ready_enemy_units, key=lambda candidate: (candidate.power, candidate.current_hp))
+                target.is_exhausted = True
+                self.log(f"Turn {self.turn_count}: Jyn Erso exhausts {target.name}")
+            else:
+                targets = player.units or enemy.units
+                if targets:
+                    target = max(targets, key=lambda candidate: (candidate.power, candidate.current_hp))
+                    target.experience_tokens += 1
+                    target.power += 1
+                    target.hp += 1
+                    target.current_hp += 1
+                    self.log(f"Turn {self.turn_count}: Jyn Erso gives an Experience token to {target.name}")
+
+        if self._is_card(unit, "LAW", "089"):
+            max_cost = 2
+            if any(
+                candidate is not unit and (
+                    self._has_aspect(candidate, "Command") or self._has_aspect(candidate, "Aggression")
+                )
+                for candidate in player.units
+            ):
+                max_cost = 4
+            enemy_targets = [
+                candidate for candidate in enemy.units
+                if not isinstance(candidate, LeaderCard) and candidate.cost <= max_cost
+            ]
+            if enemy_targets:
+                target = max(enemy_targets, key=lambda candidate: (candidate.cost, candidate.power, candidate.current_hp))
+                self._return_unit_to_hand(enemy, target, "Kanan Jarrus")
+            else:
+                friendly_targets = [
+                    candidate for candidate in player.units
+                    if candidate is not unit and not isinstance(candidate, LeaderCard) and candidate.cost <= max_cost
+                ]
+                if friendly_targets:
+                    target = max(friendly_targets, key=lambda candidate: (candidate.cost, candidate.power, candidate.current_hp))
+                    self._return_unit_to_hand(player, target, "Kanan Jarrus")
+
+        if self._is_card(unit, "JTL", "088"):
+            targets = [
+                candidate for candidate in player.units
+                if candidate is not unit and self._has_trait(candidate, "FIRST ORDER")
+            ]
+            if targets:
+                target = max(targets, key=lambda candidate: (candidate.power, candidate.current_hp))
+                self._apply_temporary_modifier(target, power_delta=2, hp_delta=2, duration="this_phase")
 
     def _resolve_when_played_upgrade(self, player: Player, upgrade: UpgradeCard, target: UnitCard):
         self._resolve_structured_effects(player, upgrade, "when_played", defender=target)
@@ -575,6 +705,38 @@ class GameState:
         player.base.current_hp = min(player.base.hp, player.base.current_hp + amount)
         actual = player.base.current_hp - before
         self.log(f"Turn {self.turn_count}: {source_name} heals {actual} damage from Player {player.id}'s base")
+
+    def _gain_force(self, player: Player, source_name: str):
+        player.has_force_token = True
+        self.log(f"Turn {self.turn_count}: {source_name} gives Player {player.id} the Force token")
+
+    def _refresh_player_continuous_effects(self, player: Player):
+        leader = getattr(player, "leader", None)
+        if not leader:
+            return
+
+        current_power = int(getattr(leader, "continuous_power_bonus", 0) or 0)
+        current_hp = int(getattr(leader, "continuous_hp_bonus", 0) or 0)
+        desired_power = 0
+        desired_hp = 0
+
+        if leader.is_deployed and self._is_card(leader, "LOF", "004"):
+            has_other_creature_or_spectre = any(
+                unit is not leader and (
+                    self._has_trait(unit, "CREATURE") or self._has_trait(unit, "SPECTRE")
+                )
+                for unit in player.units
+            )
+            if has_other_creature_or_spectre:
+                desired_power = 2
+                desired_hp = 2
+
+        if desired_power != current_power or desired_hp != current_hp:
+            self._modify_unit_stats(leader, desired_power - current_power, desired_hp - current_hp)
+            leader.continuous_power_bonus = desired_power
+            leader.continuous_hp_bonus = desired_hp
+            if leader.is_deployed and leader in player.units and leader.current_hp <= 0:
+                self._remove_unit(player, leader)
 
     def _discard_cards(self, player: Player, count: int, source_name: str):
         discarded = []
@@ -662,6 +824,13 @@ class GameState:
             return player.leader
         return None
 
+    def _use_force(self, player: Player) -> bool:
+        if not getattr(player, "has_force_token", False):
+            return False
+        player.has_force_token = False
+        self.log(f"Turn {self.turn_count}: Player {player.id} uses the Force")
+        return True
+
     def _choose_enemy_unit(self, player: Player, *, arena: Optional[Arena] = None, non_vehicle: bool = False) -> Optional[UnitCard]:
         enemy = self._get_enemy(player)
         units = enemy.units
@@ -704,22 +873,67 @@ class GameState:
         unit: UnitCard,
         power_bonus: int = 0,
         combat_damage_before_defender: bool = False,
+        keywords: Optional[list[str] | set[str]] = None,
+        allow_exhausted: bool = False,
+        can_attack_base: bool = True,
+        strip_defender_abilities: bool = False,
+        defeat_self_after_attack: bool = False,
+        defeat_self_if_damaged_base: bool = False,
     ):
-        if unit not in player.units or getattr(unit, "is_exhausted", False):
+        was_exhausted = getattr(unit, "is_exhausted", False)
+        if unit not in player.units or (was_exhausted and not allow_exhausted):
             return False
 
-        unit.power += power_bonus
         previous_flag = getattr(unit, "combat_damage_before_defender_once", False)
+        result = False
+        if (
+            power_bonus
+            or keywords
+            or not can_attack_base
+            or strip_defender_abilities
+            or defeat_self_after_attack
+            or defeat_self_if_damaged_base
+        ):
+            self._apply_temporary_modifier(
+                unit,
+                power_delta=power_bonus,
+                keywords=keywords,
+                duration="this_attack",
+                can_attack_base=can_attack_base,
+                strip_defender_abilities=strip_defender_abilities,
+                defeat_self_after_attack=defeat_self_after_attack,
+                defeat_self_if_damaged_base=defeat_self_if_damaged_base,
+            )
+        if allow_exhausted and was_exhausted:
+            unit.is_exhausted = False
         unit.combat_damage_before_defender_once = combat_damage_before_defender
         try:
             target = "base"
             attackable = self._attackable_enemy_units(player, unit)
             if attackable:
                 target = attackable[0].id
-            return self._attack(player, unit.id, target)
+            elif not can_attack_base:
+                return False
+            result = self._attack(player, unit.id, target)
+            return result
         finally:
             unit.combat_damage_before_defender_once = previous_flag
-            unit.power -= power_bonus
+            if not result:
+                self._clear_attack_modifiers(unit)
+                if allow_exhausted and was_exhausted:
+                    unit.is_exhausted = True
+            elif (
+                getattr(unit, "temporary_attack_power_bonus", 0)
+                or getattr(unit, "temporary_attack_hp_bonus", 0)
+                or getattr(unit, "temporary_attack_keywords", None)
+                or getattr(unit, "temporary_attack_cannot_attack_base", False)
+                or getattr(unit, "temporary_attack_strip_defender_abilities", False)
+                or getattr(unit, "temporary_attack_defeat_self_after_attack", False)
+                or getattr(unit, "temporary_attack_defeat_self_if_damaged_base", False)
+                or getattr(unit, "temporary_attack_damaged_base", False)
+                or getattr(unit, "temporary_attack_abilities_suppressed", False)
+            ):
+                self._clear_attack_modifiers(unit)
 
     def _resolve_event(self, player: Player, event: EventCard):
         event_engine.resolve_event(self, player, event)
@@ -806,6 +1020,7 @@ class GameState:
     
     def _ready_cards(self, player: Player):
         """Ready all exhausted cards"""
+        self._clear_phase_modifiers(player)
         for r in player.resources:
             r.ready()
         for unit in player.units:
@@ -917,7 +1132,10 @@ class GameState:
             self._emit("GAME OVER: Player 2 (Imperial) wins")
         else:
             self._emit("GAME OVER: Draw (max turns reached)")
-        self._emit(f"   Final Base HP - P1: {self.player1.base.current_hp}/25, P2: {self.player2.base.current_hp}/25")
+        self._emit(
+            f"   Final Base HP - P1: {self.player1.base.current_hp}/{self.player1.base.hp}, "
+            f"P2: {self.player2.base.current_hp}/{self.player2.base.hp}"
+        )
         self._emit("="*50 + "\n")
         
         return self.winner
@@ -927,5 +1145,7 @@ class GameState:
         for player in (self.player1, self.player2):
             player.played_aspects_this_phase = set()
             player.pilot_discount_this_phase = 0
+            player.played_event_this_phase = False
+            self._clear_phase_modifiers(player)
             for unit in player.units:
                 unit.attacked_this_phase = False

@@ -30,6 +30,13 @@ python main.py --test
 | `python main.py --test-local-provider` | Check Ollama or MLX setup for local card-effect drafting |
 | `python main.py --draft-card SET NUMBER` | Draft one card effect with a local model |
 | `python main.py --draft-missing-cards` | Bulk-draft missing effect records with a local model |
+| `python main.py --validate-effects` | Validate stored effect records and summarize runtime blockers |
+| `python main.py --validate-effect SET NUMBER` | Inspect one stored effect record with schema/runtime validation |
+| `python main.py --archive-effect-draft SET NUMBER` | Archive the current draft record before replacing it |
+| `python main.py --show-draft-artifact SET NUMBER` | Show archived draft artifacts for one card |
+| `python main.py --delete-draft-artifact SET NUMBER` | Delete archived draft artifacts for one card |
+| `python main.py --dump-card-profile SET NUMBER` | Dump one compact compiled card profile as JSON for local LLM workflows |
+| `python main.py --dump-deck-profiles DECK` | Dump compact compiled profiles for a deck's unique cards as JSON |
 
 ## Available Strategies
 
@@ -136,6 +143,9 @@ The UI includes:
 - Optional local-model draft provider for Ollama or MLX. Local drafts are
   normalized into the same schema, triaged as `safe_draft`, `needs_review`, or
   `unresolved`, and kept in the existing human-review flow.
+- Validation reporting for stored effect records. Use
+  `python main.py --validate-effects` to summarize schema issues and runtime
+  blockers before trusting a local draft corpus.
 
 Local LLM settings are read from shell environment variables or an untracked
 `.env` file at the repository root:
@@ -146,6 +156,59 @@ cp .env.example .env
 ```
 
 Do not commit real API keys.
+
+## Using A Local LLM To Interpret Card JSON
+
+The intended workflow is:
+
+1. Deterministic code loads SWU DB card JSON into `UnitCard`, `UpgradeCard`,
+   `EventCard`, or `LeaderCard`.
+2. A compact `CardProfile` augmentation is attached to the card object.
+3. A local LLM can read that profile or the raw card JSON offline and draft a
+   structured effect record.
+4. The simulator only executes approved executable records later. The local LLM
+   is not consulted during gameplay.
+
+For token-efficient local-model prompts, export one card or one deck in compact
+JSON:
+
+```bash
+python main.py --dump-card-profile JTL 151
+python main.py --dump-deck-profiles rebel_piloting_fighters
+python main.py --dump-card-profile LOF 041 --include-effect-record
+```
+
+These dumps are designed to be cheaper than pasting the full
+`swu_gameplay_cards.json` payload into Codex or a local model. They include:
+
+- card reference, name, type, cost, stats, and arenas
+- traits, aspects, keywords, and mechanic tags
+- consolidated rules text
+- current effect execution/validation status
+- optional saved effect record when `--include-effect-record` is passed
+
+Recommended local-LLM loop:
+
+```bash
+python main.py --dump-card-profile SOR 128 > /tmp/card.json
+# feed /tmp/card.json to your local model with instructions to draft triggers and steps
+python main.py --draft-card SOR 128
+python main.py --validate-effect SOR 128
+```
+
+If you want to keep a bad or superseded draft for later review before replacing
+it, archive it first:
+
+```bash
+python main.py --archive-effect-draft TWI 107 --archive-reason "pre prompt/schema cleanup snapshot"
+python main.py --show-draft-artifact TWI 107
+python main.py --delete-draft-artifact TWI 107
+```
+
+Keep the model on the augmentation side only:
+
+- good: `card json/profile -> draft structured metadata`
+- bad: `live board state -> ask the LLM what happens now`
 
 ## Local Model Drafting
 

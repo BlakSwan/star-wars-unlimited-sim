@@ -27,6 +27,79 @@ def resolve_event(game: Any, player: Player, event: EventCard) -> None:
             game._damage_unit(enemy, target, friendly.damage + 1)
         return
 
+    if game._is_card(event, "LOF", "041"):
+        targets = enemy.units or player.units
+        if targets:
+            target = min(targets, key=lambda unit: (unit.current_hp, -unit.power))
+            target_owner = enemy if target in enemy.units else player
+            game._damage_unit(target_owner, target, 2)
+        game._gain_force(player, "Drain Essence")
+        return
+
+    if event.name == "Improvised Detonation":
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            game._attack_with_unit_tuning(player, unit, power_bonus=2)
+        return
+
+    if game._is_card(event, "JTL", "123"):
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            game._attack_with_unit_tuning(player, unit, allow_exhausted=True, can_attack_base=False)
+        return
+
+    if game._is_card(event, "SOR", "168"):
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            power_bonus = 2 if game._has_trait(unit, "TROOPER") else 0
+            game._attack_with_unit_tuning(player, unit, power_bonus=power_bonus, keywords={"saboteur"})
+        return
+
+    if game._is_card(event, "LAW", "202"):
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            power_bonus = 2 if len(player.resources) < len(enemy.resources) else 0
+            game._attack_with_unit_tuning(player, unit, power_bonus=power_bonus, keywords={"saboteur"})
+        return
+
+    if game._is_card(event, "TWI", "224"):
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            game._attack_with_unit_tuning(player, unit, power_bonus=2, keywords={"saboteur"})
+        return
+
+    if game._is_card(event, "LOF", "221"):
+        if not game._use_force(player):
+            return
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            game._attack_with_unit_tuning(player, unit, power_bonus=2, combat_damage_before_defender=True)
+        return
+
+    if game._is_card(event, "LAW", "205"):
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            game._attack_with_unit_tuning(
+                player,
+                unit,
+                power_bonus=2,
+                keywords={"overwhelm"},
+                defeat_self_if_damaged_base=True,
+            )
+        return
+
+    if game._is_card(event, "SEC", "157"):
+        unit = game._choose_friendly_unit(player)
+        if unit:
+            game._attack_with_unit_tuning(
+                player,
+                unit,
+                power_bonus=1,
+                keywords={"overwhelm"},
+                strip_defender_abilities=True,
+            )
+        return
+
     if event.name == "Rebel Assault":
         rebels = [
             unit for unit in player.units
@@ -65,6 +138,26 @@ def resolve_event(game: Any, player: Player, event: EventCard) -> None:
                 game._damage_unit(enemy, target, 2 * resources)
         return
 
+    if game._is_card(event, "JTL", "144"):
+        targets = [unit for unit in enemy.units if not isinstance(unit, LeaderCard)]
+        if targets:
+            target = max(targets, key=lambda unit: (unit.current_hp, unit.power))
+            amount = max(0, target.current_hp - 1)
+            if amount:
+                game._damage_unit(enemy, target, amount)
+        return
+
+    if game._is_card(event, "LAW", "133"):
+        targets = [
+            unit for unit in enemy.units
+            if not isinstance(unit, LeaderCard) and not game._blocks_enemy_defeat_or_bounce(unit)
+        ]
+        if targets:
+            target = max(targets, key=lambda unit: (unit.cost, unit.power, unit.current_hp))
+            game._remove_unit(enemy, target)
+            game._heal_base(player, 3, "Lost and Forgotten")
+        return
+
     if game._is_card(event, "SEC", "233"):
         targets = [
             unit for unit in enemy.units
@@ -75,4 +168,10 @@ def resolve_event(game: Any, player: Player, event: EventCard) -> None:
         if targets:
             target = max(targets, key=lambda unit: (unit.cost, unit.power + unit.hp))
             game._return_unit_to_hand(enemy, target, "Beguile")
+        return
+
+    if game._is_card(event, "JTL", "229"):
+        target = game._choose_friendly_unit(player) or game._choose_enemy_unit(player)
+        if target:
+            game._apply_temporary_modifier(target, keywords={"sentinel"}, duration="this_phase")
         return

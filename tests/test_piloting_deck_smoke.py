@@ -24,10 +24,11 @@ SUPPORTED_PILOTING_DECKS = [
 class PilotingDeckSmokeTests(unittest.TestCase):
     def test_vehicle_piloting_test_deck_loads(self):
         self.assertIn("vehicle_piloting_test", available_decks())
-        deck, leader, metadata = load_deck("vehicle_piloting_test")
+        deck, leader, base, metadata = load_deck("vehicle_piloting_test")
 
         self.assertEqual(metadata["name"], "Vehicle Piloting Test")
         self.assertEqual(leader.name, "Wedge Antilles")
+        self.assertEqual(base.name, "Resistance Headquarters")
         self.assertGreaterEqual(len(deck), 50)
 
     def test_vehicle_piloting_test_deck_produces_piloting_actions(self):
@@ -65,11 +66,12 @@ class PilotingDeckSmokeTests(unittest.TestCase):
         for deck_name in SUPPORTED_PILOTING_DECKS:
             with self.subTest(deck=deck_name):
                 self.assertIn(deck_name, available_decks())
-                deck, _, metadata = load_deck(deck_name)
+                deck, _, base, metadata = load_deck(deck_name)
                 audit = audit_deck(deck_name)
 
                 self.assertEqual(50, metadata["card_count"])
                 self.assertEqual(50, len(deck))
+                self.assertGreaterEqual(base.hp, 25)
                 self.assertTrue(audit.is_valid_tournament_shape)
                 self.assertEqual(0, audit.counts_by_status["unsupported"])
                 self.assertEqual(0, audit.piloting_counts_by_status["partial"])

@@ -116,6 +116,600 @@ class EngineUpgradeTests(unittest.TestCase):
         self.assertEqual(target.hp, 3)
         self.assertEqual(target.current_hp, 3)
 
+    def test_temporary_phase_modifier_applies_and_clears(self):
+        game = game_state()
+        target = unit()
+        game.player1.units.append(target)
+        game.player1.ground_arena.append(target)
+
+        game._apply_temporary_modifier(target, power_delta=2, hp_delta=1, keywords={"saboteur"}, duration="this_phase")
+        self.assertEqual(target.power, 4)
+        self.assertEqual(target.hp, 4)
+        self.assertEqual(target.current_hp, 4)
+        self.assertTrue(game._has_keyword(target, "saboteur"))
+
+        game._clear_phase_modifiers(game.player1)
+        self.assertEqual(target.power, 2)
+        self.assertEqual(target.hp, 3)
+        self.assertEqual(target.current_hp, 3)
+        self.assertFalse(game._has_keyword(target, "saboteur"))
+
+    def test_temporary_attack_modifier_changes_attack_power_and_clears(self):
+        game = game_state()
+        attacker = UnitCard("ATK_TMP_1", "Raider", 2, 2, 3, Arena.GROUND)
+        defender = UnitCard("DEF_TMP_1", "Blocker", 2, 4, 5, Arena.GROUND)
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        game._apply_temporary_modifier(attacker, power_delta=3, keywords={"saboteur"}, duration="this_attack")
+        self.assertEqual(game._attack_power(game.player1, attacker, defender), 5)
+        self.assertTrue(game._has_keyword(attacker, "saboteur"))
+
+        self.assertTrue(game._attack(game.player1, attacker.id, defender.id))
+        self.assertEqual(attacker.temporary_attack_power_bonus, 0)
+        self.assertFalse(game._has_keyword(attacker, "saboteur"))
+
+    def test_structured_modify_stats_this_phase_executes_and_clears(self):
+        game = game_state()
+        target = unit()
+        game.player1.units.append(target)
+        game.player1.ground_arena.append(target)
+        step = {
+            "type": "modify_stats",
+            "power": 2,
+            "hp": 1,
+            "duration": "this_phase",
+            "target": {"controller": "friendly", "type": "unit"},
+        }
+
+        game._apply_structured_step(game.player1, target, step)
+        self.assertEqual(target.power, 4)
+        self.assertEqual(target.hp, 4)
+
+        game._clear_phase_modifiers(game.player1)
+        self.assertEqual(target.power, 2)
+        self.assertEqual(target.hp, 3)
+
+    def test_structured_modify_stats_this_attack_executes_for_combat_only(self):
+        game = game_state()
+        attacker = UnitCard("ATK_STRUCT_1", "Clone Trooper", 2, 2, 4, Arena.GROUND)
+        defender = UnitCard("DEF_STRUCT_1", "Battle Droid", 1, 1, 4, Arena.GROUND)
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+        step = {
+            "type": "modify_stats",
+            "power": 2,
+            "duration": "this_attack",
+            "target": {"controller": "friendly", "type": "unit"},
+        }
+
+        game._apply_structured_step(game.player1, attacker, step)
+        self.assertEqual(game._attack_power(game.player1, attacker, defender), 4)
+        self.assertTrue(game._attack(game.player1, attacker.id, defender.id))
+        self.assertEqual(attacker.temporary_attack_power_bonus, 0)
+
+    def test_improvised_detonation_attacks_with_bonus(self):
+        game = game_state()
+        attacker = UnitCard("IBH_021_UNIT", "Rebel Trooper", 2, 2, 4, Arena.GROUND)
+        defender = UnitCard("IBH_021_DEF", "Stormtrooper", 2, 1, 4, Arena.GROUND)
+        event = EventCard("IBH_021_1", "Improvised Detonation", 2, effect="Attack with a unit. It gets +2/+0 for this attack.")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        game._resolve_event(game.player1, event)
+        self.assertEqual(defender.current_hp, 0)
+
+    def test_general_rieekan_action_attacks_with_other_heroism_unit(self):
+        game = game_state()
+        rieekan = UnitCard("IBH_023_1", "General Rieekan", 4, 2, 6, Arena.GROUND, traits=["REBEL", "OFFICIAL"])
+        hero = UnitCard("IBH_023_H", "Hero Unit", 3, 2, 4, Arena.GROUND)
+        hero.aspects = ["Heroism"]
+        defender = UnitCard("IBH_023_D", "Enemy Unit", 2, 1, 4, Arena.GROUND)
+        game.player1.units.extend([rieekan, hero])
+        game.player1.ground_arena.extend([rieekan, hero])
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        self.assertTrue(game.execute_action(game.player1, f"unit_action_{rieekan.id}"))
+        self.assertEqual(defender.current_hp, 0)
+
+    def test_hoth_lieutenant_attacks_with_bonus_on_play(self):
+        game = game_state()
+        lieutenant = UnitCard("IBH_064_1", "Hoth Lieutenant", 3, 2, 4, Arena.GROUND)
+        ally = UnitCard("IBH_064_A", "Echo Trooper", 2, 2, 4, Arena.GROUND)
+        defender = UnitCard("IBH_064_D", "Enemy Unit", 2, 1, 4, Arena.GROUND)
+        game.player1.units.append(ally)
+        game.player1.ground_arena.append(ally)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        self.assertTrue(game._play_unit(game.player1, lieutenant))
+        self.assertEqual(defender.current_hp, 0)
+
+    def test_diversion_grants_sentinel_for_phase(self):
+        game = game_state()
+        target = UnitCard("JTL_229_T", "Guard", 2, 2, 4, Arena.GROUND)
+        event = EventCard("JTL_229_1", "Diversion", 1, effect="Give a unit Sentinel for this phase.")
+        game.player1.units.append(target)
+        game.player1.ground_arena.append(target)
+
+        game._resolve_event(game.player1, event)
+        self.assertTrue(game._has_keyword(target, "sentinel"))
+        game._clear_phase_modifiers(game.player1)
+        self.assertFalse(game._has_keyword(target, "sentinel"))
+
+    def test_desperate_commando_gives_negative_phase_modifier_on_defeat(self):
+        game = game_state()
+        commando = UnitCard("JTL_060_1", "Desperate Commando", 2, 2, 2, Arena.GROUND)
+        target = UnitCard("JTL_060_T", "Target Unit", 2, 3, 3, Arena.GROUND)
+        game.player1.units.append(commando)
+        game.player1.ground_arena.append(commando)
+        game.player2.units.append(target)
+        game.player2.ground_arena.append(target)
+
+        game._remove_unit(game.player1, commando)
+        self.assertEqual(target.power, 2)
+        self.assertEqual(target.hp, 2)
+
+    def test_captain_phasma_buffs_another_first_order_unit(self):
+        game = game_state()
+        phasma = UnitCard("JTL_088_1", "Captain Phasma", 5, 5, 6, Arena.GROUND, traits=["FIRST ORDER", "TROOPER"])
+        ally = UnitCard("JTL_088_A", "First Order Scout", 2, 2, 3, Arena.GROUND, traits=["FIRST ORDER"])
+        game.player1.units.append(ally)
+        game.player1.ground_arena.append(ally)
+
+        self.assertTrue(game._play_unit(game.player1, phasma))
+        self.assertEqual(ally.power, 4)
+        self.assertEqual(ally.hp, 5)
+
+    def test_ibh_han_solo_reduces_defender_power_for_this_attack(self):
+        game = game_state()
+        han = UnitCard("IBH_10_1", "Han Solo", 4, 3, 4, Arena.GROUND, traits=["REBEL"])
+        defender = UnitCard("IBH_10_D", "Guard", 2, 3, 5, Arena.GROUND)
+        game.player1.units.append(han)
+        game.player1.ground_arena.append(han)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        self.assertTrue(game._attack(game.player1, han.id, defender.id))
+        self.assertEqual(han.current_hp, 3)
+
+    def test_attack_with_unit_tuning_can_grant_keyword_and_block_base_attack(self):
+        game = game_state()
+        attacker = UnitCard("ATK_TUNE_1", "Raider", 2, 2, 4, Arena.GROUND)
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+
+        self.assertFalse(game._attack_with_unit_tuning(
+            game.player1,
+            attacker,
+            power_bonus=2,
+            keywords={"saboteur"},
+            can_attack_base=False,
+        ))
+        self.assertEqual(attacker.temporary_attack_power_bonus, 0)
+        self.assertFalse(game._has_keyword(attacker, "saboteur"))
+
+    def test_attack_with_unit_tuning_can_attack_exhausted_unit(self):
+        game = game_state()
+        attacker = UnitCard("ATK_TUNE_2", "Tired Fighter", 2, 2, 4, Arena.GROUND)
+        defender = UnitCard("ATK_TUNE_2_D", "Blocker", 2, 1, 3, Arena.GROUND)
+        attacker.is_exhausted = True
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        self.assertTrue(game._attack_with_unit_tuning(game.player1, attacker, allow_exhausted=True))
+        self.assertTrue(attacker.is_exhausted)
+
+    def test_structured_attack_with_unit_supports_combined_mechanics(self):
+        game = game_state()
+        attacker = UnitCard("ATK_STRUCT_2", "Space Ace", 2, 2, 4, Arena.SPACE)
+        defender = UnitCard("ATK_STRUCT_2_D", "Enemy Ace", 2, 1, 4, Arena.SPACE)
+        game.player1.units.append(attacker)
+        game.player1.space_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.space_arena.append(defender)
+        step = {
+            "type": "attack_with_unit",
+            "power": 2,
+            "target": {"controller": "friendly", "type": "unit"},
+            "keywords": ["saboteur"],
+            "combat_damage_before_defender": True,
+        }
+
+        game._apply_structured_step(game.player1, attacker, step)
+        self.assertNotIn(defender, game.player2.units)
+        self.assertEqual(attacker.current_hp, 4)
+
+    def test_dogfight_attacks_exhausted_unit_and_cannot_hit_base(self):
+        game = game_state()
+        fighter = UnitCard("JTL_123_F", "Dogfighter", 2, 2, 4, Arena.SPACE)
+        enemy = UnitCard("JTL_123_E", "Enemy Ship", 2, 1, 2, Arena.SPACE)
+        event = EventCard("JTL_123_1", "Dogfight", 1, effect="Attack with a unit, even if it's exhausted. That unit can't attack bases for this attack.")
+        fighter.is_exhausted = True
+        game.player1.units.append(fighter)
+        game.player1.space_arena.append(fighter)
+        game.player2.units.append(enemy)
+        game.player2.space_arena.append(enemy)
+
+        game._resolve_event(game.player1, event)
+        self.assertNotIn(enemy, game.player2.units)
+        self.assertTrue(fighter.is_exhausted)
+
+    def test_rio_durant_action_attacks_space_unit_with_saboteur_bonus(self):
+        leader = LeaderCard(
+            "JTL_015",
+            "Rio Durant",
+            5,
+            action_cost=1,
+            action_effect="Action [C=1, Exhaust]: Attack with a space unit. It gets +1/+0 and gains Saboteur for this attack.",
+            epic_action_cost=5,
+            epic_action_effect="Deploy as 3/5 unit",
+        )
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        ship = UnitCard("JTL_015_S", "Scout Craft", 2, 2, 4, Arena.SPACE)
+        enemy = UnitCard("JTL_015_E", "Enemy Ship", 2, 1, 3, Arena.SPACE)
+        game.player1.units.append(ship)
+        game.player1.space_arena.append(ship)
+        game.player2.units.append(enemy)
+        game.player2.space_arena.append(enemy)
+        game.player1.resources = [Resource(CardStub("R1"))]
+
+        self.assertTrue(game.execute_action(game.player1, "leader_action_JTL_015"))
+        self.assertNotIn(enemy, game.player2.units)
+
+    def test_precision_fire_gives_trooper_bonus_and_saboteur(self):
+        game = game_state()
+        trooper = UnitCard("SOR_168_T", "Trooper", 2, 2, 4, Arena.GROUND, traits=["TROOPER"])
+        enemy = UnitCard("SOR_168_E", "Enemy", 2, 1, 4, Arena.GROUND)
+        event = EventCard("SOR_168_1", "Precision Fire", 1, effect="Attack with a unit. It gains Saboteur for this attack. If it's a TROOPER, it also gains +2/+0 for this attack.")
+        game.player1.units.append(trooper)
+        game.player1.ground_arena.append(trooper)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        game._resolve_event(game.player1, event)
+        self.assertNotIn(enemy, game.player2.units)
+
+    def test_commence_the_festivities_uses_resource_gap_for_bonus(self):
+        game = game_state()
+        attacker = UnitCard("LAW_202_A", "Attacker", 2, 2, 4, Arena.GROUND)
+        enemy = UnitCard("LAW_202_E", "Enemy", 2, 1, 4, Arena.GROUND)
+        event = EventCard("LAW_202_1", "Commence the Festivities", 1, effect="Attack with a unit. It gains Saboteur for this attack. If you control fewer resources than an opponent, it gets +2/+0 for this attack.")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+        game.player1.resources = [Resource(CardStub("R1"))]
+        game.player2.resources = [Resource(CardStub("R2")), Resource(CardStub("R3"))]
+
+        game._resolve_event(game.player1, event)
+        self.assertNotIn(enemy, game.player2.units)
+
+    def test_breaking_in_attacks_with_bonus_and_saboteur(self):
+        game = game_state()
+        attacker = UnitCard("TWI_224_A", "Infiltrator", 2, 2, 4, Arena.GROUND)
+        enemy = UnitCard("TWI_224_E", "Enemy", 2, 1, 4, Arena.GROUND)
+        event = EventCard("TWI_224_1", "Breaking In", 2, effect="Attack with a unit. It gets +2/+0 and gains Saboteur for this attack.")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        game._resolve_event(game.player1, event)
+        self.assertNotIn(enemy, game.player2.units)
+
+    def test_trust_your_instincts_requires_force_token(self):
+        game = game_state()
+        attacker = UnitCard("LOF_221_A", "Jedi", 2, 2, 4, Arena.GROUND)
+        enemy = UnitCard("LOF_221_E", "Enemy", 2, 4, 4, Arena.GROUND)
+        event = EventCard("LOF_221_1", "Trust Your Instincts", 1, effect="Use the Force. If you do, attack with a unit. It gets +2/+0 for this attack and deals combat damage before the defender.")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        game._resolve_event(game.player1, event)
+        self.assertIn(enemy, game.player2.units)
+
+        game.player1.has_force_token = True
+        game._resolve_event(game.player1, event)
+        self.assertNotIn(enemy, game.player2.units)
+        self.assertFalse(game.player1.has_force_token)
+
+    def test_jtl_han_solo_leader_action_checks_odd_costs(self):
+        leader = LeaderCard(
+            "JTL_017",
+            "Han Solo",
+            5,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Reveal the top card of your deck, then attack with a unit. If the revealed card and that unit have different odd costs, that unit gets +1/+0 for this attack.",
+            epic_action_cost=5,
+            epic_action_effect="Deploy as 3/7 unit",
+        )
+        leader.traits = ["REBEL", "PILOT"]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        attacker = UnitCard("JTL_017_A", "Smuggler", 2, 2, 4, Arena.GROUND)
+        enemy = UnitCard("JTL_017_E", "Enemy", 2, 1, 3, Arena.GROUND)
+        revealed = EventCard("TOP_1", "Top Card", 1, effect="")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+        game.player1.deck = [revealed]
+
+        self.assertTrue(game.execute_action(game.player1, "leader_action_JTL_017"))
+        self.assertNotIn(enemy, game.player2.units)
+
+    def test_saw_gerrera_action_defeats_attacking_unit_after_attack(self):
+        leader = LeaderCard(
+            "LAW_001",
+            "Saw Gerrera",
+            6,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Attack with a unit. It gets +2/+0 and gains Overwhelm for this attack. After completing this attack, defeat it.",
+            epic_action_cost=6,
+            epic_action_effect="Deploy as 4/7 unit",
+        )
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        attacker = UnitCard("LAW_001_A", "Rebel Fighter", 2, 2, 4, Arena.GROUND)
+        enemy = UnitCard("LAW_001_E", "Enemy", 2, 1, 4, Arena.GROUND)
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        self.assertTrue(game.execute_action(game.player1, "leader_action_LAW_001"))
+        self.assertNotIn(attacker, game.player1.units)
+
+    def test_flash_the_vents_defeats_attacker_if_base_was_damaged(self):
+        game = game_state()
+        attacker = UnitCard("LAW_205_A", "Bruiser", 2, 2, 4, Arena.GROUND)
+        event = EventCard("LAW_205_1", "Flash the Vents", 1, effect="Attack with a unit. It gets +2/+0 and gains Overwhelm for this attack. After completing this attack, if that unit damaged a base, defeat that unit.")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+
+        game._resolve_event(game.player1, event)
+        self.assertNotIn(attacker, game.player1.units)
+
+    def test_one_way_out_strips_defender_abilities_for_attack(self):
+        game = game_state()
+        attacker = UnitCard("SEC_157_A", "Hero", 2, 2, 4, Arena.GROUND)
+        defender = UnitCard("SEC_157_D", "Sentinel Defender", 2, 1, 4, Arena.GROUND, abilities=["Sentinel"])
+        event = EventCard("SEC_157_1", "One Way Out", 1, effect="Attack with a unit. It gets +1/+0 and gains Overwhelm for this attack. If it attacks a unit, the defender loses all abilities for this attack.")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        game._resolve_event(game.player1, event)
+        self.assertFalse(defender.temporary_attack_abilities_suppressed)
+
+    def test_maul_action_grants_overwhelm_for_attack(self):
+        leader = LeaderCard(
+            "TWI_009",
+            "Maul",
+            6,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Attack with a unit. It gains Overwhelm for this attack.",
+            epic_action_cost=6,
+            epic_action_effect="Deploy as 6/6 unit",
+        )
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        attacker = UnitCard("TWI_009_A", "Bruiser", 2, 2, 4, Arena.GROUND)
+        defender = UnitCard("TWI_009_D", "Wall", 2, 1, 1, Arena.GROUND)
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+
+        self.assertTrue(game.execute_action(game.player1, "leader_action_TWI_009"))
+        self.assertLess(game.player2.base.current_hp, 25)
+
+    def test_asajj_action_uses_event_phase_bonus(self):
+        leader = LeaderCard(
+            "TWI_014",
+            "Asajj Ventress",
+            4,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Attack with a unit. If you played an event this phase, it gets +1/+0 for this attack.",
+            epic_action_cost=4,
+            epic_action_effect="Deploy as 3/4 unit",
+        )
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        attacker = UnitCard("TWI_014_A", "Assassin", 2, 2, 4, Arena.GROUND)
+        enemy = UnitCard("TWI_014_E", "Enemy", 2, 1, 3, Arena.GROUND)
+        event = EventCard("TWI_014_EVT", "Setup Event", 1, effect="No-op")
+        game.player1.units.append(attacker)
+        game.player1.ground_arena.append(attacker)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+        game._record_played_card(game.player1, event)
+
+        self.assertTrue(game.execute_action(game.player1, "leader_action_TWI_014"))
+        self.assertNotIn(enemy, game.player2.units)
+
+    def test_obi_wan_action_requires_force_and_gives_experience(self):
+        leader = LeaderCard(
+            "LOF_008",
+            "Obi-Wan Kenobi",
+            5,
+            action_cost=0,
+            action_effect="Action [Exhaust, use the Force]: Give an Experience token to a unit without an Experience token on it.",
+            epic_action_cost=5,
+            epic_action_effect="Deploy as 3/6 unit",
+        )
+        leader.traits = ["FORCE", "JEDI", "REPUBLIC"]
+        leader.abilities = [
+            "Action [Exhaust, use the Force]: Give an Experience token to a unit without an Experience token on it.",
+            "On Attack: You may give an Experience token to another unit without an Experience token on it.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        ally = UnitCard("LOF_008_A", "Clone Trooper", 2, 2, 2, Arena.GROUND)
+        game.player1.units.append(ally)
+        game.player1.ground_arena.append(ally)
+
+        self.assertNotIn("leader_action_LOF_008", game.get_legal_actions(game.player1))
+
+        game.player1.has_force_token = True
+        self.assertIn("leader_action_LOF_008", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "leader_action_LOF_008"))
+        self.assertFalse(game.player1.has_force_token)
+        self.assertEqual(ally.experience_tokens, 1)
+        self.assertEqual(ally.power, 3)
+        self.assertEqual(ally.hp, 3)
+
+    def test_obi_wan_on_attack_gives_experience_to_another_unit(self):
+        leader = LeaderCard(
+            "LOF_008",
+            "Obi-Wan Kenobi",
+            5,
+            action_cost=0,
+            action_effect="Action [Exhaust, use the Force]: Give an Experience token to a unit without an Experience token on it.",
+            epic_action_cost=5,
+            epic_action_effect="Deploy as 3/6 unit",
+        )
+        leader.traits = ["FORCE", "JEDI", "REPUBLIC"]
+        leader.abilities = [
+            "Action [Exhaust, use the Force]: Give an Experience token to a unit without an Experience token on it.",
+            "On Attack: You may give an Experience token to another unit without an Experience token on it.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        ally = UnitCard("LOF_008_B", "Padawan", 2, 2, 3, Arena.GROUND)
+        defender = UnitCard("LOF_008_D", "Enemy Unit", 2, 1, 1, Arena.GROUND)
+        game.player1.units.append(ally)
+        game.player1.ground_arena.append(ally)
+        game.player2.units.append(defender)
+        game.player2.ground_arena.append(defender)
+        game.player1.resources = [Resource(CardStub("R1")), Resource(CardStub("R2")), Resource(CardStub("R3")), Resource(CardStub("R4")), Resource(CardStub("R5"))]
+
+        self.assertTrue(game.execute_action(game.player1, "leader_epic_LOF_008"))
+        self.assertTrue(game._attack(game.player1, leader.id, defender.id))
+        self.assertEqual(ally.experience_tokens, 1)
+        self.assertEqual(ally.power, 3)
+
+    def test_kanan_leader_action_shields_creature_or_spectre(self):
+        leader = LeaderCard(
+            "LOF_004",
+            "Kanan Jarrus",
+            6,
+            action_cost=1,
+            action_effect="Action [C=1, Exhaust]: Give a Shield token to a Creature or Spectre unit.",
+            epic_action_cost=6,
+            epic_action_effect="Deploy as 3/6 unit",
+        )
+        leader.traits = ["FORCE", "JEDI", "REBEL", "SPECTRE"]
+        leader.abilities = [
+            "Action [C=1, Exhaust]: Give a Shield token to a Creature or Spectre unit.",
+            "Shielded",
+            "While you control another Creature or Spectre unit, this unit gets +2/+2.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        spectre = UnitCard("LOF_004_S", "Spectre Ally", 2, 2, 3, Arena.GROUND, traits=["SPECTRE"])
+        game.player1.units.append(spectre)
+        game.player1.ground_arena.append(spectre)
+        game.player1.resources = [Resource(CardStub("R1"))]
+
+        self.assertIn("leader_action_LOF_004", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "leader_action_LOF_004"))
+        self.assertEqual(spectre.shield_tokens, 1)
+
+    def test_kanan_deploy_gets_shield_and_continuous_bonus(self):
+        leader = LeaderCard(
+            "LOF_004",
+            "Kanan Jarrus",
+            6,
+            action_cost=1,
+            action_effect="Action [C=1, Exhaust]: Give a Shield token to a Creature or Spectre unit.",
+            epic_action_cost=6,
+            epic_action_effect="Deploy as 3/6 unit",
+        )
+        leader.traits = ["FORCE", "JEDI", "REBEL", "SPECTRE"]
+        leader.abilities = [
+            "Action [C=1, Exhaust]: Give a Shield token to a Creature or Spectre unit.",
+            "Shielded",
+            "While you control another Creature or Spectre unit, this unit gets +2/+2.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        ally = UnitCard("LOF_004_A", "Creature Ally", 2, 1, 1, Arena.GROUND, traits=["CREATURE"])
+        game.player1.units.append(ally)
+        game.player1.ground_arena.append(ally)
+        game.player1.resources = [
+            Resource(CardStub("R1")), Resource(CardStub("R2")), Resource(CardStub("R3")),
+            Resource(CardStub("R4")), Resource(CardStub("R5")), Resource(CardStub("R6")),
+        ]
+
+        self.assertTrue(game.execute_action(game.player1, "leader_epic_LOF_004"))
+        self.assertEqual(leader.shield_tokens, 1)
+        self.assertEqual(leader.power, 5)
+        self.assertEqual(leader.hp, 8)
+
+        game._remove_unit(game.player1, ally)
+        self.assertEqual(leader.power, 3)
+        self.assertEqual(leader.hp, 6)
+
+    def test_aurra_sing_action_defeats_weakened_unit(self):
+        leader = LeaderCard(
+            "LAW_004",
+            "Aurra Sing",
+            7,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Defeat a non-leader unit with 1 or less remaining HP.",
+            epic_action_cost=7,
+            epic_action_effect="Deploy as 3/7 unit",
+        )
+        leader.traits = ["UNDERWORLD", "BOUNTY HUNTER"]
+        leader.abilities = [
+            "Action [Exhaust]: Defeat a non-leader unit with 1 or less remaining HP.",
+            "When Deployed: You may defeat a non-leader unit with 5 or less remaining HP.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        target = UnitCard("LAW_004_T", "Wounded Enemy", 4, 4, 4, Arena.GROUND)
+        target.current_hp = 1
+        target.damage = 3
+        game.player2.units.append(target)
+        game.player2.ground_arena.append(target)
+
+        self.assertIn("leader_action_LAW_004", game.get_legal_actions(game.player1))
+        self.assertTrue(game.execute_action(game.player1, "leader_action_LAW_004"))
+        self.assertNotIn(target, game.player2.units)
+
+    def test_aurra_sing_deploy_defeats_unit_with_five_or_less_hp(self):
+        leader = LeaderCard(
+            "LAW_004",
+            "Aurra Sing",
+            7,
+            action_cost=0,
+            action_effect="Action [Exhaust]: Defeat a non-leader unit with 1 or less remaining HP.",
+            epic_action_cost=7,
+            epic_action_effect="Deploy as 3/7 unit",
+        )
+        leader.traits = ["UNDERWORLD", "BOUNTY HUNTER"]
+        leader.abilities = [
+            "Action [Exhaust]: Defeat a non-leader unit with 1 or less remaining HP.",
+            "When Deployed: You may defeat a non-leader unit with 5 or less remaining HP.",
+        ]
+        game = GameState([], [], leader, LeaderCard("LDR_002", "Leader Two", 6), verbose=False)
+        target = UnitCard("LAW_004_D", "Enemy Unit", 5, 5, 5, Arena.GROUND)
+        game.player2.units.append(target)
+        game.player2.ground_arena.append(target)
+        game.player1.resources = [
+            Resource(CardStub("R1")), Resource(CardStub("R2")), Resource(CardStub("R3")),
+            Resource(CardStub("R4")), Resource(CardStub("R5")), Resource(CardStub("R6")),
+            Resource(CardStub("R7")),
+        ]
+
+        self.assertTrue(game.execute_action(game.player1, "leader_epic_LAW_004"))
+        self.assertNotIn(target, game.player2.units)
+
     def test_piloting_card_can_be_played_as_upgrade_on_vehicle(self):
         game = game_state()
         vehicle = unit("Alliance Shuttle")
@@ -842,6 +1436,134 @@ class EngineUpgradeTests(unittest.TestCase):
 
         self.assertNotIn(token, game.player1.units)
         self.assertNotIn(token, game.player1.discard_pile)
+
+    def test_drain_essence_deals_damage_and_gains_force_token(self):
+        game = game_state()
+        target = UnitCard("LOF_041_T", "Enemy Unit", 2, 3, 3, Arena.GROUND)
+        larger = UnitCard("LOF_041_L", "Large Enemy", 4, 5, 6, Arena.GROUND)
+        event = EventCard("LOF_041_1", "Drain Essence", 2, effect="Deal 2 damage to a unit. The Force is with you.")
+        game.player2.units.extend([target, larger])
+        game.player2.ground_arena.extend([target, larger])
+
+        game._resolve_event(game.player1, event)
+
+        self.assertEqual(target.current_hp, 1)
+        self.assertEqual(larger.current_hp, 6)
+        self.assertTrue(game.player1.has_force_token)
+
+    def test_no_disintegrations_leaves_non_leader_unit_at_one_hp(self):
+        game = game_state()
+        target = UnitCard("JTL_144_T", "Target Unit", 4, 4, 5, Arena.GROUND)
+        smaller = UnitCard("JTL_144_S", "Smaller Unit", 2, 2, 3, Arena.GROUND)
+        event = EventCard("JTL_144_1", "No Disintegrations", 3, effect="Deal damage to a non-leader unit equal to 1 less than its remaining HP.")
+        game.player2.units.extend([target, smaller])
+        game.player2.ground_arena.extend([target, smaller])
+
+        game._resolve_event(game.player1, event)
+
+        self.assertEqual(target.current_hp, 1)
+        self.assertEqual(smaller.current_hp, 3)
+
+    def test_lost_and_forgotten_defeats_enemy_unit_and_heals_base(self):
+        game = game_state()
+        target = UnitCard("LAW_133_T", "Enemy Unit", 5, 4, 6, Arena.GROUND)
+        event = EventCard("LAW_133_1", "Lost and Forgotten", 6, effect="Defeat a non-leader unit. If you do, heal 3 damage from your base.")
+        game.player1.base.current_hp = 20
+        game.player2.units.append(target)
+        game.player2.ground_arena.append(target)
+
+        game._resolve_event(game.player1, event)
+
+        self.assertNotIn(target, game.player2.units)
+        self.assertEqual(game.player1.base.current_hp, 23)
+
+    def test_jyn_erso_prefers_exhausting_ready_enemy_unit(self):
+        game = game_state()
+        jyn = UnitCard("LAW_067_1", "Jyn Erso", 2, 2, 2, Arena.GROUND)
+        enemy = UnitCard("LAW_067_E", "Enemy Unit", 3, 4, 4, Arena.GROUND)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        game._play_unit(game.player1, jyn)
+
+        self.assertTrue(enemy.is_exhausted)
+        self.assertEqual(jyn.experience_tokens, 0)
+
+    def test_jyn_erso_falls_back_to_experience_when_no_ready_enemy_exists(self):
+        game = game_state()
+        jyn = UnitCard("LAW_067_1", "Jyn Erso", 2, 2, 2, Arena.GROUND)
+        ally = UnitCard("LAW_067_A", "Friendly Unit", 2, 3, 3, Arena.GROUND)
+        enemy = UnitCard("LAW_067_E", "Tired Enemy", 4, 5, 5, Arena.GROUND)
+        enemy.is_exhausted = True
+        game.player1.units.append(ally)
+        game.player1.ground_arena.append(ally)
+        game.player2.units.append(enemy)
+        game.player2.ground_arena.append(enemy)
+
+        game._play_unit(game.player1, jyn)
+
+        self.assertEqual(ally.experience_tokens, 1)
+        self.assertEqual(ally.power, 4)
+        self.assertEqual(ally.hp, 4)
+
+    def test_kanan_jarrus_bounces_larger_unit_with_command_or_aggression_support(self):
+        game = game_state()
+        kanan = UnitCard("LAW_089_1", "Kanan Jarrus", 4, 3, 4, Arena.GROUND)
+        support = UnitCard("LAW_089_S", "Command Support", 2, 2, 3, Arena.GROUND)
+        support.aspects = ["Command"]
+        target = UnitCard("LAW_089_T", "Enemy Unit", 4, 4, 4, Arena.GROUND)
+        game.player1.units.append(support)
+        game.player1.ground_arena.append(support)
+        game.player2.units.append(target)
+        game.player2.ground_arena.append(target)
+
+        game._play_unit(game.player1, kanan)
+
+        self.assertNotIn(target, game.player2.units)
+        self.assertIn(target, game.player2.hand)
+
+    def test_red_five_deals_on_attack_damage_to_damaged_unit(self):
+        game = game_state()
+        red_five = UnitCard("JTL_151_1", "Red Five", 3, 3, 4, Arena.SPACE)
+        defender = UnitCard("JTL_151_D", "Defender", 2, 2, 4, Arena.SPACE)
+        damaged = UnitCard("JTL_151_X", "Damaged Enemy", 2, 1, 2, Arena.SPACE)
+        damaged.damage = 1
+        damaged.current_hp = 1
+        game.player1.units.append(red_five)
+        game.player1.space_arena.append(red_five)
+        game.player2.units.extend([defender, damaged])
+        game.player2.space_arena.extend([defender, damaged])
+
+        self.assertTrue(game._attack(game.player1, red_five.id, defender.id))
+        self.assertNotIn(damaged, game.player2.units)
+
+    def test_karis_uses_force_token_on_defeat_to_weaken_a_unit(self):
+        game = game_state()
+        karis = UnitCard("LOF_031_1", "Karis", 2, 2, 4, Arena.GROUND)
+        target = UnitCard("LOF_031_T", "Enemy Unit", 3, 4, 4, Arena.GROUND)
+        game.player1.has_force_token = True
+        game.player1.units.append(karis)
+        game.player1.ground_arena.append(karis)
+        game.player2.units.append(target)
+        game.player2.ground_arena.append(target)
+
+        game._remove_unit(game.player1, karis)
+
+        self.assertFalse(game.player1.has_force_token)
+        self.assertEqual(target.power, 2)
+        self.assertEqual(target.hp, 2)
+
+    def test_nightsister_warrior_draws_on_defeat(self):
+        game = game_state()
+        warrior = UnitCard("LOF_059_1", "Nightsister Warrior", 2, 2, 2, Arena.GROUND)
+        draw_card = UnitCard("DRAW_059", "Drawn Card", 1, 1, 1, Arena.GROUND)
+        game.player1.deck = [draw_card]
+        game.player1.units.append(warrior)
+        game.player1.ground_arena.append(warrior)
+
+        game._remove_unit(game.player1, warrior)
+
+        self.assertIn(draw_card, game.player1.hand)
 
 
 class CardStub:

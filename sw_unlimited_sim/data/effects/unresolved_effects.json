@@ -1,0 +1,11 @@
+{
+  "SOR-128": {
+    "name": "Death Star Stormtrooper",
+    "number": "128",
+    "reason": "Parse warnings: Dropped invalid trigger event: None\nLocal model output could not be converted into a reliable effect draft.",
+    "set": "SOR",
+    "text": "",
+    "type": "Unit",
+    "updated_at": "2026-04-22T19:55:03.079474+00:00"
+  }
+}

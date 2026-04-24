@@ -18,17 +18,20 @@ def attack(game: Any, player: Player, unit_id: str, target: str) -> bool:
         game._resolve_on_attack(player, attacker, None)
         damage = game._attack_power(player, attacker, None)
         enemy.base.take_damage(damage)
+        attacker.temporary_attack_damaged_base = damage > 0
         attacker.is_exhausted = True
         attacker.attacked_this_phase = True
         game._resolve_base_combat_damage(player, attacker, damage)
         game.log(
             f"Turn {game.turn_count}: Player {player.id}'s {attacker.name} attacks Player {enemy.id}'s base "
-            f"for {damage} damage; base HP {enemy.base.current_hp}/25"
+            f"for {damage} damage; base HP {enemy.base.current_hp}/{enemy.base.hp}"
         )
         game._emit(f"  Player {player.id}'s {attacker.name} attacks BASE for {damage} damage")
-        game._emit(f"     Base HP: {enemy.base.current_hp}/25")
+        game._emit(f"     Base HP: {enemy.base.current_hp}/{enemy.base.hp}")
         if attacker in player.units:
             game._resolve_after_attack_completed(player, attacker)
+        if attacker in player.units:
+            game._clear_attack_modifiers(attacker)
         return True
 
     defender = next((unit for unit in enemy.units if unit.id == target), None)
@@ -40,14 +43,21 @@ def attack(game: Any, player: Player, unit_id: str, target: str) -> bool:
     defender_hp_before_damage = defender.current_hp
     game._resolve_on_attack(player, attacker, defender)
     if attacker not in player.units:
+        game._clear_attack_modifiers(attacker)
         return True
     if defender not in enemy.units:
         attacker.is_exhausted = True
         attacker.attacked_this_phase = True
+        game._resolve_after_attack_completed(player, attacker)
+        if attacker in player.units:
+            game._clear_attack_modifiers(attacker)
         return True
 
     attack_damage = max(0, game._attack_power(player, attacker, defender) - game._defensive_attack_penalty(defender))
     defender_damage = game._unit_power(enemy, defender)
+    suppress_defender_abilities = bool(getattr(attacker, "temporary_attack_strip_defender_abilities", False))
+    if suppress_defender_abilities:
+        defender.temporary_attack_abilities_suppressed = True
     first_strike = bool(getattr(attacker, "combat_damage_before_defender_once", False))
     if first_strike:
         defender.take_damage(attack_damage)
@@ -72,17 +82,22 @@ def attack(game: Any, player: Player, unit_id: str, target: str) -> bool:
         excess = max(0, attack_damage - defender_hp_before_damage)
         if excess:
             enemy.base.take_damage(excess)
+            attacker.temporary_attack_damaged_base = True
             game.log(f"Turn {game.turn_count}: Overwhelm deals {excess} excess damage to Player {enemy.id}'s base")
             game._emit(f"     Overwhelm deals {excess} excess damage to base")
 
     if attacker.is_defeated() and attacker in player.units:
+        game._clear_attack_modifiers(attacker)
         game._remove_unit(player, attacker)
         game._emit(f"     {attacker.name} was defeated")
     if defender.is_defeated() and defender in enemy.units:
         game._remove_unit(enemy, defender)
         game._emit(f"     {defender.name} was defeated")
+    defender.temporary_attack_abilities_suppressed = False
     if attacker in player.units:
         game._resolve_after_attack_completed(player, attacker)
+    if attacker in player.units:
+        game._clear_attack_modifiers(attacker)
     return True
 
 
@@ -166,6 +181,12 @@ def resolve_when_pilot_attached(game: Any, player: Player, pilot: UnitCard, targ
 def resolve_after_attack_completed(game: Any, player: Player, attacker: UnitCard) -> None:
     if attacker not in player.units or attacker.is_defeated():
         return
+    if getattr(attacker, "temporary_attack_defeat_self_after_attack", False):
+        game._remove_unit(player, attacker)
+        return
+    if getattr(attacker, "temporary_attack_defeat_self_if_damaged_base", False) and getattr(attacker, "temporary_attack_damaged_base", False):
+        game._remove_unit(player, attacker)
+        return
     for upgrade in list(getattr(attacker, "attached_upgrades", []) or []):
         if game._is_card(upgrade, "JTL", "197"):
             if game._strategy_setting("anakin_return_after_attached_attack", True):
@@ -191,6 +212,22 @@ def resolve_on_attack(game: Any, player: Player, attacker: UnitCard, defender: O
             game.log(
                 f"Turn {game.turn_count}: Wedge Antilles reduces the next Pilot card played this phase by 1"
             )
+
+    if game._is_card(attacker, "IBH", "10") and defender:
+        game._apply_temporary_modifier(defender, power_delta=-2, duration="this_attack")
+
+    if game._is_card(attacker, "JTL", "088"):
+        targets = [
+            unit for unit in player.units
+            if unit is not attacker and game._has_trait(unit, "FIRST ORDER")
+        ]
+        if targets:
+            target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+            game._apply_temporary_modifier(target, power_delta=2, hp_delta=2, duration="this_phase")
+
+    if game._is_card(attacker, "TWI", "014") and getattr(player, "played_event_this_phase", False):
+        game._apply_temporary_modifier(attacker, power_delta=1, duration="this_attack")
+        attacker.combat_damage_before_defender_once = True
 
     if attacker.name == "Sabine Wren":
         if defender:
@@ -218,6 +255,38 @@ def resolve_on_attack(game: Any, player: Player, attacker: UnitCard, defender: O
             target.hp += 1
             target.current_hp += 1
             game.log(f"Turn {game.turn_count}: Ezra Bridger gives an Experience token to {target.name}")
+
+    if game._is_card(attacker, "LOF", "008"):
+        friendly_targets = [
+            unit for unit in player.units
+            if unit is not attacker and unit.experience_tokens == 0
+        ]
+        enemy_targets = [unit for unit in enemy.units if unit.experience_tokens == 0]
+        targets = friendly_targets or enemy_targets
+        if targets:
+            target = max(targets, key=lambda unit: (unit.power, unit.current_hp))
+            target.experience_tokens += 1
+            target.power += 1
+            target.hp += 1
+            target.current_hp += 1
+            game.log(f"Turn {game.turn_count}: Obi-Wan Kenobi gives an Experience token to {target.name}")
+
+    if game._is_card(attacker, "JTL", "151"):
+        damaged_units = [
+            unit for unit in enemy.units + player.units
+            if unit is not attacker and unit.damage > 0
+        ]
+        if damaged_units:
+            target = min(
+                damaged_units,
+                key=lambda unit: (
+                    unit not in enemy.units,
+                    unit.current_hp,
+                    -unit.power,
+                ),
+            )
+            target_owner = enemy if target in enemy.units else player
+            game._damage_unit(target_owner, target, 2)
 
     restore_amount = game._restore_amount(attacker)
     if restore_amount:
@@ -263,6 +332,29 @@ def resolve_when_defeated(game: Any, owner: Player, unit: UnitCard, enemy: Playe
                     f"Turn {game.turn_count}: CR90 Relief Runner heals "
                     f"{heal_target.current_hp - before} damage from {heal_target.name}"
                 )
+
+    if game._is_card(unit, "JTL", "060"):
+        targets = owner.units + enemy.units
+        targets = [candidate for candidate in targets if candidate is not unit]
+        if targets:
+            target = min(targets, key=lambda candidate: (candidate.current_hp, -candidate.power))
+            game._apply_temporary_modifier(target, power_delta=-1, hp_delta=-1, duration="this_phase")
+
+    if game._is_card(unit, "LOF", "031") and game._use_force(owner):
+        targets = [candidate for candidate in enemy.units + owner.units if candidate is not unit]
+        if targets:
+            target = max(
+                targets,
+                key=lambda candidate: (
+                    candidate in enemy.units,
+                    candidate.power,
+                    candidate.current_hp,
+                ),
+            )
+            game._apply_temporary_modifier(target, power_delta=-2, hp_delta=-2, duration="this_phase")
+
+    if game._is_card(unit, "LOF", "059"):
+        game._draw_cards(owner, 1, "Nightsister Warrior")
 
 
 def damage_unit(game: Any, owner: Player, unit: UnitCard, amount: int) -> None:

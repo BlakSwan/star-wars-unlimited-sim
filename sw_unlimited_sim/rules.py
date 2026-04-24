@@ -52,9 +52,18 @@ def is_card(game: Any, card: Card, set_code: str, number: str) -> bool:
 
 
 def has_keyword(game: Any, unit: UnitCard, keyword: str) -> bool:
-    if getattr(unit, "abilities_lost_until_ready", False):
+    if getattr(unit, "abilities_lost_until_ready", False) or getattr(unit, "temporary_attack_abilities_suppressed", False):
         return False
     keyword = keyword.lower()
+    temporary_keywords = {
+        str(value).lower()
+        for value in (
+            set(getattr(unit, "temporary_phase_keywords", set()) or set())
+            | set(getattr(unit, "temporary_attack_keywords", set()) or set())
+        )
+    }
+    if keyword in temporary_keywords:
+        return True
     if keyword in text(game, unit):
         return True
     return any(
@@ -154,7 +163,11 @@ def attack_power(game: Any, player: Player, attacker: UnitCard, defender: Option
 
 
 def unit_power(game: Any, player: Player, unit: UnitCard) -> int:
-    return unit.power + pilot_synergy_power_bonus(game, player, unit)
+    return (
+        unit.power
+        + int(getattr(unit, "temporary_attack_power_bonus", 0) or 0)
+        + pilot_synergy_power_bonus(game, player, unit)
+    )
 
 
 def pilot_synergy_power_bonus(game: Any, player: Player, unit: UnitCard) -> int:
@@ -170,7 +183,7 @@ def pilot_synergy_power_bonus(game: Any, player: Player, unit: UnitCard) -> int:
 def has_overwhelm(game: Any, player: Player, attacker: UnitCard, defender: Optional[UnitCard]) -> bool:
     if getattr(attacker, "abilities_lost_until_ready", False):
         return False
-    if "overwhelm" in text(game, attacker):
+    if has_keyword(game, attacker, "overwhelm"):
         if attacker.name == "First Legion Snowtrooper":
             return bool(defender and defender.damage > 0)
         return True
@@ -201,6 +214,10 @@ def can_attack_unit(game: Any, player: Player, attacker: UnitCard, defender: Uni
 
 
 def can_attack_base(game: Any, player: Player, attacker: UnitCard) -> bool:
+    if getattr(attacker, "temporary_phase_cannot_attack_base", False):
+        return False
+    if getattr(attacker, "temporary_attack_cannot_attack_base", False):
+        return False
     return not sentinel_units(game, player, attacker.arena) or can_ignore_sentinel(game, attacker)
 
 
@@ -214,7 +231,7 @@ def defensive_attack_penalty(game: Any, defender: UnitCard) -> int:
 
 
 def restore_amount(game: Any, unit: UnitCard) -> int:
-    if getattr(unit, "abilities_lost_until_ready", False):
+    if getattr(unit, "abilities_lost_until_ready", False) or getattr(unit, "temporary_attack_abilities_suppressed", False):
         return 0
     unit_text = text(game, unit)
     amount = 0
