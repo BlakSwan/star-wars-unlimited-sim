@@ -36,6 +36,11 @@ from effect_training import (
     should_execute_record,
     validate_effect_record,
 )
+from llm_queue import (
+    SIMPLE_LLM_BLOCKED_KEYWORDS,
+    SIMPLE_LLM_BLOCKED_PHRASES,
+    simple_llm_candidates,
+)
 from simulator import SimulationResult, run_single_game
 from strategies import get_strategy, list_strategies
 from swu_db_client import DEFAULT_GAMEPLAY_OUTPUT_PATH
@@ -139,6 +144,19 @@ pre {
 table { width: 100%; border-collapse: collapse; background: var(--panel); }
 th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 10px; vertical-align: top; }
 th { color: var(--muted); font-size: 13px; text-transform: uppercase; }
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+.table-toolbar .grow {
+  flex: 1 1 280px;
+}
+.table-toolbar label {
+  margin-top: 0;
+}
 .status-supported { color: var(--ok); font-weight: 800; }
 .status-partial { color: var(--warn); font-weight: 800; }
 .status-unsupported { color: var(--bad); font-weight: 800; }
@@ -982,6 +1000,40 @@ def batch_review_records(
     return items, dict(summary), bucket_rows
 
 
+def safe_list_items(
+    max_words: int,
+    limit: int,
+    card_filters: dict[str, str],
+    only_missing: bool = True,
+) -> list[dict]:
+    effects = load_effects()
+    items = []
+    for entry in simple_llm_candidates(max_words=max_words, limit=None):
+        card = entry["card"]
+        if card_filters and not card_matches_official_filters(card, card_filters):
+            continue
+        training_status = card_training_status(card, effects)
+        if only_missing and training_status != "missing":
+            continue
+        items.append({
+            **entry,
+            "training_status": training_status,
+            "audit": _audit_card(card, count=1, trained_effects=effects),
+        })
+        if len(items) >= limit:
+            break
+    return items
+
+
+def _archive_superseded_draft(existing: dict | None, record: dict, reason: str) -> None:
+    if not existing or existing.get("status") != "draft":
+        return
+    existing_json = json.dumps(existing, sort_keys=True)
+    new_json = json.dumps(record, sort_keys=True)
+    if existing_json != new_json:
+        save_draft_artifact(existing, reason=reason)
+
+
 def approve_batch_records(selected_keys: list[str]) -> dict[str, object]:
     effects = load_effects()
     results: dict[str, object] = {
@@ -1050,12 +1102,13 @@ def queue_priority(
 
 
 def training_queue_items(scope: str, status_filter: str, limit: int) -> list[dict]:
-    return training_queue_items_filtered(scope, status_filter, limit, {})
+    return training_queue_items_filtered(scope, status_filter, "all", limit, {})
 
 
 def training_queue_items_filtered(
     scope: str,
     status_filter: str,
+    training_filter: str,
     limit: int,
     card_filters: dict[str, str],
 ) -> list[dict]:
@@ -1083,6 +1136,13 @@ def training_queue_items_filtered(
 
         audit = _audit_card(card, count=1, trained_effects=effects)
         training_status = card_training_status(card, effects)
+        if training_filter != "all":
+            if training_filter == "missing" and training_status != "missing":
+                continue
+            if training_filter == "draft" and training_status != "draft":
+                continue
+            if training_filter == "approved" and not training_status.startswith("approved/"):
+                continue
         if status_filter != "all":
             if status_filter == "needs_work" and audit.status == "supported":
                 continue
@@ -1121,10 +1181,11 @@ def training_queue_items_filtered(
 def training_queue_page(query: dict[str, list[str]]) -> bytes:
     scope = query.get("scope", ["all"])[0]
     status_filter = query.get("status", ["needs_work"])[0]
+    training_filter = query.get("training", ["missing"])[0]
     limit = parse_positive_int(query.get("limit", ["100"])[0], 100, 500)
     card_filters = official_filters_from_query(query)
     filter_values = official_filter_values(list(_load_card_index().values()))
-    items = training_queue_items_filtered(scope, status_filter, limit, card_filters)
+    items = training_queue_items_filtered(scope, status_filter, training_filter, limit, card_filters)
     competitive_data = load_competitive_decks()
     competitive_note = (
         f"{competitive_data.get('deck_count', 0)} SWUDB hot decks cached"
@@ -1164,8 +1225,12 @@ def training_queue_page(query: dict[str, list[str]]) -> bytes:
         <select name="scope">{options(["all", "competitive", "decks"], scope)}</select>
       </div>
       <div>
-        <label>Status</label>
+        <label>Audit</label>
         <select name="status">{options(["needs_work", "unsupported", "partial", "missing", "all"], status_filter)}</select>
+      </div>
+      <div>
+        <label>Training</label>
+        <select name="training">{options(["missing", "draft", "approved", "all"], training_filter)}</select>
       </div>
       <div>
         <label>Limit</label>
@@ -1199,6 +1264,9 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
     approval_filter = query.get("approval", ["approvable"])[0]
     bucket_filter = query.get("bucket", ["all"])[0]
     limit = parse_positive_int(query.get("limit", ["100"])[0], 100, 500)
+    safe_limit = parse_positive_int(query.get("safe_limit", ["20"])[0], 20, 200)
+    safe_max_words = parse_positive_int(query.get("safe_max_words", ["10"])[0], 10, 50)
+    safe_only_missing = query.get("safe_only_missing", ["1"])[0] == "1"
     card_filters = official_filters_from_query(query)
     cards = list(_load_card_index().values())
     filter_values = official_filter_values(cards)
@@ -1209,6 +1277,12 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
         approval_filter=approval_filter,
         limit=limit,
         card_filters=card_filters,
+    )
+    safe_items = safe_list_items(
+        max_words=safe_max_words,
+        limit=safe_limit,
+        card_filters=card_filters,
+        only_missing=safe_only_missing,
     )
     bucket_options = sorted({row[0] for row in bucket_rows})
     summary_rows = "".join(
@@ -1226,7 +1300,19 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
             if item["blockers"]
             else "<span class='status-supported'>ready</span>"
         )
-        item_rows.append(
+        search_text = " ".join(
+            [
+                str(card_ref),
+                str(item["name"]),
+                str(item["type"]),
+                str(item["bucket"]),
+                str(item["triage"]),
+                str(item["runtime"]),
+                str(item["approval_state"]),
+                " ".join(item["blockers"]),
+            ]
+        )
+        row_html = (
             "<tr>"
             f"<td><input type='checkbox' name='cards' value='{esc(item['key'])}' {'disabled' if item['approval_state'] != 'approvable' else ''} style='width:auto'></td>"
             f"<td>{esc(card_ref)}</td>"
@@ -1239,8 +1325,31 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
             f"<td>{blocker_html}</td>"
             f"<td><a class='button secondary' href='{train_href}'>Review</a></td>"
             "</tr>"
+        ).replace(
+            "<tr>",
+            f"<tr class='batch-review-row' data-search='{esc(search_text)}'>",
+            1,
         )
+        item_rows.append(row_html)
     review_rows = "\n".join(item_rows) or "<tr><td colspan='10'>No drafts match this batch review filter.</td></tr>"
+    safe_rows = []
+    for item in safe_items:
+        card = item["card"]
+        selected = f"{card.get('Set')}-{card.get('Number')}"
+        train_href = f"/train?card={esc(selected)}"
+        local_draft_href = f"/train/suggest?card={esc(selected)}&provider=local"
+        safe_rows.append(
+            "<tr>"
+            f"<td>{esc(item['key'])}</td>"
+            f"<td>{esc(item['title'])}<br><span class='muted'>{esc(item['type'])}</span></td>"
+            f"<td>{esc(item['bucket'])}</td>"
+            f"<td>{item['words']}</td>"
+            f"<td>{esc(item['training_status'])}</td>"
+            f"<td>{esc(item['text'])}</td>"
+            f"<td><a class='button' href='{local_draft_href}'>Configured Local Draft</a> <a class='button secondary' href='{train_href}'>Review</a></td>"
+            "</tr>"
+        )
+    safe_table_rows = "\n".join(safe_rows) or "<tr><td colspan='7'>No safe-list cards match the current filters.</td></tr>"
 
     hidden_filter_fields = "".join(
         f"<input type='hidden' name='{esc(name)}' value='{esc(value)}'>"
@@ -1250,6 +1359,9 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
             "approval": approval_filter,
             "bucket": bucket_filter,
             "limit": str(limit),
+            "safe_limit": str(safe_limit),
+            "safe_max_words": str(safe_max_words),
+            "safe_only_missing": "1" if safe_only_missing else "0",
             **card_filters,
         }.items()
     )
@@ -1285,12 +1397,56 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
     <a class="button secondary" href="/batch">Clear</a>
   </form>
 </section>
+<section class="card">
+  <h3>Safe List Generation</h3>
+  <p class="muted">Generate the next low-risk unsupported cards for local drafting using the same simple queue rules as the CLI. Excluded keywords: {esc(', '.join(sorted(SIMPLE_LLM_BLOCKED_KEYWORDS)))}. Excluded phrases: {esc(', '.join(SIMPLE_LLM_BLOCKED_PHRASES))}.</p>
+  <form method="get" action="/batch">
+    <div class="inline-field">
+      <div>
+        <label>Safe List Limit</label>
+        <input name="safe_limit" type="number" min="1" max="200" value="{esc(safe_limit)}">
+      </div>
+      <div>
+        <label>Max Words</label>
+        <input name="safe_max_words" type="number" min="1" max="50" value="{esc(safe_max_words)}">
+      </div>
+      <div>
+        <label>Existing Records</label>
+        <select name="safe_only_missing">{options(["1", "0"], "1" if safe_only_missing else "0")}</select>
+      </div>
+      {official_filter_controls(filter_values, card_filters)}
+    </div>
+    <input type="hidden" name="triage" value="{esc(triage_filter)}">
+    <input type="hidden" name="runtime" value="{esc(runtime_filter)}">
+    <input type="hidden" name="approval" value="{esc(approval_filter)}">
+    <input type="hidden" name="bucket" value="{esc(bucket_filter)}">
+    <input type="hidden" name="limit" value="{esc(limit)}">
+    <button type="submit">Generate Safe List</button>
+  </form>
+  <form method="post" action="/batch/draft-safe">
+    <input type="hidden" name="safe_limit" value="{esc(safe_limit)}">
+    <input type="hidden" name="safe_max_words" value="{esc(safe_max_words)}">
+    <input type="hidden" name="safe_only_missing" value="{'1' if safe_only_missing else '0'}">
+    <input type="hidden" name="triage" value="{esc(triage_filter)}">
+    <input type="hidden" name="runtime" value="{esc(runtime_filter)}">
+    <input type="hidden" name="approval" value="{esc(approval_filter)}">
+    <input type="hidden" name="bucket" value="{esc(bucket_filter)}">
+    <input type="hidden" name="limit" value="{esc(limit)}">
+    {''.join(f"<input type='hidden' name='{esc(name)}' value='{esc(value)}'>" for name, value in card_filters.items())}
+    <button type="submit">Process Safe List With Configured Local LLM</button>
+  </form>
+  <table>
+    <thead><tr><th>Card</th><th>Name</th><th>Bucket</th><th>Words</th><th>Training</th><th>Rules Text</th><th>Actions</th></tr></thead>
+    <tbody>{safe_table_rows}</tbody>
+  </table>
+</section>
 <section class="grid">
   <div class="card"><h3>Filtered Drafts</h3><div class="metric">{summary.get('total', 0)}</div></div>
   <div class="card"><h3>Approvable</h3><div class="metric">{summary.get('approvable', 0)}</div></div>
   <div class="card"><h3>Blocked</h3><div class="metric">{summary.get('blocked', 0)}</div></div>
   <div class="card"><h3>Safe Draft</h3><div class="metric">{summary.get('triage:safe_draft', 0)}</div></div>
   <div class="card"><h3>Executable</h3><div class="metric">{summary.get('runtime:executable', 0)}</div></div>
+  <div class="card"><h3>Safe List</h3><div class="metric">{len(safe_items)}</div></div>
 </section>
 <section class="card">
   <h3>Bucket Summary</h3>
@@ -1304,12 +1460,71 @@ def batch_review_page(query: dict[str, list[str]]) -> bytes:
     {hidden_filter_fields}
     <button type="submit">Approve Selected Drafts</button>
     <p class="muted">Only rows without blockers can be selected. Each approved card archives the prior draft snapshot before promotion.</p>
+    <div class="table-toolbar">
+      <div class="grow">
+        <label for="batch-row-filter">Filter Visible Rows</label>
+        <input id="batch-row-filter" type="search" placeholder="Filter by card, name, bucket, triage, runtime, blockers">
+      </div>
+      <div>
+        <label><input id="batch-select-visible" type="checkbox" style="width:auto"> Select all shown</label>
+      </div>
+    </div>
     <table>
       <thead><tr><th>Select</th><th>Card</th><th>Name</th><th>Bucket</th><th>Triage</th><th>Runtime</th><th>Approval</th><th>Warnings</th><th>Blockers</th><th>Action</th></tr></thead>
-      <tbody>{review_rows}</tbody>
+      <tbody id="batch-review-rows">{review_rows}</tbody>
     </table>
   </form>
 </section>
+<script>
+(() => {{
+  const filterInput = document.getElementById("batch-row-filter");
+  const selectVisible = document.getElementById("batch-select-visible");
+  const rows = Array.from(document.querySelectorAll("#batch-review-rows .batch-review-row"));
+
+  function visibleRows() {{
+    return rows.filter((row) => !row.hidden);
+  }}
+
+  function syncSelectVisible() {{
+    const candidates = visibleRows()
+      .map((row) => row.querySelector("input[name='cards']"))
+      .filter((input) => input && !input.disabled);
+    if (!candidates.length) {{
+      selectVisible.checked = false;
+      selectVisible.indeterminate = false;
+      return;
+    }}
+    const checkedCount = candidates.filter((input) => input.checked).length;
+    selectVisible.checked = checkedCount === candidates.length;
+    selectVisible.indeterminate = checkedCount > 0 && checkedCount < candidates.length;
+  }}
+
+  function applyFilter() {{
+    const query = (filterInput.value || "").trim().toLowerCase();
+    rows.forEach((row) => {{
+      const haystack = (row.dataset.search || "").toLowerCase();
+      row.hidden = query !== "" && !haystack.includes(query);
+    }});
+    syncSelectVisible();
+  }}
+
+  filterInput?.addEventListener("input", applyFilter);
+  selectVisible?.addEventListener("change", () => {{
+    visibleRows().forEach((row) => {{
+      const input = row.querySelector("input[name='cards']");
+      if (input && !input.disabled) {{
+        input.checked = selectVisible.checked;
+      }}
+    }});
+    syncSelectVisible();
+  }});
+  rows.forEach((row) => {{
+    const input = row.querySelector("input[name='cards']");
+    input?.addEventListener("change", syncSelectVisible);
+  }});
+  applyFilter();
+}})();
+</script>
 """
     return page("Batch Review", body)
 
@@ -1630,6 +1845,83 @@ def batch_approve(post_body: str) -> bytes:
     return page("Batch Approval", message)
 
 
+def batch_draft_safe(post_body: str) -> bytes:
+    fields = parse_qs(post_body)
+    safe_limit = parse_positive_int(fields.get("safe_limit", ["20"])[0], 20, 200)
+    safe_max_words = parse_positive_int(fields.get("safe_max_words", ["10"])[0], 10, 50)
+    safe_only_missing = fields.get("safe_only_missing", ["1"])[0] == "1"
+    card_filters = official_filters_from_query(fields)
+    try:
+        items = safe_list_items(
+            max_words=safe_max_words,
+            limit=safe_limit,
+            card_filters=card_filters,
+            only_missing=safe_only_missing,
+        )
+        if not items:
+            raise ValueError("No safe-list cards match the current filters.")
+        provider = get_effect_suggestion_provider("local")
+        drafted: list[tuple[str, str, str]] = []
+        failed: list[tuple[str, str]] = []
+        for item in items:
+            card = item["card"]
+            key = item["key"]
+            try:
+                record = provider.suggest_effect(card)
+                existing = get_effect(card.get("Set"), card.get("Number"))
+                _archive_superseded_draft(existing, record, "Superseded by Batch Review safe-list local draft")
+                save_effect(record)
+                drafted.append(
+                    (
+                        key,
+                        record.get("review", {}).get("triage", "needs_review"),
+                        record.get("execution_status", ""),
+                    )
+                )
+            except EffectSuggestionError as exc:
+                failed.append((key, f"{exc.title}: {exc.detail}"))
+            except Exception as exc:
+                failed.append((key, str(exc)))
+        drafted_html = ""
+        if drafted:
+            drafted_html = (
+                "<h3>Drafted</h3><ul>"
+                + "".join(
+                    f"<li>{esc(key)}: triage={esc(triage)}, runtime={esc(runtime or 'unknown')}</li>"
+                    for key, triage, runtime in drafted
+                )
+                + "</ul>"
+            )
+        failed_html = ""
+        if failed:
+            failed_html = (
+                "<h3>Failures</h3><ul>"
+                + "".join(f"<li>{esc(key)}: {esc(detail)}</li>" for key, detail in failed)
+                + "</ul>"
+            )
+        message = (
+            "<section class='card'><h2>Safe List Drafting Complete</h2>"
+            f"<p><strong>Processed:</strong> {len(items)}</p>"
+            f"<p><strong>Drafted:</strong> {len(drafted)}</p>"
+            f"<p><strong>Failures:</strong> {len(failed)}</p>"
+            f"{drafted_html}"
+            f"{failed_html}"
+            "<a class='button secondary' href='/batch'>Back To Batch Review</a></section>"
+        )
+    except EffectSuggestionError as exc:
+        actions = "".join(f"<li>{esc(action)}</li>" for action in exc.actions)
+        action_block = f"<ul>{actions}</ul>" if actions else ""
+        message = (
+            f"<section class='card'><h2>{esc(exc.title)}</h2>"
+            f"<p>{esc(exc.detail)}</p>"
+            f"{action_block}"
+            f"<a class='button secondary' href='/batch'>Back</a></section>"
+        )
+    except Exception as exc:
+        message = f"<section class='card'><h2>Could Not Draft Safe List</h2><p>{esc(exc)}</p><a class='button secondary' href='/batch'>Back</a></section>"
+    return page("Safe List Drafting", message)
+
+
 def suggest_train_effect(query: dict[str, list[str]]) -> bytes:
     selected = query.get("card", [""])[0]
     try:
@@ -1700,6 +1992,9 @@ class UIHandler(BaseHTTPRequestHandler):
             return
         if self.path == "/batch/approve":
             self._send(batch_approve(body))
+            return
+        if self.path == "/batch/draft-safe":
+            self._send(batch_draft_safe(body))
             return
         self.send_error(404)
 
