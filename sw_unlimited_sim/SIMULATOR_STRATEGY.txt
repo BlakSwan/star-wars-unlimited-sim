@@ -1,0 +1,183 @@
+Star Wars Unlimited Simulator - Build Strategy
+
+This project is being built as a hybrid deterministic engine plus structured
+card-effect layer, not as a pure text parser and not as a live LLM rules
+judge.
+
+Core Strategy
+
+1. Build a deterministic game shell first.
+   The foundation is the runtime game engine: players, phases, initiative,
+   resources, drawing, card play, attacks, combat, leader deployment, base
+   damage, and game end conditions.
+
+   Main files:
+   - models.py
+   - engine.py
+   - combat_engine.py
+   - play_engine.py
+   - event_engine.py
+   - leader_engine.py
+   - rules.py
+
+2. Load real card data into typed runtime objects.
+   The repo uses SWU DB gameplay data as the canonical source of card facts.
+   Cards are loaded into UnitCard, UpgradeCard, EventCard, LeaderCard, and
+   Base objects rather than hardcoding the whole card pool.
+
+   Main files:
+   - deck_loader.py
+   - swu_db_client.py
+   - models.py
+
+3. Attach compiled card profiles to runtime cards.
+   Each runtime card can carry a compact profile containing rules text,
+   keywords, traits, mechanic tags, and an optional structured effect record.
+   This is the augmentation boundary for offline interpretation work.
+
+   Main files:
+   - card_profiles.py
+   - models.py
+
+4. Represent card behavior as structured effects when possible.
+   Unsupported or partially supported card text is converted into structured
+   effect records with explicit triggers, steps, targets, conditions, and
+   durations.
+
+   Main files:
+   - effect_training.py
+   - effect_store.py
+   - structured_effects.py
+
+5. Execute only approved executable records.
+   Drafts are stored for review, but the simulator only executes records that
+   are both:
+   - status: approved
+   - execution_status: executable
+
+   This keeps simulation runtime deterministic and safe.
+
+6. Use audits to drive implementation order.
+   The repo audits card coverage and deck coverage to decide what to support
+   next. The priority is not every card in numeric order; the priority is
+   high-value cards and reusable mechanic families.
+
+   Main files:
+   - effect_audit.py
+   - card_analysis.py
+   - competitive_decks.py
+
+7. Use the local LLM only as an offline draft assistant.
+   The local LLM can read card JSON or compact card profiles and propose
+   structured effect records. It is not queried during gameplay.
+
+   The intended flow is:
+   - load card data deterministically
+   - draft a structured effect offline
+   - validate it
+   - review it
+   - approve it if safe
+   - execute it later in the simulator
+
+   Main files:
+   - effect_training.py
+   - effect_store.py
+   - card_profiles.py
+   - LLM_READINESS.md
+
+8. Build simulation and strategy analysis on top of the game kernel.
+   Once the engine is good enough, the repo uses named AI strategies and
+   repeated simulations to estimate outcomes and compare approaches.
+
+   Main files:
+   - strategies.py
+   - simulator.py
+
+
+What This Means Architecturally
+
+The simulator is being built in layers:
+
+- Game kernel
+  Deterministic turn structure and combat logic.
+
+- Data ingestion
+  Real SWU DB card data converted into runtime objects.
+
+- Card profile augmentation
+  Compact metadata attached to runtime cards.
+
+- Structured effect schema
+  Triggers, steps, targets, conditions, durations, execution status.
+
+- Review-gated execution
+  Only approved and executable effects participate in real gameplay.
+
+- Coverage analysis
+  Audit tools measure what is supported and what still needs work.
+
+- Simulation layer
+  Strategy comparison and statistical output.
+
+
+Why This Strategy Makes Sense
+
+This approach avoids the biggest failure modes:
+
+- It avoids depending on an LLM to referee matches live.
+- It avoids mixing canonical source card data with speculative effect drafts.
+- It avoids pretending a draft is simulator-safe before review.
+- It avoids spending effort on low-value cards before reusable mechanics exist.
+
+It also gives the project:
+
+- reproducible simulations
+- testable behavior
+- modular rules work
+- a scalable way to grow card coverage
+- a human review checkpoint before unsupported text becomes live gameplay
+
+
+Current Development Pattern
+
+The repo is effectively using this loop:
+
+1. Implement or improve a deterministic mechanic primitive.
+2. Audit the card pool and deck pool.
+3. Identify high-value unsupported cards.
+4. Draft structured effects for the simpler cards.
+5. Validate and review those drafts.
+6. Approve only the safe executable ones.
+7. Let the simulator consume those approved records.
+
+
+Recommended Forward Strategy
+
+The project should continue with:
+
+1. Expand mechanic primitives before widening LLM use.
+   The runtime should gain support for more target filters, trigger families,
+   and effect types before trying to bulk-interpret harder cards.
+
+2. Keep simple cards in the structured-effect pipeline.
+   Short, low-ambiguity cards are the best place to increase supported-card
+   coverage quickly.
+
+3. Reserve bespoke engine code for mechanic families that need it.
+   New systemic mechanics should be implemented once in the engine instead of
+   re-encoded card by card.
+
+4. Use deck relevance to prioritize work.
+   Support should be guided by deck audits and competitive deck usage, not only
+   by total unsupported count.
+
+5. Keep “supported” aligned with “safe to simulate.”
+   A card should only count as supported when the simulator can execute it
+   reliably, not merely because a draft exists.
+
+
+Bottom Line
+
+The repo is following an engine-first, schema-second, review-gated strategy.
+That is the correct direction for a simulator that wants both breadth of card
+coverage and trustworthy simulation results.
